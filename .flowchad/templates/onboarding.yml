@@ -1,0 +1,36 @@
+# Template: Onboarding
+# Copy to .flowchad/flows/ and customize for your app.
+
+name: onboarding
+url: https://staging.example.com
+tags: [onboarding, activation]
+priority: P1
+credentials:
+  email: $TEST_EMAIL
+  password: $TEST_PASSWORD
+
+steps:
+  - action: navigate
+    url: /welcome
+    expect: onboarding wizard or welcome screen
+    timing: 2s
+
+  - action: click
+    selector: "[data-testid=get-started]"
+    expect: first onboarding step
+    timing: 2s
+
+  - action: fill
+    selector: "#company-name"
+    value: "Test Company"
+
+  - action: click
+    selector: "[data-testid=next-step]"
+    expect: second onboarding step
+    timing: 2s
+
+  - action: click
+    selector: "[data-testid=skip]"
+    expect: dashboard or main app screen
+    timing: 3s
+    optional: true
