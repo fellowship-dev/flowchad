@@ -1,0 +1,31 @@
+# Flowchad — project configuration
+# Copy this file when installing flowchad into your project.
+
+# Project name (used in reports and diagrams)
+# name: my-app
+
+# Base URL for flow execution
+# url: https://staging.example.com
+
+# Platform type: saas | website | mobile | internal
+# See knowledge/platform-types.md for evaluation criteria per type.
+# type: saas
+
+# Default timing thresholds (seconds)
+# timing:
+#   slow: 3       # flag transitions slower than this
+#   critical: 10  # flag as critical above this
+
+# Credentials (env var references — never hardcode secrets)
+# credentials:
+#   email: $TEST_EMAIL
+#   password: $TEST_PASSWORD
+
+# Analytics integration (optional — enables metrics collection)
+# analytics:
+#   provider: posthog  # posthog | mixpanel | amplitude | segment
+#   mcp: true          # connect via MCP server if available
+
+# Speckit integration (optional — cross-reference specs during walks)
+# speckit:
+#   path: .speckit/    # relative path to speckit directory
