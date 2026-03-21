@@ -1,0 +1,29 @@
+# Template: Sign Up
+# Copy to .flowchad/flows/ and customize for your app.
+
+name: sign-up
+url: https://staging.example.com
+tags: [onboarding, critical]
+priority: P0
+credentials:
+  email: $TEST_EMAIL
+  password: $TEST_PASSWORD
+
+steps:
+  - action: navigate
+    url: /signup
+    expect: registration form visible
+    timing: 2s
+
+  - action: fill
+    selector: "#email"
+    value: $TEST_EMAIL
+
+  - action: fill
+    selector: "#password"
+    value: $TEST_PASSWORD
+
+  - action: click
+    selector: "button[type=submit]"
+    expect: redirect to /dashboard or confirmation page
+    timing: 3s
