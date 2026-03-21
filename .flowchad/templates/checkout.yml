@@ -1,0 +1,38 @@
+# Template: Checkout
+# Copy to .flowchad/flows/ and customize for your app.
+
+name: checkout
+url: https://staging.example.com
+tags: [payment, critical]
+priority: P0
+credentials:
+  email: $TEST_EMAIL
+  password: $TEST_PASSWORD
+
+steps:
+  - action: navigate
+    url: /cart
+    expect: cart page with items
+    timing: 2s
+
+  - action: click
+    selector: "[data-testid=checkout-button]"
+    expect: checkout form visible
+    timing: 2s
+
+  - action: fill
+    selector: "#card-number"
+    value: "4242424242424242"
+
+  - action: fill
+    selector: "#card-expiry"
+    value: "12/28"
+
+  - action: fill
+    selector: "#card-cvc"
+    value: "123"
+
+  - action: click
+    selector: "button[type=submit]"
+    expect: order confirmation page
+    timing: 5s
