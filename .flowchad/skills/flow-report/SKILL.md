@@ -21,9 +21,10 @@ The argument is the flow name. Uses the most recent snapshot for that flow.
 
 1. **Walk results** — load `snapshots/{latest}-{flow-name}/results.json`
 2. **Screenshots** — read each step screenshot for visual analysis
-3. **Flow definition** — load `flows/{flow-name}.yml` for context
-4. **Knowledge docs** — reference `knowledge/friction-taxonomy.md` for severity classification
-5. **Config** — load `config.yml` for platform type, timing thresholds, business goals
+3. **Video** — reference trimmed video and GIF if available (include in report)
+4. **Flow definition** — load `flows/{flow-name}.yml` for context
+5. **Knowledge docs** — reference `knowledge/friction-taxonomy.md` for severity classification
+6. **Config** — load `config.yml` for platform type, timing thresholds, business goals
 
 ## Analysis Process
 
@@ -136,6 +137,9 @@ Generate a markdown report at:
 | Cosmetic | N |
 
 **Overall assessment:** {one-line verdict}
+
+**Video:** [{flow-name}-trimmed.mp4](snapshots/{date}-{flow-name}/{flow-name}-trimmed.mp4) ({Xs} trimmed from {Ys})
+**GIF:** [{flow-name}.gif](snapshots/{date}-{flow-name}/{flow-name}.gif)
 
 **Recommended next steps:**
 1. {highest priority fix}
