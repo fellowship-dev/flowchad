@@ -18,6 +18,8 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `priority` | enum | `P1` | `P0` (critical), `P1` (important), `P2` (nice-to-have) |
 | `credentials` | map | `{}` | Env var references for auth (never hardcode) |
 | `headed` | bool | `false` | Force headed browser (delegates to Navvi if available) |
+| `video` | bool | `true` | Record video of the walk (requires ffmpeg for trimming) |
+| `viewport` | map | `{width: 1280, height: 720}` | Browser viewport size |
 
 ## Step Fields
 

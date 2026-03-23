@@ -26,7 +26,7 @@ The argument is the flow name (matches `flows/{name}.yml`).
 
 ## Execution
 
-### Step 0: Load Flow & Connect Browser
+### Step 0: Load Flow, Connect Browser & Start Recording
 
 ```javascript
 // Launch or connect to browser
@@ -45,6 +45,40 @@ try {
 
 Load the flow YAML from `.flowchad/flows/{name}.yml`. Parse steps. Resolve `$ENV_VAR` references from environment.
 
+### Step 0b: Start Video Recording
+
+If the flow has `video: false`, skip this step. Otherwise, start recording:
+
+```javascript
+// Create snapshot directory
+const snapshotDir = `.flowchad/snapshots/${date}-${flowName}`;
+await fs.mkdir(snapshotDir, { recursive: true });
+
+// Start Playwright video recording
+const context = await browser.newContext({
+  recordVideo: {
+    dir: snapshotDir,
+    size: { width: 1280, height: 720 }
+  }
+});
+const page = await context.newPage();
+```
+
+Initialize an action log to track timestamps for smart trimming:
+
+```javascript
+const actionLog = [];  // { ts: number, action: string, detail: string, durationMs?: number }
+const recordingStartTime = Date.now();
+```
+
+Log every action performed during the walk:
+
+```javascript
+function logAction(action, detail, durationMs) {
+  actionLog.push({ ts: Date.now(), action, detail, durationMs });
+}
+```
+
 ### Step 1: Execute Each Step
 
 For each step in the flow:
@@ -58,7 +92,10 @@ For each step in the flow:
    - `wait` → `page.waitForSelector(selector)` or `page.waitForTimeout(ms)`
    - `hover` → `page.hover(selector)`
 
-2. **Measure timing** — record `Date.now()` before and after action
+2. **Measure timing** — record `Date.now()` before and after action. Log the action:
+   ```javascript
+   logAction(step.action, step.selector || step.url, step.action === 'fill' ? typingDurationMs : undefined);
+   ```
 
 3. **Take screenshot** — `page.screenshot({ path: snapshotDir/step-{N}-{action}.png, fullPage: false })`
 
@@ -83,6 +120,55 @@ If a step has `optional: true` and fails, record but don't flag as critical.
 
 If a step has `captcha: true`, skip with status `skipped` and note "requires headed browser (Navvi)".
 
+### Step 2b: Stop Recording & Smart Trim
+
+Close the page and context to finalize the video:
+
+```javascript
+await page.close();  // triggers video save
+const videoPath = await page.video().path();
+```
+
+**Smart trim** — cut dead frames using the action log. This removes periods where nothing happens, producing a fluid replay of just the interactions.
+
+```bash
+# Extract video duration
+DURATION=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$VIDEO")
+FPS=$(ffprobe -v error -select_streams v -show_entries stream=r_frame_rate -of csv=p=0 "$VIDEO" | bc)
+```
+
+**Trim algorithm:**
+1. For each logged action, calculate a keep-window:
+   - **Before**: 1 second before the action
+   - **After**: 3 seconds after the action (for `fill` actions: typing duration + 3s)
+2. Merge overlapping windows
+3. If trimmed version is <80% of original length, produce the trimmed cut
+4. Use ffmpeg `select` filter to keep only the action windows:
+
+```bash
+# Build ffmpeg select filter from action windows
+# Example: select='between(t,2.1,6.1)+between(t,8.5,12.5)'
+ffmpeg -y -i "$VIDEO" \
+  -vf "select='$SELECT_EXPR',setpts=N/FRAME_RATE/TB" \
+  -af "aselect='$SELECT_EXPR',asetpts=N/SR/TB" \
+  "${SNAPSHOT_DIR}/${FLOW_NAME}-trimmed.mp4" 2>/dev/null
+```
+
+**GIF conversion** (for embedding in issues/PRs):
+
+```bash
+# Two-pass palette-optimized GIF
+ffmpeg -y -i "${TRIMMED_OR_FULL}" -vf "fps=8,scale=800:-1:flags=lanczos,palettegen" /tmp/palette.png
+ffmpeg -y -i "${TRIMMED_OR_FULL}" -i /tmp/palette.png \
+  -lavfi "fps=8,scale=800:-1:flags=lanczos[x];[x][1:v]paletteuse" \
+  "${SNAPSHOT_DIR}/${FLOW_NAME}.gif"
+```
+
+**Output files:**
+- `{flow-name}-full.webm` — raw Playwright recording
+- `{flow-name}-trimmed.mp4` — action-only cut (if trim saves >20%)
+- `{flow-name}.gif` — palette-optimized GIF (from trimmed if available, else full)
+
 ### Step 3: Store Results
 
 Create a dated snapshot directory:
@@ -94,6 +180,9 @@ Create a dated snapshot directory:
     ├── step-02-fill.png
     ├── step-03-fill.png
     ├── step-04-click.png
+    ├── {flow-name}-full.webm
+    ├── {flow-name}-trimmed.mp4
+    ├── {flow-name}.gif
     └── results.json
 ```
 
@@ -130,6 +219,17 @@ Create a dated snapshot directory:
       "screenshot": "step-02-fill.png"
     }
   ],
+  "video": {
+    "full": "sign-up-full.webm",
+    "trimmed": "sign-up-trimmed.mp4",
+    "gif": "sign-up.gif",
+    "full_duration_s": 32.1,
+    "trimmed_duration_s": 8.4
+  },
+  "action_log": [
+    { "ts": 1711270365123, "action": "navigate", "detail": "/signup" },
+    { "ts": 1711270366500, "action": "fill", "detail": "#email", "durationMs": 800 }
+  ],
   "summary": {
     "total": 4,
     "passed": 3,
@@ -155,6 +255,8 @@ After the walk completes, print a summary:
 ✓ step 4: click submit (2.8s) ⚠️ slow (threshold: 2s)
 
 Results: 3/4 passed, 1 slow
+Video: .flowchad/snapshots/2026-03-20-sign-up/sign-up-trimmed.mp4 (8.4s from 32.1s)
+GIF: .flowchad/snapshots/2026-03-20-sign-up/sign-up.gif
 Snapshot: .flowchad/snapshots/2026-03-20-sign-up/
 ```
 
