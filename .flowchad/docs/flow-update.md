@@ -1,9 +1,3 @@
----
-name: flow-update
-description: Update an existing flow definition to reflect product changes — reads codebase diffs, updates steps/expectations/context. Usage /flow-update <flow-name> <what changed>
-user_invocable: true
----
-
 # Flow Update
 
 Update an existing flow definition to match current product state after a feature change.

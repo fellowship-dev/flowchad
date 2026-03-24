@@ -58,12 +58,10 @@ This installs all FlowChad skills into your agent's directory (`.claude/skills/`
 git clone https://github.com/Fellowship-dev/flowchad.git .flowchad
 ```
 
-Then symlink skills into your agent directory:
+Then symlink the skill into your agent directory:
 ```bash
-mkdir -p .claude/skills
-for skill in .flowchad/skills/*/; do
-  ln -s "../../.flowchad/skills/$(basename $skill)" ".claude/skills/$(basename $skill)"
-done
+mkdir -p .claude/skills/flowchad
+ln -s ../../../.flowchad/../SKILL.md .claude/skills/flowchad/SKILL.md
 ```
 </details>
 
@@ -254,9 +252,9 @@ Each finding includes what's wrong, why it matters, a suggested fix, and effort 
 ## Project Structure
 
 ```
-.claude/skills/        # Installed by npx skills add (symlinks)
+SKILL.md                 # Main skill (installed by npx skills add)
 .flowchad/
-├── skills/            # Skill definitions (SKILL.md files)
+├── docs/              # Detailed command instructions
 ├── knowledge/         # Reference docs (friction taxonomy, metrics, platform types)
 ├── templates/         # Starter flows (sign-up, login, checkout, onboarding)
 ├── flows/             # Your project's flow definitions (YAML)

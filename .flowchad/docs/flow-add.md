@@ -1,9 +1,3 @@
----
-name: flow-add
-description: Create a new flow definition from a natural language description — scans codebase for routes, components, and existing flows to generate accurate YAML. Usage /flow-add <description>
-user_invocable: true
----
-
 # Flow Add
 
 Create a new flow definition from a natural language description of a feature or user journey.
