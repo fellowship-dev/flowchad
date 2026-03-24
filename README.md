@@ -4,13 +4,10 @@
 
 # Flowchad
 
-**Drop-in AI QA for any web project.** Walk user flows, screenshot each step, record trimmed videos, and get friction reports — all from Claude Code.
-
-No CLI. No npm. No config files to learn. Clone into your project and go.
+**Drop-in AI QA for any web project.** Walk user flows, screenshot each step, record trimmed videos, and get friction reports — all from Claude Code, Cursor, Copilot, and 40+ other agents.
 
 ```bash
-cd your-project
-git clone https://github.com/Fellowship-dev/flowchad.git .flowchad
+npx skills add Fellowship-dev/flowchad
 ```
 
 ---
@@ -29,12 +26,29 @@ git clone https://github.com/Fellowship-dev/flowchad.git .flowchad
 
 ## Quick Start
 
-**1. Install** — clone into any project:
+**1. Install** — add skills to any project:
 
 ```bash
-cd your-project
+npx skills add Fellowship-dev/flowchad
+```
+
+This installs all FlowChad skills into your agent's directory (`.claude/skills/`, `.cursor/skills/`, etc.) with drift detection via `skills-lock.json`. Update anytime with `npx skills update`.
+
+<details>
+<summary>Alternative: manual clone</summary>
+
+```bash
 git clone https://github.com/Fellowship-dev/flowchad.git .flowchad
 ```
+
+Then symlink skills into your agent directory:
+```bash
+mkdir -p .claude/skills
+for skill in .flowchad/skills/*/; do
+  ln -s "../../.flowchad/skills/$(basename $skill)" ".claude/skills/$(basename $skill)"
+done
+```
+</details>
 
 **2. Configure** — edit `.flowchad/config.yml`:
 
@@ -204,7 +218,7 @@ scripts/
 
 ## Requirements
 
-- [Claude Code](https://claude.ai/claude-code) (runtime)
+- An AI coding agent — [Claude Code](https://claude.ai/claude-code), Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, or [any of 40+ supported agents](https://skills.sh)
 - Chrome or Chromium (for Playwright CDP, or run headless)
 
 Optional:
