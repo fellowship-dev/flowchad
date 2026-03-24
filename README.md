@@ -21,7 +21,7 @@
 ## Getting Started
 
 ```bash
-npx skills add Fellowship-dev/flowchad
+npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 
 Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and [40+ other agents](https://skills.sh).
