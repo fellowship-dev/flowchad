@@ -1,9 +1,3 @@
----
-name: flow-diagram
-description: Generate mermaid flowcharts from YAML flow definitions — visualize happy path, error paths, and decision points. Usage /flow-diagram <flow-name>
-user_invocable: true
----
-
 # Flow Diagram
 
 Generate a mermaid flowchart from a flow definition YAML.
