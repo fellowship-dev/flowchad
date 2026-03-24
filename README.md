@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="flowchad-v1-icon.png" alt="Flowchad" width="128" height="128">
+</p>
+
 # Flowchad
 
 **Drop-in AI QA for any web project.** Walk user flows, screenshot each step, record trimmed videos, and get friction reports — all from Claude Code.
