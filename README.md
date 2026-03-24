@@ -1,21 +1,40 @@
 <p align="center">
-  <img src="flowchad-v1-icon.png" alt="Flowchad" width="128" height="128">
+  <img src="flowchad-v1-icon.png" alt="Flowchad" width="120" />
 </p>
 
-# Flowchad
+<h1 align="center">Flowchad</h1>
 
-**Drop-in AI QA for any web project.** Walk user flows, screenshot each step, record trimmed videos, and get friction reports — all from Claude Code, Cursor, Copilot, and 40+ other agents.
+<p align="center">
+  <strong>Drop-in AI QA for any web project.</strong>
+  <br />
+  Walk user flows, screenshot each step, record trimmed videos, and get friction reports.
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &middot;
+  <a href="#what-it-does">What It Does</a> &middot;
+  <a href="#flow-definition-reference">Flow Reference</a> &middot;
+  <a href="#evidence-upload">Evidence Upload</a> &middot;
+  <a href="#how-it-compares">Compare</a>
+</p>
+
+<p align="center">
 
 ```bash
 npx skills add Fellowship-dev/flowchad
 ```
 
+</p>
+
+Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and [40+ other agents](https://skills.sh).
+
 ---
 
 ## What It Does
 
-| Command | What happens |
-|---------|-------------|
+| Skill | What happens |
+|-------|-------------|
+| `/flowchad-setup` | Auto-discovers routes, tests, and analytics — scaffolds flow definitions |
 | `/flow-walk sign-up` | Walks the flow step-by-step, captures screenshots + timing + video |
 | `/flow-report sign-up` | Categorizes findings as Critical / Friction / Cosmetic |
 | `/flow-suggest sign-up` | Prioritized improvements ranked by effort vs impact |
@@ -50,7 +69,15 @@ done
 ```
 </details>
 
-**2. Configure** — edit `.flowchad/config.yml`:
+**2. Setup** — let the AI auto-discover your project:
+
+```
+/flowchad-setup
+```
+
+This scans your codebase for routes, existing tests, analytics SDKs, and test credentials, then scaffolds flow definitions and config automatically.
+
+Or configure manually — edit `.flowchad/config.yml`:
 
 ```yaml
 name: my-app
@@ -97,6 +124,12 @@ steps:
     timing: 3s
 ```
 
+Or skip manual YAML and let AI create it:
+
+```
+/flow-add User signs up with email and password and sees the dashboard
+```
+
 **4. Walk it:**
 
 ```
@@ -109,15 +142,9 @@ steps:
 /flow-report sign-up
 ```
 
-Or skip steps 2-3 and let the setup skill auto-discover your routes, tests, and analytics:
-
-```
-/flowchad-setup
-```
-
 ## Video Recording
 
-Flow walks automatically record video. The recording is **smart-trimmed** — dead frames where nothing happens are cut out, keeping only 1s before and 3s after each action. You get a fluid video of the actual interactions, not a 5-minute screen recording with 30 seconds of action.
+Flow walks automatically record video. The recording is **smart-trimmed** — dead frames where nothing happens are cut out, keeping only 1s before and 3s after each action.
 
 Output:
 - `{flow-name}.mp4` — full recording
@@ -148,6 +175,31 @@ evidence:
 
 ## Flow Definition Reference
 
+### Naming Convention
+
+Flow names are descriptive sentences — like RSpec `describe`/`it` blocks. Self-explanatory without project context.
+
+```yaml
+# Bad
+name: sign-up
+
+# Good
+name: New user signs up with email and password and lands on the dashboard
+```
+
+Filenames mirror the scenario as a slug: `new-user-signs-up-with-email-and-password.yml`
+
+### Context Block
+
+Document preconditions for the scenario — machine-readable and self-documenting:
+
+```yaml
+context:
+  user: new_account
+  auth: logged_out
+  plan: free
+```
+
 ### Actions
 
 | Action | Fields | Description |
@@ -165,7 +217,9 @@ evidence:
 ```yaml
 - action: click
   selector: "button.submit"
-  expect: redirect to /dashboard     # natural language — AI evaluates
+  expect: >
+    Redirect to /dashboard because sign-up succeeded.
+    Welcome message confirms account was created.
   timing: 3s                         # flag if slower than this
   optional: true                     # don't fail the flow if this breaks
   captcha: true                      # skip in headless, delegate to Navvi
@@ -202,15 +256,15 @@ Each finding includes what's wrong, why it matters, a suggested fix, and effort 
 ## Project Structure
 
 ```
+.claude/skills/        # Installed by npx skills add (symlinks)
 .flowchad/
-├── commands/        # Slash commands for Claude Code
-├── skills/          # AI skills (walk, report, suggest, diff, diagram, setup, evidence)
-├── knowledge/       # Reference docs (friction taxonomy, metrics, platform types)
-├── templates/       # Starter flows (sign-up, login, checkout, onboarding)
-├── flows/           # Your project's flow definitions (YAML)
-├── snapshots/       # Walk results + screenshots + videos (gitignored)
-├── reports/         # Generated friction reports (gitignored)
-└── config.yml       # Project config
+├── skills/            # Skill definitions (SKILL.md files)
+├── knowledge/         # Reference docs (friction taxonomy, metrics, platform types)
+├── templates/         # Starter flows (sign-up, login, checkout, onboarding)
+├── flows/             # Your project's flow definitions (YAML)
+├── snapshots/         # Walk results + screenshots + videos (gitignored)
+├── reports/           # Generated friction reports (gitignored)
+└── config.yml         # Project config
 scripts/
 ├── evidence-init.sh   # Create evidence orphan branch
 └── evidence-upload.sh # Upload files to evidence branch
@@ -229,12 +283,13 @@ Optional:
 
 | | Flowchad | Cypress/Playwright e2e | Manual QA |
 |---|---|---|---|
-| Setup time | 2 minutes | Hours | N/A |
+| Setup time | `npx skills add` | Hours of config | N/A |
 | Maintenance | Zero (YAML + AI) | Constant (brittle selectors) | N/A |
 | Reports | Auto-generated friction reports | Pass/fail only | Spreadsheets |
 | Video | Smart-trimmed action replays | Raw recordings | Screen recordings |
 | Cost | Free | Free | $$$/hour |
 | Intelligence | AI evaluates UX quality | Assertions only | Human judgment |
+| Agent support | 40+ agents | Framework-specific | N/A |
 
 ## License
 
