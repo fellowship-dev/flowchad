@@ -1,10 +1,15 @@
 # Template: Login
 # Copy to .flowchad/flows/ and customize for your app.
+# Rename file to match your scenario, e.g.:
+#   existing-user-logs-in-with-email-and-password.yml
 
-name: login
+name: Existing user logs in with email and password and reaches the dashboard
 url: https://staging.example.com
 tags: [auth, critical]
 priority: P0
+context:
+  user: existing
+  auth: logged_out
 credentials:
   email: $TEST_EMAIL
   password: $TEST_PASSWORD
@@ -12,7 +17,9 @@ credentials:
 steps:
   - action: navigate
     url: /login
-    expect: login form visible
+    expect: >
+      Login form is visible with email and password fields.
+      No "session expired" or error banners present.
     timing: 2s
 
   - action: fill
@@ -25,5 +32,7 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
-    expect: redirect to /dashboard
+    expect: >
+      Redirect to /dashboard because login succeeded.
+      User's name or avatar visible in the header, confirming authentication.
     timing: 3s

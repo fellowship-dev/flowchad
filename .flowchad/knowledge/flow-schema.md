@@ -6,7 +6,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Human-readable flow name |
+| `name` | string | Descriptive sentence explaining the scenario (see [naming convention](#naming-convention)) |
 | `url` | string | Starting URL (base or full) |
 | `steps` | list | Ordered steps to execute |
 
@@ -14,6 +14,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `context` | map | `{}` | Preconditions for the scenario — machine-readable, self-documenting (see [context block](#context-block)) |
 | `tags` | list | `[]` | Categorization tags for filtering |
 | `priority` | enum | `P1` | `P0` (critical), `P1` (important), `P2` (nice-to-have) |
 | `credentials` | map | `{}` | Env var references for auth (never hardcode) |
@@ -44,15 +45,63 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 - **wait** — pause. Requires `value` (e.g. `2s`) or `selector` (wait until visible).
 - **hover** — hover over element. Requires `selector`.
 
+## Naming Convention
+
+Flow names should read like RSpec `describe`/`it` blocks — self-explanatory to any LLM or human without project context. The name is a sentence describing the scenario, not a slug.
+
+```yaml
+# Bad — opaque without context
+name: sign-up
+
+# Good — you know the scenario from the name alone
+name: New user signs up with email and password and lands on the dashboard
+```
+
+The filename should mirror the scenario: `new-user-signs-up-with-email-and-password.yml`.
+
+## Context Block
+
+The `context` block documents preconditions for the scenario. Not executable (yet), but machine-readable and self-documenting. It tells you the starting state without reading the steps.
+
+```yaml
+context:
+  user: new_account          # no prior account exists
+  auth: logged_out           # user is not authenticated
+  cart_items: 0              # empty cart
+  plan: free                 # on free tier
+  feature_flags:
+    new_checkout: true       # experimental checkout enabled
+```
+
+Common context keys:
+- `user` — account state (`new_account`, `existing`, `admin`, `invited`)
+- `auth` — auth state (`logged_out`, `logged_in`, `expired_session`)
+- `data` — data state (`empty`, `seeded`, `populated`)
+- `plan` — subscription tier (`free`, `pro`, `enterprise`)
+- `feature_flags` — any flags that affect the flow
+- `browser` — browser constraints (`mobile`, `desktop`, `slow_network`)
+
+You can use any keys that make sense for your project. The schema is intentionally open.
+
 ## Expect Evaluation
 
-The `expect` field is a natural language description, not a code assertion. The AI evaluates it against the screenshot and DOM state after the step completes.
+The `expect` field is a natural language description, not a code assertion. The AI evaluates it against the screenshot and DOM state after the step completes. Write rich, descriptive expectations that explain **why** the expected state matters.
 
 Examples:
-- `expect: form visible` — AI checks screenshot for a visible form
-- `expect: redirect to /dashboard` — AI checks URL changed to /dashboard
-- `expect: error message displayed` — AI looks for error UI
-- `expect: cart shows 3 items` — AI reads cart count from screenshot
+```yaml
+# Minimal — works but misses intent
+expect: form visible
+
+# Rich — explains what a human would judge
+expect: >
+  Registration form is visible with email and password fields.
+  No error messages shown. Submit button is enabled.
+
+# With reasoning
+expect: >
+  Redirect to /dashboard because sign-up succeeded.
+  Welcome banner shows the user's name, confirming the account was created.
+```
 
 ## Variable Substitution
 

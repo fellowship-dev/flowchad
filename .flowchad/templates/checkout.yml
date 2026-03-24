@@ -1,10 +1,16 @@
 # Template: Checkout
 # Copy to .flowchad/flows/ and customize for your app.
+# Rename file to match your scenario, e.g.:
+#   logged-in-user-checks-out-cart-with-credit-card.yml
 
-name: checkout
+name: Logged-in user checks out their cart with a credit card and sees order confirmation
 url: https://staging.example.com
 tags: [payment, critical]
 priority: P0
+context:
+  user: existing
+  auth: logged_in
+  cart_items: 1
 credentials:
   email: $TEST_EMAIL
   password: $TEST_PASSWORD
@@ -12,12 +18,16 @@ credentials:
 steps:
   - action: navigate
     url: /cart
-    expect: cart page with items
+    expect: >
+      Cart page loads with at least one item.
+      Checkout button is visible and enabled.
     timing: 2s
 
   - action: click
     selector: "[data-testid=checkout-button]"
-    expect: checkout form visible
+    expect: >
+      Checkout form appears with payment fields.
+      Order summary shows correct item count and total.
     timing: 2s
 
   - action: fill
@@ -34,5 +44,7 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
-    expect: order confirmation page
+    expect: >
+      Order confirmation page with order number and summary.
+      Cart is now empty. No error messages about payment failure.
     timing: 5s

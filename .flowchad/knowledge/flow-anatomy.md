@@ -129,17 +129,46 @@ Step 6 (edge): Verification email never arrives
 
 ## Flow Naming Convention
 
-Use this format: `[verb]-[noun](-[qualifier])`
+Flow names should read like RSpec `describe`/`it` blocks — self-explanatory without project context.
 
-Examples:
-- `create-account`
-- `submit-order`
-- `invite-member-via-email`
-- `invite-member-via-link`
-- `reset-password`
-- `export-report-csv`
+### `name` field — a sentence
 
-Qualifiers disambiguate when multiple flows share the same verb-noun pair.
+The `name` is a full sentence describing the scenario, including the actor, the action, and the expected outcome:
+
+```yaml
+# Bad — opaque slug
+name: create-account
+
+# Good — scenario is immediately clear
+name: New user creates an account with email and password and sees the dashboard
+```
+
+### Filename — the scenario as a slug
+
+The filename mirrors the scenario, kebab-cased: `new-user-creates-account-with-email-and-password.yml`
+
+### `context` block — preconditions
+
+Add a `context` block to document the starting state. This is not executable (yet), but makes the scenario machine-readable and self-documenting:
+
+```yaml
+name: Returning user resets password via email link and logs in with new credentials
+context:
+  user: existing
+  auth: logged_out
+  email_verified: true
+```
+
+### Naming guidance
+
+| Old convention | New convention |
+|---|---|
+| `create-account` | `New user creates an account with email and password and sees the dashboard` |
+| `invite-member-via-email` | `Admin invites a team member via email and the invitee receives an activation link` |
+| `reset-password` | `Returning user resets password via email link and logs in with new credentials` |
+| `export-report-csv` | `Manager exports a monthly report as CSV and the download starts automatically` |
+
+The old `[verb]-[noun](-[qualifier])` format is still valid for filenames but should not be used as the `name` field.
 
 ## Flow Documentation Template
 
