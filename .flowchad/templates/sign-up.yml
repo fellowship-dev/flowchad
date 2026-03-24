@@ -1,10 +1,15 @@
 # Template: Sign Up
 # Copy to .flowchad/flows/ and customize for your app.
+# Rename file to match your scenario, e.g.:
+#   new-user-signs-up-with-email-and-password.yml
 
-name: sign-up
+name: New user signs up with email and password and lands on the dashboard
 url: https://staging.example.com
 tags: [onboarding, critical]
 priority: P0
+context:
+  user: new_account
+  auth: logged_out
 credentials:
   email: $TEST_EMAIL
   password: $TEST_PASSWORD
@@ -12,7 +17,9 @@ credentials:
 steps:
   - action: navigate
     url: /signup
-    expect: registration form visible
+    expect: >
+      Registration form is visible with email and password fields.
+      No error messages shown. Submit button is enabled.
     timing: 2s
 
   - action: fill
@@ -25,5 +32,7 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
-    expect: redirect to /dashboard or confirmation page
+    expect: >
+      Redirect to /dashboard because sign-up succeeded.
+      Welcome message or onboarding prompt confirms account was created.
     timing: 3s

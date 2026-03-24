@@ -1,10 +1,16 @@
 # Template: Onboarding
 # Copy to .flowchad/flows/ and customize for your app.
+# Rename file to match your scenario, e.g.:
+#   new-user-completes-onboarding-wizard-and-reaches-dashboard.yml
 
-name: onboarding
+name: New user completes onboarding wizard after sign-up and reaches the main dashboard
 url: https://staging.example.com
 tags: [onboarding, activation]
 priority: P1
+context:
+  user: new_account
+  auth: logged_in
+  onboarding_completed: false
 credentials:
   email: $TEST_EMAIL
   password: $TEST_PASSWORD
@@ -12,12 +18,15 @@ credentials:
 steps:
   - action: navigate
     url: /welcome
-    expect: onboarding wizard or welcome screen
+    expect: >
+      Onboarding wizard or welcome screen appears.
+      Progress indicator shows step 1. User can proceed or skip.
     timing: 2s
 
   - action: click
     selector: "[data-testid=get-started]"
-    expect: first onboarding step
+    expect: >
+      First onboarding step loads with input fields for company or profile setup.
     timing: 2s
 
   - action: fill
@@ -26,11 +35,14 @@ steps:
 
   - action: click
     selector: "[data-testid=next-step]"
-    expect: second onboarding step
+    expect: >
+      Second onboarding step appears. Progress indicator advances.
     timing: 2s
 
   - action: click
     selector: "[data-testid=skip]"
-    expect: dashboard or main app screen
+    expect: >
+      Dashboard or main app screen loads because onboarding is complete (or skipped).
+      No onboarding prompt remains. User can start using the product.
     timing: 3s
     optional: true

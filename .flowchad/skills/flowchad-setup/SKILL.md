@@ -147,35 +147,51 @@ analytics:
 
 ### Convert Existing Tests to Flow Definitions
 
-For each e2e test found, generate a `.yml` flow definition in `.flowchad/flows/`:
+For each e2e test found, generate a `.yml` flow definition in `.flowchad/flows/`.
+
+**Naming rules:**
+- `name` field: a descriptive sentence explaining the scenario (actor + action + outcome)
+- Filename: the scenario as a kebab-case slug
+- Add a `context` block with relevant preconditions extracted from the test setup
+- Write rich `expect` strings that explain what a human would judge, not just pass/fail
 
 ```yaml
-# .flowchad/flows/{flow-name}.yml
+# .flowchad/flows/new-user-signs-up-with-email-and-password.yml
 # Auto-generated from: {source_test_file}
-name: {Flow Name}
+name: New user signs up with email and password and lands on the dashboard
 url: {start_url}
 tags: [{category}]
 priority: P0
+context:
+  user: new_account
+  auth: logged_out
 steps:
   - action: navigate
     url: {url}
-    expect: {from_test_assertion}
+    expect: >
+      {Rich description from test assertion — what the page should look like and why}
     timing: 3s
 ```
 
 ### Generate Flows from Routes (if no tests exist)
 
-For each public route, generate a minimal flow:
+For each public route, generate a flow with a descriptive name:
 
 ```yaml
-name: {Route Name}
+# .flowchad/flows/visitor-loads-homepage-and-sees-hero-section.yml
+name: Visitor loads the homepage and sees the hero section with CTA
 url: {route_path}
 tags: [auto-generated]
 priority: P2
+context:
+  user: anonymous
+  auth: logged_out
 steps:
   - action: navigate
     url: {route_path}
-    expect: status 200
+    expect: >
+      Page loads successfully with main content visible.
+      No error pages, broken layouts, or missing assets.
     timing: 3s
 ```
 

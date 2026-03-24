@@ -20,6 +20,8 @@ git clone https://github.com/Fellowship-dev/flowchad.git .flowchad
 | `/flow-suggest sign-up` | Prioritized improvements ranked by effort vs impact |
 | `/flow-diff sign-up` | Compares runs to catch regressions |
 | `/flow-diagram sign-up` | Mermaid flowchart from your YAML definition |
+| `/flow-add <description>` | Creates a new flow from natural language, scanning your codebase for selectors |
+| `/flow-update <name> <change>` | Updates an existing flow to reflect product changes |
 
 ## Quick Start
 
@@ -42,18 +44,23 @@ credentials:
   password: $TEST_PASSWORD
 ```
 
-**3. Define a flow** — create `.flowchad/flows/sign-up.yml`:
+**3. Define a flow** — create `.flowchad/flows/new-user-signs-up-with-email-and-password.yml`:
 
 ```yaml
-name: sign-up
+name: New user signs up with email and password and lands on the dashboard
 url: /signup
 tags: [onboarding, critical]
 priority: P0
+context:
+  user: new_account
+  auth: logged_out
 
 steps:
   - action: navigate
     url: /signup
-    expect: registration form visible
+    expect: >
+      Registration form is visible with email and password fields.
+      No error messages shown. Submit button is enabled.
     timing: 2s
 
   - action: fill
@@ -66,7 +73,9 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
-    expect: redirect to /dashboard
+    expect: >
+      Redirect to /dashboard because sign-up succeeded.
+      Welcome message confirms account was created.
     timing: 3s
 ```
 
@@ -127,10 +136,15 @@ Disable with `video: false` in your flow YAML or config.
 ### Flow-Level Options
 
 ```yaml
-name: checkout
+name: Mobile user checks out cart with Apple Pay on a small viewport
 url: /cart
 tags: [payment, critical]
 priority: P0          # P0 (critical) to P3 (nice-to-have)
+context:
+  user: existing
+  auth: logged_in
+  cart_items: 1
+  browser: mobile
 video: true           # record video (default: true)
 viewport:             # override default 1280x720
   width: 375
