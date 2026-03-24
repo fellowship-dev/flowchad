@@ -21,7 +21,7 @@
 ## Getting Started
 
 ```bash
-npx skills add Fellowship-dev/flowchad --all
+npx skills add Fellowship-dev/flowchad
 ```
 
 Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and [40+ other agents](https://skills.sh).
@@ -47,8 +47,8 @@ Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and
 
 ```bash
 npx skills add Fellowship-dev/flowchad
-# install all skills at once without toggling one by one:
-npx skills add Fellowship-dev/flowchad --all
+# install all skills to a specific agent without prompts:
+npx skills add Fellowship-dev/flowchad --skill '*' --agent claude-code -y
 ```
 
 This installs all FlowChad skills into your agent's directory (`.claude/skills/`, `.cursor/skills/`, etc.) with drift detection via `skills-lock.json`. Update anytime with `npx skills update`.
