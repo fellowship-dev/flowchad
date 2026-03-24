@@ -80,16 +80,29 @@ grep -r "app\.\(get\|post\|put\|delete\|route\)" --include="*.ts" --include="*.j
   src/ routes/ 2>/dev/null | head -20
 ```
 
-### 1e. Detect Credentials & Staging URLs
+### 1e. Detect Dev Server, URLs & Credentials
+
+FlowChad is designed to run against the local dev server first. Detect the dev server command and URLs in priority order: **localhost > staging > production**.
 
 ```bash
-# Look for test/staging config
-grep -ri "staging\|test.*url\|base.*url\|APP_URL\|NEXT_PUBLIC" \
-  .env.example .env.test .env.staging \
-  config/environments/test.rb config/environments/staging.rb \
+# 1. Detect dev server command
+grep -A2 '"dev"\|"start"\|"serve"' package.json 2>/dev/null
+grep -m1 "rails s\|bin/dev\|foreman start" Procfile* Makefile 2>/dev/null
+grep -m1 "runserver\|manage.py" Makefile 2>/dev/null
+
+# 2. Detect dev server port
+grep -ri "PORT\|localhost\|127\.0\.0\.1\|0\.0\.0\.0" \
+  .env .env.development .env.local \
+  config/environments/development.rb \
+  2>/dev/null | head -10
+
+# 3. Detect staging/production URLs (lower priority)
+grep -ri "staging\|test.*url\|base.*url\|APP_URL\|NEXT_PUBLIC.*URL" \
+  .env.example .env.test .env.staging .env.production \
+  config/environments/staging.rb config/environments/production.rb \
   2>/dev/null
 
-# Check for seed/fixture users
+# 4. Check for seed/fixture users
 find . -path "*/seeds*" -o -path "*/fixtures*" -o -path "*/factories*" \
   2>/dev/null | head -10
 ```
@@ -102,18 +115,22 @@ Present a summary:
 ## Flowchad Setup — Discovery Report
 
 **Framework:** [Rails / Next.js / etc.]
+**Dev server:** [npm run dev / rails s / not detected]
+**Dev URL:** [http://localhost:3000 / not detected]
+**Staging URL:** [found / not found]
+**Production URL:** [found / not found]
 **Test files found:** N files across [Cypress / Playwright / RSpec / etc.]
 **Existing flows detected:** [list of user journeys found in tests]
 **Analytics:** [Mixpanel / PostHog / none]
 **Speckit:** [installed / not found]
 **Routes:** N public routes detected
-**Staging URL:** [found / not found]
 **Test credentials:** [found in fixtures / not found]
 ```
 
-Then ask ONLY what's missing:
+Then ask ONLY what's missing. **URL priority is localhost > staging > production** — FlowChad runs against the local dev server by default:
 
-- If no staging URL: "What's your staging or production URL?"
+- If dev server detected: "I found `npm run dev` on port 3000. Want to use `http://localhost:3000` as the default URL? (Make sure your dev server is running)"
+- If no dev server detected: "What port does your dev server run on? (e.g., `http://localhost:3000`). If you don't have a local setup, provide a staging or production URL instead."
 - If no test credentials: "Do you have a test account? (email/password)"
 - If analytics found: "Found [Mixpanel] — want me to set up the MCP server for funnel data?"
 - If tests found: "Found N e2e tests — want me to convert them to Flowchad flow definitions?"
@@ -129,7 +146,7 @@ Fill in discovered values in `.flowchad/config.yml`:
 
 ```yaml
 name: {project_name}
-url: {staging_url or production_url}
+url: {localhost_url or staging_url or production_url}  # prefer localhost
 type: {saas|website|mobile|internal}
 
 timing:
