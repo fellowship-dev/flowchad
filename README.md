@@ -11,20 +11,18 @@
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick Start</a> &middot;
+  <a href="#getting-started">Getting Started</a> &middot;
   <a href="#what-it-does">What It Does</a> &middot;
   <a href="#flow-definition-reference">Flow Reference</a> &middot;
   <a href="#evidence-upload">Evidence Upload</a> &middot;
   <a href="#how-it-compares">Compare</a>
 </p>
 
-<p align="center">
+## Getting Started
 
 ```bash
 npx skills add Fellowship-dev/flowchad
 ```
-
-</p>
 
 Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and [40+ other agents](https://skills.sh).
 
