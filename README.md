@@ -291,6 +291,19 @@ Optional:
 | Intelligence | AI evaluates UX quality | Assertions only | Human judgment |
 | Agent support | 40+ agents | Framework-specific | N/A |
 
+## FAQ
+
+### Why does `npx skills add` flag some skills as "High Risk" or "Med Risk"?
+
+The security risk scores come from automated scanners (Gen, Socket, Snyk) that analyze the skill instructions for shell commands, file system access, and network calls. FlowChad is a QA tool that **by design** needs to:
+
+- Run `grep` and `find` to scan your codebase for routes and selectors
+- Launch a browser via Playwright to walk your flows
+- Read and write files (screenshots, reports, flow definitions)
+- Access `.env` files for test credentials
+
+A tool that automates browsers and scans codebases *should* have file and network access — that's the whole point. The scanners flag these patterns because they'd be suspicious in a CSS formatting skill, but they're expected for a QA tool.
+
 ## License
 
-Apache 2.0
+MIT
