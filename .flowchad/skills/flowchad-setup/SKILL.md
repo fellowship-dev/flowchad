@@ -1,3 +1,9 @@
+---
+name: flowchad-setup
+description: Initialize Flowchad in a project — auto-discover existing tests, analytics, specs, and user flows, then scaffold flow definitions. Run as first step before any /flow-walk.
+user_invocable: true
+---
+
 # Flowchad Setup
 
 Initialize Flowchad in a project by discovering what already exists, asking what's missing, and scaffolding flow definitions.

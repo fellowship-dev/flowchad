@@ -1,3 +1,9 @@
+---
+name: flow-walk
+description: Walk a user flow using Playwright CDP — execute steps, capture screenshots, measure timing, store results. Usage /flow-walk <flow-name>
+user_invocable: true
+---
+
 # Flow Walk
 
 Execute a flow definition step-by-step using Playwright CDP, capturing screenshots and timing at each step.
