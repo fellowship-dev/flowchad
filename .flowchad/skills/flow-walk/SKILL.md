@@ -299,9 +299,32 @@ After the walk completes, print a summary:
 ✓ step 4: click submit (2.8s) ⚠️ slow (threshold: 2s)
 
 Results: 3/4 passed, 1 slow
-Video: .flowchad/snapshots/2026-03-20-sign-up/sign-up-trimmed.mp4 (8.4s from 32.1s)
-GIF: .flowchad/snapshots/2026-03-20-sign-up/sign-up.gif
 Snapshot: .flowchad/snapshots/2026-03-20-sign-up/
 ```
 
-Then suggest: "Run `/flow-report sign-up` to generate a friction report from these results."
+### Show the GIF
+
+If a GIF was generated, **always show it to the user immediately**. Use the Read tool to display the GIF file — it renders inline in VS Code and most terminals:
+
+```
+Read the GIF file: .flowchad/snapshots/{date}-{flow-name}/{flow-name}.gif
+```
+
+This is the "magic moment" — the user sees their flow animated right in the chat.
+
+### Suggest next steps with context-aware viewing tips
+
+```
+📎 **Walk recording saved!**
+
+**View the GIF:**
+- It's displayed above ↑ (if you're in VS Code / Claude Code)
+- Open it in Finder: `open .flowchad/snapshots/2026-03-20-sign-up/sign-up.gif`
+- Drag it into a GitHub PR or issue for inline preview
+
+**Video:** .flowchad/snapshots/2026-03-20-sign-up/sign-up-trimmed.mp4
+
+**Next:**
+- `/flow-report sign-up` — generate a friction report from these results
+- `/flow-suggest sign-up` — get prioritized improvement suggestions
+```
