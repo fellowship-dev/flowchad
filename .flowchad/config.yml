@@ -26,6 +26,14 @@
 #   provider: posthog  # posthog | mixpanel | amplitude | segment
 #   mcp: true          # connect via MCP server if available
 
+# Evidence upload (optional — host screenshots/GIFs for issues/PRs)
+# evidence:
+#   backend: git       # git (default) | s3 | navvi
+#   branch: evidence   # orphan branch name (git backend only)
+#   # s3_bucket: my-bucket          # S3/R2 backend
+#   # s3_endpoint: https://...      # S3/R2 endpoint URL
+#   # s3_public_url: https://...    # public base URL for embedded links
+
 # Speckit integration (optional — cross-reference specs during walks)
 # speckit:
 #   path: .speckit/    # relative path to speckit directory

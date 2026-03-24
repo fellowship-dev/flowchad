@@ -242,6 +242,50 @@ Create a dated snapshot directory:
 }
 ```
 
+### Step 4: Upload Evidence
+
+After snapshots are saved, upload visual evidence for embedding in issues/PRs.
+
+Read the evidence backend from `config.yml` (default: `git`). Follow the `evidence-upload` skill instructions.
+
+**Git backend (default):**
+
+```bash
+# Detect repo
+REPO=$(git remote get-url origin | sed -E 's|.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$|\1|')
+
+# Initialize evidence branch if needed (first run only)
+.flowchad/../scripts/evidence-init.sh "$REPO"
+
+# Upload each screenshot
+for screenshot in ${SNAPSHOT_DIR}/step-*.png; do
+  FILENAME=$(basename "$screenshot")
+  URL=$(.flowchad/../scripts/evidence-upload.sh "$screenshot" "$REPO" "${FLOW_NAME}/${DATE}/${FILENAME}")
+  # Store URL in results
+done
+
+# Upload GIF if it exists
+if [ -f "${SNAPSHOT_DIR}/${FLOW_NAME}.gif" ]; then
+  GIF_URL=$(.flowchad/../scripts/evidence-upload.sh "${SNAPSHOT_DIR}/${FLOW_NAME}.gif" "$REPO" "${FLOW_NAME}/${DATE}/${FLOW_NAME}.gif")
+fi
+```
+
+Add evidence URLs to `results.json`:
+
+```json
+{
+  "evidence": {
+    "backend": "git",
+    "screenshots": {
+      "step-01-navigate": "https://raw.githubusercontent.com/owner/repo/evidence/flow/date/step-01-navigate.png"
+    },
+    "gif": "https://raw.githubusercontent.com/owner/repo/evidence/flow/date/flow.gif"
+  }
+}
+```
+
+If evidence upload fails (no `gh` auth, network error), log a warning and continue — evidence is best-effort, never blocks the walk.
+
 ## Output
 
 After the walk completes, print a summary:

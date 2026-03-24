@@ -108,6 +108,26 @@ Output:
 
 Disable with `video: false` in your flow YAML or config.
 
+## Evidence Upload
+
+Screenshots and GIFs can be uploaded automatically for embedding in GitHub issues and PRs. Configure in `config.yml`:
+
+```yaml
+evidence:
+  backend: git       # git (default) | s3 | navvi
+  branch: evidence   # orphan branch name (git backend)
+```
+
+**Git backend (default)** — uploads to a dedicated orphan branch via the GitHub Contents API. Zero external deps, works with any PAT. Initialize once:
+
+```bash
+./scripts/evidence-init.sh owner/repo
+```
+
+**S3/R2 backend** — for teams with existing cloud storage. Set `s3_bucket`, `s3_endpoint`, and `s3_public_url` in config.
+
+**Navvi backend** — drags files into GitHub's UI via headed browser. Produces GitHub-hosted URLs but requires browser credentials.
+
 ## Flow Definition Reference
 
 ### Actions
@@ -166,13 +186,16 @@ Each finding includes what's wrong, why it matters, a suggested fix, and effort 
 ```
 .flowchad/
 ├── commands/        # Slash commands for Claude Code
-├── skills/          # AI skills (walk, report, suggest, diff, diagram, setup)
+├── skills/          # AI skills (walk, report, suggest, diff, diagram, setup, evidence)
 ├── knowledge/       # Reference docs (friction taxonomy, metrics, platform types)
 ├── templates/       # Starter flows (sign-up, login, checkout, onboarding)
 ├── flows/           # Your project's flow definitions (YAML)
 ├── snapshots/       # Walk results + screenshots + videos (gitignored)
 ├── reports/         # Generated friction reports (gitignored)
 └── config.yml       # Project config
+scripts/
+├── evidence-init.sh   # Create evidence orphan branch
+└── evidence-upload.sh # Upload files to evidence branch
 ```
 
 ## Requirements

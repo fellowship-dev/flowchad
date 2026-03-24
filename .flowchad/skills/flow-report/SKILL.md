@@ -22,9 +22,10 @@ The argument is the flow name. Uses the most recent snapshot for that flow.
 1. **Walk results** — load `snapshots/{latest}-{flow-name}/results.json`
 2. **Screenshots** — read each step screenshot for visual analysis
 3. **Video** — reference trimmed video and GIF if available (include in report)
-4. **Flow definition** — load `flows/{flow-name}.yml` for context
-5. **Knowledge docs** — reference `knowledge/friction-taxonomy.md` for severity classification
-6. **Config** — load `config.yml` for platform type, timing thresholds, business goals
+4. **Evidence URLs** — if `results.json` contains an `evidence` key, use those URLs for inline images in the report. Otherwise fall back to local file paths.
+5. **Flow definition** — load `flows/{flow-name}.yml` for context
+6. **Knowledge docs** — reference `knowledge/friction-taxonomy.md` for severity classification
+7. **Config** — load `config.yml` for platform type, timing thresholds, business goals
 
 ## Analysis Process
 
@@ -110,7 +111,7 @@ Generate a markdown report at:
 **Impact:** {why this matters}
 **Fix:** {suggested fix}
 **Effort:** {low|medium|high}
-**Screenshot:** {path}
+**Screenshot:** ![Step {N}]({evidence_url or local path})
 
 ---
 
@@ -139,7 +140,7 @@ Generate a markdown report at:
 **Overall assessment:** {one-line verdict}
 
 **Video:** [{flow-name}-trimmed.mp4](snapshots/{date}-{flow-name}/{flow-name}-trimmed.mp4) ({Xs} trimmed from {Ys})
-**GIF:** [{flow-name}.gif](snapshots/{date}-{flow-name}/{flow-name}.gif)
+**GIF:** ![Walk recording]({evidence_gif_url or local path})
 
 **Recommended next steps:**
 1. {highest priority fix}
