@@ -1,3 +1,9 @@
+---
+name: flow-report
+description: Generate a categorized friction report from walk results — Critical/Friction/Cosmetic findings with actionable suggestions. Usage /flow-report <flow-name>
+user_invocable: true
+---
+
 # Flow Report
 
 Analyze walk results and generate a categorized friction report.
@@ -94,12 +100,34 @@ Generate a markdown report at:
 **Pass rate:** {passed}/{total} steps ({pass_rate}%)
 **Duration:** {total_duration}
 
+---
+
+## Critical
+
+### 1. {Title}
+**Step {N}:** {action} → {target}
+**Observed:** {what happened}
+**Expected:** {what should happen}
+**Impact:** {why this matters}
+**Fix:** {suggested fix}
+**Effort:** {low|medium|high}
+**Screenshot:** ![Step {N}]({evidence_url or local path})
+
+---
 
 ## Friction
 
 ### 2. {Title}
 ...
 
+---
+
+## Cosmetic
+
+### 3. {Title}
+...
+
+---
 
 ## Summary
 

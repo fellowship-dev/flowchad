@@ -1,3 +1,9 @@
+---
+name: flow-diff
+description: Compare walk snapshots to detect regressions and improvements — visual diff, timing changes, broken/fixed steps. Usage /flow-diff <flow-name>
+user_invocable: true
+---
+
 # Flow Diff
 
 Compare the latest walk snapshot against previous runs to detect regressions and improvements.

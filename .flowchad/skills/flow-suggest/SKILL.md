@@ -1,3 +1,9 @@
+---
+name: flow-suggest
+description: AI-powered improvement prioritization — analyze walk results, friction reports, and trends to produce a ranked action plan. Usage /flow-suggest <flow-name>
+user_invocable: true
+---
+
 # Flow Suggest
 
 Analyze all available data for a flow and produce a prioritized list of improvements ranked by effort vs impact.
@@ -91,3 +97,28 @@ Consider:
    Fix: add strength meter component
    Effort: medium
 
+---
+
+### Summary
+
+| Priority | Count | Est. Time |
+|----------|-------|-----------|
+| 🔥 Do now | 2 | ~1 hour |
+| 📋 Plan next | 1 | ~3 hours |
+| ✅ Quick wins | 1 | ~10 min |
+| ⏭️ Backlog | 1 | ~2 hours |
+```
+
+## Cross-Flow Suggestions (when `all`)
+
+When analyzing all flows, also identify:
+- **Common friction**: same issue across multiple flows (e.g., slow navigation everywhere → CDN/performance problem)
+- **Missing flows**: critical paths that have no flow definition yet
+- **Coverage gaps**: pages/features with no flow coverage
+
+## After Suggesting
+
+Suggest next actions:
+- "Create issues from these suggestions? I can draft them."
+- "Run `/flow-walk {name}` after implementing fixes to measure improvement"
+- "Run `/flow-diff {name}` to track progress over time"

@@ -1,3 +1,9 @@
+---
+name: evidence-upload
+description: Upload walk screenshots and GIFs to GitHub for embedding in issues and PRs. Supports orphan branch (default), S3, or Navvi backends.
+user_invocable: false
+---
+
 # Evidence Upload
 
 Upload visual evidence (screenshots, GIFs, videos) from flow walks to a hosting backend, returning markdown-embeddable URLs.
