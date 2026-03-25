@@ -308,9 +308,9 @@ A tool that automates browsers and scans codebases *should* have file and networ
 
 This is a [known bug](https://github.com/vercel-labs/skills/issues/337) — `skills update` only tracks globally installed skills (installed with `-g`). Project-scoped installs don't get written to the global lock file, so updates are never detected.
 
-**Workaround — re-add to get the latest:**
+**Workaround — remove by skill names, then re-add:**
 ```bash
-npx skills remove Fellowship-dev/flowchad
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 
