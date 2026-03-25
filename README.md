@@ -304,6 +304,21 @@ The security risk scores come from automated scanners (Gen, Socket, Snyk) that a
 
 A tool that automates browsers and scans codebases *should* have file and network access — that's the whole point. The scanners flag these patterns because they'd be suspicious in a CSS formatting skill, but they're expected for a QA tool.
 
+### Why does `npx skills update` say "up to date" when skills have changed?
+
+This is a [known bug](https://github.com/vercel-labs/skills/issues/337) — `skills update` only tracks globally installed skills (installed with `-g`). Project-scoped installs don't get written to the global lock file, so updates are never detected.
+
+**Workaround — re-add to get the latest:**
+```bash
+npx skills remove Fellowship-dev/flowchad
+npx skills add Fellowship-dev/flowchad --skill '*'
+```
+
+**Or install globally so updates work:**
+```bash
+npx skills add Fellowship-dev/flowchad --skill '*' -g
+```
+
 ## License
 
 MIT
