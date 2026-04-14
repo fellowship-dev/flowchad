@@ -54,19 +54,15 @@ npx skills add Fellowship-dev/flowchad --skill '*' --agent claude-code -y
 This installs all FlowChad skills into your agent's directory (`.claude/skills/`, `.cursor/skills/`, etc.) with drift detection via `skills-lock.json`. Update anytime with `npx skills update`.
 
 <details>
-<summary>Alternative: manual clone</summary>
+<summary>Alternative: scaffold data directory only</summary>
+
+If you just need the project data directory (config + flows) without installing skills:
 
 ```bash
-git clone https://github.com/Fellowship-dev/flowchad.git .flowchad
+curl -fsSL https://raw.githubusercontent.com/Fellowship-dev/flowchad/main/install.sh | bash
 ```
 
-Then symlink skills into your agent directory:
-```bash
-mkdir -p .claude/skills
-for skill in .flowchad/skills/*/; do
-  ln -s "../../.flowchad/skills/$(basename $skill)" ".claude/skills/$(basename $skill)"
-done
-```
+Then install skills separately: `npx skills add Fellowship-dev/flowchad --skill '*'`
 </details>
 
 **2. Setup** — let the AI auto-discover your project:
@@ -255,20 +251,18 @@ Each finding includes what's wrong, why it matters, a suggested fix, and effort 
 
 ## Project Structure
 
+After installation, your project has two FlowChad layers:
+
 ```
-.claude/skills/        # Installed by npx skills add (symlinks)
-.flowchad/
-├── skills/            # Skill definitions (SKILL.md files)
-├── knowledge/         # Reference docs (friction taxonomy, metrics, platform types)
-├── templates/         # Starter flows (sign-up, login, checkout, onboarding)
-├── flows/             # Your project's flow definitions (YAML)
-├── snapshots/         # Walk results + screenshots + videos (gitignored)
-├── reports/           # Generated friction reports (gitignored)
-└── config.yml         # Project config
-scripts/
-├── evidence-init.sh   # Create evidence orphan branch
-└── evidence-upload.sh # Upload files to evidence branch
+.agents/skills/        # Skill source files (installed by npx skills add)
+.claude/skills/        # Symlinks to .agents/skills/ (Claude Code)
+.flowchad/             # Project data — tracked in git (shared knowledge)
+├── config.yml         # Project config (URL, timing, credentials)
+└── flows/             # Your flow definitions (YAML)
 ```
+
+The skills (tooling) live in `.agents/skills/` and are managed by `npx skills`.
+The project data (config + flows) lives in `.flowchad/` and is committed to git.
 
 ## Requirements
 
