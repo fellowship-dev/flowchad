@@ -1,6 +1,9 @@
 #!/bin/bash
-# Flowchad installer — drop-in AI QA for any web project
+# Flowchad installer — scaffold project data directory
 # Usage: curl -fsSL https://raw.githubusercontent.com/Fellowship-dev/flowchad/main/install.sh | bash
+#
+# This creates .flowchad/ with config.yml and flows/ — your project's flow data.
+# For the skills (flow-walk, flow-add, etc.), run: npx skills add Fellowship-dev/flowchad --skill '*'
 
 set -e
 
@@ -26,25 +29,29 @@ if [ ! -d ".git" ] && [ ! -f "package.json" ] && [ ! -f "Gemfile" ] && [ ! -f "p
   fi
 fi
 
-# Check if already installed
-if [ -d ".flowchad" ]; then
-  echo -e "${YELLOW}.flowchad/ already exists.${NC} Updating..."
-  cd .flowchad
-  git pull origin main 2>/dev/null || echo -e "${YELLOW}Not a git repo — skipping update.${NC}"
-  cd ..
+# Create project data directory
+if [ -d ".flowchad/flows" ]; then
+  echo -e "${YELLOW}.flowchad/ already exists.${NC} Skipping scaffold."
 else
-  echo "Installing to .flowchad/..."
-  git clone https://github.com/Fellowship-dev/flowchad.git .flowchad 2>/dev/null
-fi
+  echo "Creating .flowchad/..."
+  mkdir -p .flowchad/flows
 
-# Add to .gitignore if not already there
-if [ -f ".gitignore" ]; then
-  if ! grep -q "^\.flowchad/$" .gitignore 2>/dev/null; then
-    echo "" >> .gitignore
-    echo "# Flowchad (AI QA)" >> .gitignore
-    echo ".flowchad/" >> .gitignore
-    echo -e "${GREEN}✓${NC} Added .flowchad/ to .gitignore"
+  # Create default config if not present
+  if [ ! -f ".flowchad/config.yml" ]; then
+    PROJECT_NAME=$(basename "$(pwd)")
+    cat > .flowchad/config.yml <<YAML
+name: ${PROJECT_NAME}
+url: http://localhost:3000
+type: website
+
+timing:
+  slow: 3
+  critical: 10
+YAML
+    echo -e "${GREEN}✓${NC} Created .flowchad/config.yml"
   fi
+
+  echo -e "${GREEN}✓${NC} Created .flowchad/flows/"
 fi
 
 # Check for ffmpeg (optional, for video)
@@ -65,11 +72,14 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}${BOLD}Flowchad installed!${NC}"
+echo -e "${GREEN}${BOLD}Flowchad project data initialized!${NC}"
 echo ""
 echo "Next steps:"
-echo "  1. Edit .flowchad/config.yml with your project URL"
-echo "  2. Define flows in .flowchad/flows/ (or run /flowchad-setup)"
-echo "  3. Walk a flow: /flow-walk sign-up"
-echo "  4. Get a report: /flow-report sign-up"
+echo "  1. Install skills:  npx skills add Fellowship-dev/flowchad --skill '*'"
+echo "  2. Edit .flowchad/config.yml with your project URL"
+echo "  3. Run /flowchad-setup to auto-discover flows"
+echo "  4. Or define flows manually in .flowchad/flows/"
+echo "  5. Walk a flow: /flow-walk sign-up"
+echo ""
+echo -e "${BOLD}Important:${NC} .flowchad/ contains shared project knowledge — commit it to git."
 echo ""
