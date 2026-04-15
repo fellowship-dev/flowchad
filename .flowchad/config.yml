@@ -55,8 +55,8 @@
 # Used for flows that require login, form submissions, email verification.
 # persona: flowchad-myapp
 
-# Smoke test config (optional — used by flowchad-runner in cron/CI mode)
+# Smoketest config (optional — used by flowchad-runner in cron/CI mode)
 # NOTE: Schedule lives in crew.yml, NOT here.
-# smoke:
-#   flows: [page-load, contact-form]        # flows to run in smoke mode
+# smoketest:
+#   flows: [page-load, contact-form]        # flows to run in smoketest mode
 #   skip_production: [contact-form]         # flows to skip on production (unless persona available)
