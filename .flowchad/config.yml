@@ -50,6 +50,12 @@
 #     deploy_check: vercel
 #     deploy_timeout: 120
 
+# Locales (auto-detected by /flowchad-setup — do not edit manually)
+# Run /flowchad-setup to refresh after i18n config changes.
+# [en] = English-only site, no locale-prefixed paths.
+# [en, es] = generates /es/* paths for flows when walking locale-aware routes.
+# locales: [en]
+
 # Navvi persona (optional — enables authenticated flow walks)
 # Gopass entry: navvi/{persona}/email and navvi/{persona}/password
 # Used for flows that require login, form submissions, email verification.

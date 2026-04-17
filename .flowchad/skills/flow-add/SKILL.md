@@ -73,6 +73,15 @@ grep -ri "test.*email\|test.*password\|seed\|fixture" .env.example .env.test 2>/
 cat .flowchad/config.yml 2>/dev/null | grep -A2 credentials
 ```
 
+### 2e. Read locales from config
+
+```bash
+# Read confirmed locales — set by /flowchad-setup via i18n detection
+grep '^locales:' .flowchad/config.yml 2>/dev/null || echo "locales: [en]"
+```
+
+Use the `locales` value from `config.yml` in the generated flow. If not set, default to `[en]`.
+
 ## Step 3: Draft Flow YAML
 
 Generate the flow definition following the naming convention:
@@ -132,6 +141,7 @@ name: New user signs up with Google OAuth and lands on the onboarding wizard
 url: https://staging.example.com
 tags: [onboarding, auth, oauth]
 priority: P0
+locales: [en]  # from config.yml — [en, es] if site has confirmed i18n
 context:
   user: new_account
   auth: logged_out

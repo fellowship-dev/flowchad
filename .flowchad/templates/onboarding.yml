@@ -7,6 +7,7 @@ name: New user completes onboarding wizard after sign-up and reaches the main da
 url: https://staging.example.com
 tags: [onboarding, activation]
 priority: P1
+locales: [en]  # auto-detected by /flowchad-setup — update if site adds i18n
 context:
   user: new_account
   auth: logged_in

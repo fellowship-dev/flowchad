@@ -45,6 +45,20 @@ try {
 
 Load the flow YAML from `.flowchad/flows/{name}.yml`. Parse steps. Resolve `$ENV_VAR` references from environment.
 
+**i18n locale check:** read the `locales` field from the flow YAML (falls back to `config.yml` then defaults to `[en]`).
+
+- `locales: [en]` — walk routes as-is. Never prefix with `/en/` or any other locale.
+- `locales: [en, es]` — for each step with a relative `url`, walk the base path (en) then the `/es/` prefixed path (es). Report results per locale.
+- Only generate locale-prefixed paths for locales **explicitly listed** in `locales`. Do not infer locale support from URL patterns alone.
+
+```bash
+# Read locales for this flow
+FLOW_LOCALES=$(grep '^locales:' ".flowchad/flows/${FLOW_NAME}.yml" 2>/dev/null \
+  || grep '^locales:' ".flowchad/config.yml" 2>/dev/null \
+  || echo "locales: [en]")
+# e.g. "locales: [en, es]" → parse to array ["en", "es"]
+```
+
 ### Step 0b: Start Video Recording
 
 If the flow has `video: false`, skip this step. Otherwise, start recording:
