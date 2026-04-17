@@ -80,7 +80,27 @@ grep -r "app\.\(get\|post\|put\|delete\|route\)" --include="*.ts" --include="*.j
   src/ routes/ 2>/dev/null | head -20
 ```
 
-### 1e. Detect Dev Server, URLs & Credentials
+### 1e. Detect i18n Configuration
+
+Run `scripts/detect-i18n.sh` (relative to the project root) to auto-detect supported locales:
+
+```bash
+bash scripts/detect-i18n.sh .
+# Output: space-separated locale codes, e.g. "en" or "en es fr"
+```
+
+The script checks (in order, first match wins):
+1. **Next.js** — `i18n.locales` array in `next.config.{js,mjs,ts,cjs}`
+2. **locales/ or messages/ directories** — subdirectory names or top-level JSON/YAML filenames
+3. **Strapi** — i18n plugin detection (falls through if locales are DB-only)
+4. **hreflang tags** — `<link rel="alternate" hreflang=...>` scraped from `config.yml` base URL
+5. **Default** — `en` (no locale prefix)
+
+Store result as `$DETECTED_LOCALES` (e.g., `"en"` or `"en es"`). Convert to YAML list format: `[en]` or `[en, es]`.
+
+**On re-run (existing config.yml):** compare detected locales to the current `locales:` field. If changed, update the field and all existing flows in `.flowchad/flows/*.yml`.
+
+### 1f. Detect Dev Server, URLs & Credentials
 
 FlowChad is designed to run against the local dev server first. Detect the dev server command and URLs in priority order: **localhost > staging > production**.
 
@@ -125,6 +145,7 @@ Present a summary:
 **Speckit:** [installed / not found]
 **Routes:** N public routes detected
 **Test credentials:** [found in fixtures / not found]
+**i18n locales:** [en] (English-only) | [en, es, ...] (detected from {source})
 ```
 
 Then ask ONLY what's missing. **URL priority is localhost > staging > production** — FlowChad runs against the local dev server by default:
@@ -160,6 +181,10 @@ credentials:
 analytics:
   provider: {mixpanel|posthog|none}
   mcp: true
+
+# Detected by /flowchad-setup via scripts/detect-i18n.sh
+# [en] = English-only site. [en, es] = locale-prefixed routes exist for /es/*.
+locales: [{detected_locales_csv}]
 ```
 
 ### Convert Existing Tests to Flow Definitions
@@ -179,6 +204,7 @@ name: New user signs up with email and password and lands on the dashboard
 url: {start_url}
 tags: [{category}]
 priority: P0
+locales: [{detected_locales_csv}]  # from scripts/detect-i18n.sh
 context:
   user: new_account
   auth: logged_out
@@ -200,6 +226,7 @@ name: Visitor loads the homepage and sees the hero section with CTA
 url: {route_path}
 tags: [auto-generated]
 priority: P2
+locales: [{detected_locales_csv}]  # from scripts/detect-i18n.sh
 context:
   user: anonymous
   auth: logged_out
@@ -254,6 +281,10 @@ Created:
 - .flowchad/config.yml (updated)
 - .flowchad/flows/ — {N} flow definitions
 - .mcp.json updated with {analytics_provider} (if applicable)
+
+i18n: detected locales [{detected_locales_csv}] from {source}.
+      Flow walk will only generate /{locale}/* paths for confirmed locales.
+      Re-run /flowchad-setup to refresh if i18n config changes.
 
 Next steps:
 1. Review generated flows in .flowchad/flows/
