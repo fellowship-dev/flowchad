@@ -7,6 +7,7 @@ name: Existing user logs in with email and password and reaches the dashboard
 url: https://staging.example.com
 tags: [auth, critical]
 priority: P0
+locales: [en]  # auto-detected by /flowchad-setup — update if site adds i18n
 context:
   user: existing
   auth: logged_out
