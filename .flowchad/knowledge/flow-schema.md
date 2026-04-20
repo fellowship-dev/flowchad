@@ -21,6 +21,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `headed` | bool | `false` | Force headed browser (delegates to Navvi if available) |
 | `video` | bool | `true` | Record video of the walk (requires ffmpeg for trimming) |
 | `viewport` | map | `{width: 1280, height: 720}` | Browser viewport size |
+| `locales` | list | `[en]` | Confirmed locales for this flow (auto-detected by `/flowchad-setup`). Flow walk only generates locale-prefixed paths for locales in this list. `[en]` means no prefix (English-only site). See [i18n locale detection](#i18n-locale-detection). |
 
 ## Step Fields
 
@@ -119,3 +120,36 @@ steps:
 ```
 
 Variables are resolved from environment at walk time.
+
+## i18n Locale Detection
+
+The `locales` field tells flow-walk which locale prefixes are valid for this project. It is auto-populated by `/flowchad-setup` via `scripts/detect-i18n.sh` and should be updated whenever the site's i18n config changes (re-run `/flowchad-setup` to refresh).
+
+### Detection priority (first match wins)
+
+1. **Next.js** — `i18n.locales` array in `next.config.{js,mjs,ts,cjs}`
+2. **locales/ or messages/ directories** — subdirectory names or top-level JSON/YAML filenames (used by next-intl, i18next, react-intl, etc.)
+3. **Strapi** — i18n plugin detection (locales stored in DB; falls through to hreflang check)
+4. **hreflang tags** — `<link rel="alternate" hreflang=...>` scraped from the production homepage URL in `config.yml`
+5. **Default** — `[en]` (English only, no locale prefix)
+
+### Behavior in flow-walk
+
+- `locales: [en]` → test routes as-is (e.g., `/login`, `/signup`). **No `/en/` prefix.**
+- `locales: [en, es]` → test both `/login` (en) and `/es/login` (es) variants.
+- `locales: [en, es, fr]` → test three variants per locale-aware route.
+
+Only routes that naturally include a locale prefix in the flow definition (e.g., `url: /es/login`) are affected. Routes already hardcoded with a locale are used as-is.
+
+### Example
+
+```yaml
+# English-only site — no locale-prefixed routes generated
+locales: [en]
+
+# Multilingual site confirmed by next.config.js i18n block
+locales: [en, es]
+
+# Three-locale site detected from messages/ directory
+locales: [en, es, fr]
+```

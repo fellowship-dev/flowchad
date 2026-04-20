@@ -7,6 +7,7 @@ name: New user signs up with email and password and lands on the dashboard
 url: https://staging.example.com
 tags: [onboarding, critical]
 priority: P0
+locales: [en]  # auto-detected by /flowchad-setup — update if site adds i18n
 context:
   user: new_account
   auth: logged_out
