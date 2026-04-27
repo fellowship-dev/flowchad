@@ -56,13 +56,11 @@
 # [en, es] = generates /es/* paths for flows when walking locale-aware routes.
 # locales: [en]
 
-# Navvi persona (optional — enables authenticated flow walks)
-# Gopass entry: navvi/{persona}/email and navvi/{persona}/password
-# Used for flows that require login, form submissions, email verification.
-# persona: flowchad-myapp
+# Navvi persona for authenticated flows (optional)
+# Enables: real form submissions, email verification, sign-up flows
+# persona: flowchad-my-project  # gopass entry at navvi/flowchad-my-project/{email,password}
 
-# Smoketest config (optional — used by flowchad-runner in cron/CI mode)
-# NOTE: Schedule lives in crew.yml, NOT here.
-# smoketest:
-#   flows: [page-load, contact-form]        # flows to run in smoketest mode
-#   skip_production: [contact-form]         # flows to skip on production (unless persona available)
+# Smoke test configuration (schedule lives in crew.yml, not here)
+# smoke:
+#   flows: [page-load, contact-form]      # flows to run during smoke tests
+#   skip_production: [contact-form]       # skip these flows in production unless persona available
