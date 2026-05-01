@@ -85,6 +85,15 @@ credentials:
   password: $TEST_PASSWORD
 ```
 
+The `type` field tells the AI which evaluation criteria to apply during `/flow-report`:
+
+| Type | Product category | Focus areas |
+|------|-----------------|-------------|
+| `saas` | Web app with accounts | Onboarding, conversion funnels, billing, collaboration |
+| `website` | Marketing / docs / blog | SEO, accessibility, Core Web Vitals, CTAs |
+| `mobile` | iOS / Android app | Touch targets, offline behavior, gestures, state preservation |
+| `internal` | Admin / ops tool | Efficiency (clicks-to-task), power-user patterns, error recovery |
+
 **3. Define a flow** — create `.flowchad/flows/new-user-signs-up-with-email-and-password.yml`:
 
 ```yaml
@@ -169,7 +178,11 @@ evidence:
 
 ```bash
 ./scripts/evidence-init.sh owner/repo
+# or omit the repo — it auto-detects from your git remote origin:
+./scripts/evidence-init.sh
 ```
+
+The script is idempotent: if the evidence branch already exists it exits cleanly with no changes.
 
 **S3/R2 backend** — for teams with existing cloud storage. Set `s3_bucket`, `s3_endpoint`, and `s3_public_url` in config.
 
@@ -210,7 +223,7 @@ context:
 | `fill` | `selector`, `value` | Type into an input |
 | `click` | `selector` | Click an element |
 | `select` | `selector`, `value` | Choose from dropdown |
-| `scroll` | `selector` or `direction` | Scroll to element or direction |
+| `scroll` | `selector` or `value` | Scroll to element or to a direction (`top`/`bottom`/`down`) |
 | `wait` | `selector` or `ms` | Wait for element or duration |
 | `hover` | `selector` | Hover over element |
 
@@ -226,6 +239,16 @@ context:
   optional: true                     # don't fail the flow if this breaks
   captcha: true                      # skip in headless, delegate to Navvi
 ```
+
+**Timing thresholds** — steps that exceed `timing` are reported as Friction findings. General guidance:
+
+| Duration | Perception | Guidance |
+|----------|------------|----------|
+| < 300ms | Fast | Acceptable for most interactions |
+| 300ms – 1s | Noticeable | Needs a loading indicator or skeleton screen |
+| 1s – 3s | Slow | Requires a progress indicator; users may lose context |
+| > 3s | Frustrating | Must show progress with time estimate |
+| > 10s | Broken | Users assume failure; provide cancel and recovery |
 
 ### Flow-Level Options
 
@@ -277,8 +300,8 @@ If the flow was already run against the production URL, no curl is needed — P0
 
 1. **Next.js config** — reads `i18n.locales` from `next.config.js` / `next.config.ts`
 2. **Locale directories** — looks for `locales/` or `messages/` directories in the project root
-3. **Strapi i18n plugin** — checks for Strapi i18n configuration
-4. **hreflang tags** — fetches the production homepage and reads `<link rel="alternate" hreflang="...">` tags
+3. **Strapi i18n plugin** — checks for Strapi i18n configuration (locales are stored in DB; detection falls through to step 4)
+4. **hreflang tags** — fetches the production homepage URL (from `config.yml`) and parses `link[rel=alternate][hreflang]` tags to extract locale codes
 5. **Default** — falls back to `[en]` (English only, no locale-prefixed paths)
 
 The detected locales are written to `locales:` in `.flowchad/config.yml`. Re-run `/flowchad-setup` after i18n config changes.
