@@ -140,12 +140,18 @@ Or skip manual YAML and let AI create it:
 
 ## Video Recording
 
-Flow walks automatically record video. The recording is **smart-trimmed** — dead frames where nothing happens are cut out, keeping only 1s before and 3s after each action.
+Flow walks automatically record video. The recording is **smart-trimmed** — dead frames where nothing happens are cut out.
+
+**Trim algorithm:**
+1. Build an action log — a timestamp is recorded before each step executes.
+2. For each logged action, compute a keep-window: 1 second before the action, 3 seconds after (for `fill` steps: typing duration + 3 seconds after).
+3. Merge overlapping keep-windows.
+4. If the merged windows cover less than 80% of the original duration (i.e., trimming saves >20%), produce the trimmed cut via ffmpeg. Otherwise keep the full recording only.
 
 Output:
-- `{flow-name}.mp4` — full recording
-- `{flow-name}-trimmed.mp4` — action-only cut (if trim saves >20%)
-- `{flow-name}.gif` — palette-optimized GIF for issues/PRs
+- `{flow-name}-full.webm` — raw Playwright recording
+- `{flow-name}-trimmed.mp4` — action-only cut (created only if trim saves >20%)
+- `{flow-name}.gif` — palette-optimized GIF for issues/PRs (from trimmed cut if available, else full)
 
 Disable with `video: false` in your flow YAML or config.
 
@@ -248,6 +254,36 @@ Reports classify every finding into three levels:
 - **Cosmetic** — works fine but looks rough (typos, alignment, placeholder text)
 
 Each finding includes what's wrong, why it matters, a suggested fix, and effort estimate.
+
+### Issue Priority (P0 / P1 / P2)
+
+When `/flow-report` files GitHub issues for Critical findings, it first checks whether production is actually affected:
+
+1. Resolves the production URL from (in order): `config.yml → environments.production.url`, then `BRIEF.md` in the project root, then `gh api` repo homepage field.
+2. Curls the failed path on production.
+3. Assigns priority based on the result:
+
+| Result | Priority | Label |
+|--------|----------|-------|
+| Production also fails (non-2xx) | **P0** (error) or **P1** (fail) | `[P0]` or `[P1]` |
+| Production returns 200, staging fails | **P2** — regression risk only | `[P2] … (staging only — prod healthy)` |
+| Production URL could not be resolved | **P1 unverified** | `[P1] … (production status unverified)` |
+
+If the flow was already run against the production URL, no curl is needed — P0/P1 is assigned directly.
+
+## Locale Detection
+
+`/flowchad-setup` auto-detects which locales your project supports. The detection runs in this priority order:
+
+1. **Next.js config** — reads `i18n.locales` from `next.config.js` / `next.config.ts`
+2. **Locale directories** — looks for `locales/` or `messages/` directories in the project root
+3. **Strapi i18n plugin** — checks for Strapi i18n configuration
+4. **hreflang tags** — fetches the production homepage and reads `<link rel="alternate" hreflang="...">` tags
+5. **Default** — falls back to `[en]` (English only, no locale-prefixed paths)
+
+The detected locales are written to `locales:` in `.flowchad/config.yml`. Re-run `/flowchad-setup` after i18n config changes.
+
+When walking flows, `locales: [en]` means routes are walked as-is (no `/en/` prefix). `locales: [en, es]` walks each route twice — once at the base path and once at the `/es/`-prefixed path — and reports results per locale.
 
 ## Project Structure
 
