@@ -1,20 +1,34 @@
 # Quality Score — fellowship-dev/flowchad
 
-Last updated: 2026-04-24
+Last updated: 2026-05-18
 
 ## Domains
 
 | Domain | Grade | Last audit | Notes |
 |--------|-------|------------|-------|
-| flowchad-setup | B | 2026-04-24 | S4 yellow: 4 open issues (>3 threshold); code 3d ahead of docs |
-| flow-walk | B | 2026-04-24 | S4 yellow: 5 open issues (>3 threshold); code 3d ahead of docs |
-| flow-report | B | 2026-04-24 | S4 yellow: 5 open issues (>3 threshold); code 3d ahead of docs |
-| flow-add | B | 2026-04-24 | S4 yellow: 6 open issues (>3 threshold); code 3d ahead of docs |
-| flow-suggest | A | 2026-04-24 | All signals green; 1 open issue; docs current |
-| flow-diff | A | 2026-04-24 | All signals green; 3 open issues (at threshold); docs current |
-| flow-diagram | A | 2026-04-24 | All signals green; 2 open issues; docs current |
-| flow-update | B | 2026-04-24 | S4 yellow: 5 open issues (>3 threshold); docs current |
-| evidence-upload | A | 2026-04-24 | All signals green; 0 open issues; docs current |
+| flowchad-setup | B | 2026-05-18 | S1 ✅, S3 ✅ (docs 2026-05-01 > code 2026-04-17), S4 ✅ (3 open), S6 ❌ |
+| flow-walk | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
+| flow-report | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (5 open), S6 ❌ |
+| flow-add | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (5 open), S6 ❌ |
+| flow-suggest | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (1 open), S6 ❌ |
+| flow-diff | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (3 open), S6 ❌ |
+| flow-diagram | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (2 open), S6 ❌ |
+| flow-update | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
+| evidence-upload | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (0 open), S6 ❌ |
+
+## Signal Matrix
+
+| Domain | S1 Doc | S2 FlowChad | S3 Stale | S4 Issues | S5 Tests | S6 Hookshot |
+|--------|--------|-------------|----------|-----------|----------|-------------|
+| flowchad-setup | ✅ | N/A | ✅ (docs>code) | ✅ (3) | N/A | ❌ |
+| flow-walk | ✅ | N/A | ✅ (docs>code) | ⚠️ (4) | N/A | ❌ |
+| flow-report | ✅ | N/A | ✅ (docs>code) | ⚠️ (5) | N/A | ❌ |
+| flow-add | ✅ | N/A | ✅ (docs>code) | ⚠️ (5) | N/A | ❌ |
+| flow-suggest | ✅ | N/A | ✅ (docs>code) | ✅ (1) | N/A | ❌ |
+| flow-diff | ✅ | N/A | ✅ (docs>code) | ✅ (3) | N/A | ❌ |
+| flow-diagram | ✅ | N/A | ✅ (docs>code) | ✅ (2) | N/A | ❌ |
+| flow-update | ✅ | N/A | ✅ (docs>code) | ⚠️ (4) | N/A | ❌ |
+| evidence-upload | ✅ | N/A | ✅ (docs>code) | ✅ (0) | N/A | ❌ |
 
 ## Signal Applicability
 
@@ -22,23 +36,23 @@ Last updated: 2026-04-24
 |--------|------------|--------|
 | S1 Doc Coverage | Yes | README.md covers all 9 domains with descriptions and quick-start |
 | S2 FlowChad | No | Tool repo — no frontend framework; .flowchad/flows/ is empty by design (template) |
-| S3 Staleness | Yes | — |
+| S3 Staleness | Yes | README last updated 2026-05-01; scripts last commit 2026-04-17 — docs are ahead of code ✅ |
 | S4 Open Issues | Yes | — |
 | S5 Tests | No | No test infrastructure detected |
-| S6 Hookshot | No | .claude/doc-coverage.json not configured |
-| S7 Speckit Drift | No | Speckit not installed |
+| S6 Hookshot | Yes | Not configured ❌ (previously incorrectly marked N/A — methodology correction in this sweep) |
 
 ## Grade Summary
 
-- A: 4 (flow-suggest, flow-diff, flow-diagram, evidence-upload)
-- B: 5 (flowchad-setup, flow-walk, flow-report, flow-add, flow-update)
-- C: 0
+- A: 0
+- B: 5 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload)
+- C: 4 (flow-walk, flow-report, flow-add, flow-update)
 - D: 0
-- F: 0
+
+**Methodology note (2026-05-18)**: S6 corrected from N/A to applicable per entropy-check spec. Previous A grades (flow-suggest, flow-diff, flow-diagram, evidence-upload) now B due to S6 ❌. C grades reflect S6 ❌ + S4 ⚠️ (4-5 open issues). S3 ✅ across all domains — README updated 2026-05-01 is ahead of scripts (2026-04-17).
 
 ## History
 
 | Date | Trigger | Summary |
 |------|---------|---------|
-| 2026-04-21 | tooling.dev daily sweep | 9 domains scanned, 0 regressions, 0 improvements — first sweep |
-| 2026-04-24 | tooling.cto entropy sweep | 9 domains scanned, 5 regressions (A→B), 0 improvements — open issue accumulation on core skills (flowchad-setup, flow-walk, flow-report, flow-add, flow-update) |
+| 2026-04-24 | weekly sweep | 9 domains; setup B, walk B, report B, add B, suggest A, diff A, diagram A, update B, upload A. S6 incorrectly excluded. |
+| 2026-05-18 | weekly sweep | S6 methodology corrected. 5 B-grades, 4 C-grades. 0 real regressions (all changes are S6 correction + updated issue counts). |
