@@ -1,20 +1,20 @@
 # Quality Score — fellowship-dev/flowchad
 
-Last updated: 2026-05-18
+Last updated: 2026-05-19
 
 ## Domains
 
 | Domain | Grade | Last audit | Notes |
 |--------|-------|------------|-------|
-| flowchad-setup | B | 2026-05-18 | S1 ✅, S3 ✅ (docs 2026-05-01 > code 2026-04-17), S4 ✅ (3 open), S6 ❌ |
-| flow-walk | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
-| flow-report | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (5 open), S6 ❌ |
-| flow-add | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (5 open), S6 ❌ |
-| flow-suggest | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (1 open), S6 ❌ |
-| flow-diff | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (3 open), S6 ❌ |
-| flow-diagram | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (2 open), S6 ❌ |
-| flow-update | C | 2026-05-18 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
-| evidence-upload | B | 2026-05-18 | S1 ✅, S3 ✅, S4 ✅ (0 open), S6 ❌ |
+| flowchad-setup | B | 2026-05-19 | S1 ✅, S3 ✅ (docs 2026-05-01 > code 2026-04-17), S4 ✅ (3 open), S6 ❌ |
+| flow-walk | C | 2026-05-19 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
+| flow-report | C | 2026-05-19 | S1 ✅, S3 ✅, S4 ⚠️ (5 open), S6 ❌ |
+| flow-add | C | 2026-05-19 | S1 ✅, S3 ✅, S4 ⚠️ (5 open), S6 ❌ |
+| flow-suggest | B | 2026-05-19 | S1 ✅, S3 ✅, S4 ✅ (1 open), S6 ❌ |
+| flow-diff | B | 2026-05-19 | S1 ✅, S3 ✅, S4 ✅ (3 open), S6 ❌ |
+| flow-diagram | B | 2026-05-19 | S1 ✅, S3 ✅, S4 ✅ (2 open), S6 ❌ |
+| flow-update | C | 2026-05-19 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
+| evidence-upload | B | 2026-05-19 | S1 ✅, S3 ✅, S4 ✅ (0 open), S6 ❌ |
 
 ## Signal Matrix
 
@@ -39,7 +39,7 @@ Last updated: 2026-05-18
 | S3 Staleness | Yes | README last updated 2026-05-01; scripts last commit 2026-04-17 — docs are ahead of code ✅ |
 | S4 Open Issues | Yes | — |
 | S5 Tests | No | No test infrastructure detected |
-| S6 Hookshot | Yes | Not configured ❌ (previously incorrectly marked N/A — methodology correction in this sweep) |
+| S6 Hookshot | Yes | Not configured ❌ |
 
 ## Grade Summary
 
@@ -56,3 +56,4 @@ Last updated: 2026-05-18
 |------|---------|---------|
 | 2026-04-24 | weekly sweep | 9 domains; setup B, walk B, report B, add B, suggest A, diff A, diagram A, update B, upload A. S6 incorrectly excluded. |
 | 2026-05-18 | weekly sweep | S6 methodology corrected. 5 B-grades, 4 C-grades. 0 real regressions (all changes are S6 correction + updated issue counts). |
+| 2026-05-19 | daily sweep | 9 domains, 0 regressions, 0 improvements. All signals stable. |
