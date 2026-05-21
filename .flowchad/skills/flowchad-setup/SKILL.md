@@ -8,6 +8,18 @@ user_invocable: true
 
 Initialize Flowchad in a project by discovering what already exists, asking what's missing, and scaffolding flow definitions.
 
+## Phase 0: Update Check
+
+Before doing anything else, check if flowchad needs updating:
+
+```bash
+if [ -f ".flowchad/.version" ] && [ -f "scripts/check-updates.sh" ]; then
+  bash scripts/check-updates.sh
+fi
+```
+
+If an update is available, inform the user: "A newer version of flowchad is available. Run `bash scripts/update.sh` to update, then re-run `/flowchad-setup`." Do not block — proceed with setup regardless.
+
 ## Phase 1: Auto-Discovery (no user input)
 
 Scan the project silently. Gather everything before asking a single question.
