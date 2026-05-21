@@ -1,0 +1,28 @@
+{
+  "name": "flowchad",
+  "description": "Drop-in AI QA for any web project — automated flow walking, screenshot capture, and regression detection",
+  "version": "0.2.0",
+  "repository": "https://github.com/Fellowship-dev/flowchad",
+  "homepage": "https://github.com/Fellowship-dev/flowchad#readme",
+  "skills": [
+    "flowchad-setup",
+    "flow-walk",
+    "flow-add",
+    "flow-update",
+    "flow-suggest",
+    "flow-diff",
+    "flow-diagram",
+    "flow-report",
+    "evidence-upload"
+  ],
+  "install": {
+    "shell": "curl -fsSL https://raw.githubusercontent.com/Fellowship-dev/flowchad/main/install.sh | bash",
+    "npx": "npx skills add Fellowship-dev/flowchad --skill '*'"
+  },
+  "update": {
+    "shell": "bash scripts/update.sh"
+  },
+  "check": {
+    "shell": "bash scripts/check-updates.sh"
+  }
+}

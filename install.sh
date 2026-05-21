@@ -52,6 +52,12 @@ YAML
   fi
 
   echo -e "${GREEN}✓${NC} Created .flowchad/flows/"
+
+  # Write version tracking file
+  INSTALL_SHA=$(git ls-remote https://github.com/Fellowship-dev/flowchad.git HEAD 2>/dev/null | cut -f1 || echo "unknown")
+  INSTALL_DATE=$(date -u +%Y-%m-%d)
+  printf '0.2.0\n%s\n%s\n' "$INSTALL_SHA" "$INSTALL_DATE" > .flowchad/.version
+  echo -e "${GREEN}✓${NC} Created .flowchad/.version (${INSTALL_SHA:0:7})"
 fi
 
 # Check for ffmpeg (optional, for video)
