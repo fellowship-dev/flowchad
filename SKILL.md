@@ -13,6 +13,7 @@ skills:
   - flow-diff
   - flow-diagram
   - flow-report
+  - flow-reproduce
   - evidence-upload
 ---
 
@@ -42,6 +43,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 | `/flow-suggest <name>` | Prioritized improvement plan ranked by effort vs impact |
 | `/flow-diff <name>` | Compares walk snapshots across time to detect regressions |
 | `/flow-diagram <name>` | Generates Mermaid flowchart from a flow definition |
+| `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
 | `/evidence-upload` | Uploads screenshots/GIFs to configured evidence backend |
 
 ## Update
