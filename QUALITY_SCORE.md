@@ -15,6 +15,7 @@ Last updated: 2026-05-25
 | flow-diagram | B | 2026-05-21 | S1 ✅, S3 ✅, S4 ✅ (2 open), S6 ❌ |
 | flow-update | C | 2026-05-21 | S1 ✅, S3 ✅, S4 ⚠️ (4 open), S6 ❌ |
 | evidence-upload | B | 2026-05-21 | S1 ✅, S3 ✅, S4 ✅ (0 open), S6 ❌ |
+| flow-reproduce | B | 2026-05-25 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
 
 ## Signal Matrix
 
@@ -29,12 +30,13 @@ Last updated: 2026-05-25
 | flow-diagram | ✅ | N/A | ✅ (docs>code) | ✅ (2) | N/A | ❌ |
 | flow-update | ✅ | N/A | ✅ (docs>code) | ⚠️ (4) | N/A | ❌ |
 | evidence-upload | ✅ | N/A | ✅ (docs>code) | ✅ (0) | N/A | ❌ |
+| flow-reproduce | ✅ | N/A | ✅ (new 2026-05-25) | ✅ (0) | N/A | ❌ |
 
 ## Signal Applicability
 
 | Signal | Applicable? | Reason |
 |--------|------------|--------|
-| S1 Doc Coverage | Yes | README.md covers all 9 domains with descriptions and quick-start |
+| S1 Doc Coverage | Yes | README.md covers all 10 domains with descriptions and quick-start |
 | S2 FlowChad | No | Tool repo — no frontend framework; .flowchad/flows/ is empty by design (template) |
 | S3 Staleness | Yes | README last updated 2026-05-01; scripts last commit 2026-05-21 (PR #39 — update mechanism) ✅ |
 | S4 Open Issues | Yes | 6 total open issues across repo |
@@ -44,7 +46,7 @@ Last updated: 2026-05-25
 ## Grade Summary
 
 - A: 0
-- B: 5 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload)
+- B: 6 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload, flow-reproduce)
 - C: 4 (flow-walk, flow-report, flow-add, flow-update)
 - D: 0
 
@@ -64,3 +66,4 @@ Last updated: 2026-05-25
 | 2026-05-21 | daily sweep | 9 domains, 0 regressions, 0 improvements. Dispatched #20 (P1, update mechanism). |
 | 2026-05-21 | PR #39 double-check | Updated S3 staleness for flowchad-setup (scripts updated). #20 6/7 items in PR; "Register on skills.sh registry" remains open. |
 | 2026-05-25 | daily sweep | 9 domains, 0 regressions, 0 improvements. S3 4d ✅. WIP=0. Dispatched #28 (P1, customer bug reproduction). |
+| 2026-05-25 | issue #28 | 10 domains. Added flow-reproduce (B). 0 regressions to existing skills. |
