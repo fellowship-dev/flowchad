@@ -369,20 +369,20 @@ Save outcome to `results.json`:
 REPO=$(git remote get-url origin | sed -E 's|.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$|\1|')
 
 # Initialize evidence branch if needed
-bash scripts/evidence-init.sh "$REPO" 2>/dev/null || true
+.flowchad/../scripts/evidence-init.sh "$REPO" 2>/dev/null || true
 
 # Upload screenshots
 GIF_URL=""
 for screenshot in "${SNAPSHOT_DIR}"/step-*.png; do
   [ -f "$screenshot" ] || continue
   FNAME=$(basename "$screenshot")
-  bash scripts/evidence-upload.sh "$screenshot" "$REPO" \
+  .flowchad/../scripts/evidence-upload.sh "$screenshot" "$REPO" \
     "reproduce-issue-${ISSUE_NUMBER}/${DATE}/${FNAME}" 2>/dev/null || true
 done
 
 # Upload GIF
 if [ -f "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif" ]; then
-  GIF_URL=$(bash scripts/evidence-upload.sh \
+  GIF_URL=$(.flowchad/../scripts/evidence-upload.sh \
     "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif" \
     "$REPO" \
     "reproduce-issue-${ISSUE_NUMBER}/${DATE}/reproduce-issue-${ISSUE_NUMBER}.gif" 2>/dev/null) || true
