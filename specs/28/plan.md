@@ -41,7 +41,7 @@ The skill spec has five phases:
 - Save results to `.flowchad/snapshots/{date}-reproduce-issue-{N}/results.json`
 
 **Phase 5 — Update GitHub issue**
-- Upload evidence via `scripts/evidence-upload.sh`
+- Upload evidence via `.flowchad/skills/evidence-upload/scripts/upload_evidence.sh`
 - Apply label via `gh issue edit --add-label reproduced` or `could-not-reproduce`
 - Post structured comment via `gh issue comment`
 - Comment template: outcome header + steps table + evidence inline

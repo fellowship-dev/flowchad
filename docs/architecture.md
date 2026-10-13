@@ -33,7 +33,7 @@ The `.flowchad/config.yml` in this repo is a **template** — it ships to the us
 
 ## Evidence Hosting
 
-Evidence (screenshots, GIFs, videos) is uploaded by the `evidence-upload` skill directly to a public S3 bucket with content-addressed keys (`<owner>/<repo>/<prefix>/<sha16>-<name>`), using only the `EVIDENCE_*` environment secret. Bucket URLs render in private-repo issues and PRs, unlike repo-relative or `raw.githubusercontent.com` links. The legacy orphan-branch scripts (`scripts/evidence-init.sh`, `scripts/evidence-upload.sh`) are no longer used by any skill.
+Evidence (screenshots, GIFs, videos) is uploaded by the `evidence-upload` skill directly to a public S3 bucket with content-addressed keys (`<owner>/<repo>/<prefix>/<sha16>-<name>`), using only the `EVIDENCE_*` environment secret. Bucket URLs render in private-repo issues and PRs, unlike repo-relative or `raw.githubusercontent.com` links. The upload script is `.flowchad/skills/evidence-upload/scripts/upload_evidence.sh`; the legacy orphan-branch scripts have been removed.
 
 ## Dependency Graph Between Skills
 
