@@ -27,12 +27,10 @@
 #   mcp: true          # connect via MCP server if available
 
 # Evidence upload (optional — host screenshots/GIFs for issues/PRs)
+# Uploads go to the public evidence bucket; credentials come only from the
+# EVIDENCE_* env secret (see the evidence-upload skill). Public by URL.
 # evidence:
-#   backend: git       # git (default) | s3 | navvi
-#   branch: evidence   # orphan branch name (git backend only)
-#   # s3_bucket: my-bucket          # S3/R2 backend
-#   # s3_endpoint: https://...      # S3/R2 endpoint URL
-#   # s3_public_url: https://...    # public base URL for embedded links
+#   backend: s3        # s3 (default) | none
 
 # Speckit integration (optional — cross-reference specs during walks)
 # speckit:

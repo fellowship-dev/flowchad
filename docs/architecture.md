@@ -31,17 +31,9 @@ The `.flowchad/config.yml` in this repo is a **template** — it ships to the us
 
 **Critical constraint:** Never commit real values into the template. All sensitive values must use `$ENV_VAR` references. The template is public and committed to this repo.
 
-## Evidence Branch
+## Evidence Hosting
 
-The git evidence backend stores screenshots and GIFs in a dedicated orphan branch (default name: `evidence`). An orphan branch has no shared history with `main` — it is a completely separate tree used purely for binary artifacts. This keeps binaries out of the main git history while keeping URLs publicly accessible via GitHub's raw content endpoint.
-
-Initialize with:
-```bash
-./scripts/evidence-init.sh        # auto-detects repo from git remote origin
-./scripts/evidence-init.sh org/repo   # explicit repo
-```
-
-The script is idempotent: if the evidence branch already exists, it exits cleanly.
+Evidence (screenshots, GIFs, videos) is uploaded by the `evidence-upload` skill directly to a public S3 bucket with content-addressed keys (`<owner>/<repo>/<prefix>/<sha16>-<name>`), using only the `EVIDENCE_*` environment secret. Bucket URLs render in private-repo issues and PRs, unlike repo-relative or `raw.githubusercontent.com` links. The legacy orphan-branch scripts (`scripts/evidence-init.sh`, `scripts/evidence-upload.sh`) are no longer used by any skill.
 
 ## Dependency Graph Between Skills
 

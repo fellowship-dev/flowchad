@@ -166,27 +166,16 @@ Disable with `video: false` in your flow YAML or config.
 
 ## Evidence Upload
 
-Screenshots and GIFs can be uploaded automatically for embedding in GitHub issues and PRs. Configure in `config.yml`:
+Screenshots and GIFs are uploaded automatically to a public S3 bucket for embedding in GitHub issues and PRs. Private repos don't render repo-relative or `raw.githubusercontent.com` images for most viewers; bucket URLs render everywhere and never expire.
 
 ```yaml
 evidence:
-  backend: git       # git (default) | s3 | navvi
-  branch: evidence   # orphan branch name (git backend)
+  backend: s3        # s3 (default) | none
 ```
 
-**Git backend (default)** — uploads to a dedicated orphan branch via the GitHub Contents API. Zero external deps, works with any PAT. Initialize once:
+Provide the upload secret through the environment only: `EVIDENCE_AWS_ACCESS_KEY_ID`, `EVIDENCE_AWS_SECRET_ACCESS_KEY`, `EVIDENCE_BUCKET`, `EVIDENCE_REGION`, `EVIDENCE_PUBLIC_BASE_URL`. The `evidence-upload` skill ships `scripts/upload_evidence.sh` (curl ≥ 7.75, no other dependencies), which prints each public URL and a ready-to-paste Markdown line.
 
-```bash
-./scripts/evidence-init.sh owner/repo
-# or omit the repo — it auto-detects from your git remote origin:
-./scripts/evidence-init.sh
-```
-
-The script is idempotent: if the evidence branch already exists it exits cleanly with no changes.
-
-**S3/R2 backend** — for teams with existing cloud storage. Set `s3_bucket`, `s3_endpoint`, and `s3_public_url` in config.
-
-**Navvi backend** — drags files into GitHub's UI via headed browser. Produces GitHub-hosted URLs but requires browser credentials.
+**Anything uploaded is publicly readable by URL** — never upload secrets, customer PII or production data; prefer staging or synthetic screenshots.
 
 ## Flow Definition Reference
 
