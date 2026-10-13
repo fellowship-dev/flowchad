@@ -365,27 +365,25 @@ Save outcome to `results.json`:
 
 ### Step 5a: Upload Evidence
 
-```bash
-REPO=$(git remote get-url origin | sed -E 's|.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$|\1|')
+Use the `evidence-upload` skill (public evidence bucket; needs the `EVIDENCE_*` env secret). Everything uploaded is public by URL — never capture customer data from the report; reproduce on staging or with synthetic data.
 
-# Initialize evidence branch if needed
-.flowchad/../scripts/evidence-init.sh "$REPO" 2>/dev/null || true
+```bash
+UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
+            .claude/skills/evidence-upload/scripts/upload_evidence.sh \
+            .agents/skills/evidence-upload/scripts/upload_evidence.sh 2>/dev/null | head -1)
+PREFIX="reproduce-issue-${ISSUE_NUMBER}/${DATE}"
 
 # Upload screenshots
 GIF_URL=""
 for screenshot in "${SNAPSHOT_DIR}"/step-*.png; do
   [ -f "$screenshot" ] || continue
-  FNAME=$(basename "$screenshot")
-  .flowchad/../scripts/evidence-upload.sh "$screenshot" "$REPO" \
-    "reproduce-issue-${ISSUE_NUMBER}/${DATE}/${FNAME}" 2>/dev/null || true
+  bash "$UPLOAD" --url-only --prefix "$PREFIX" "$screenshot" || true
 done
 
 # Upload GIF
 if [ -f "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif" ]; then
-  GIF_URL=$(.flowchad/../scripts/evidence-upload.sh \
-    "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif" \
-    "$REPO" \
-    "reproduce-issue-${ISSUE_NUMBER}/${DATE}/reproduce-issue-${ISSUE_NUMBER}.gif" 2>/dev/null) || true
+  GIF_URL=$(bash "$UPLOAD" --url-only --prefix "$PREFIX" \
+    "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif") || true
 fi
 ```
 

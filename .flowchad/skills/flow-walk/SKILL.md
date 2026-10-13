@@ -260,27 +260,22 @@ Create a dated snapshot directory:
 
 After snapshots are saved, upload visual evidence for embedding in issues/PRs.
 
-Read the evidence backend from `config.yml` (default: `git`). Follow the `evidence-upload` skill instructions.
-
-**Git backend (default):**
+Read the evidence backend from `config.yml` (default: `s3`; `none` skips). Follow the `evidence-upload` skill: files go to the public evidence bucket, which needs the `EVIDENCE_*` env secret. Everything uploaded is public by URL — walk staging or synthetic data only.
 
 ```bash
-# Detect repo
-REPO=$(git remote get-url origin | sed -E 's|.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$|\1|')
+UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
+            .claude/skills/evidence-upload/scripts/upload_evidence.sh \
+            .agents/skills/evidence-upload/scripts/upload_evidence.sh 2>/dev/null | head -1)
 
-# Initialize evidence branch if needed (first run only)
-.flowchad/../scripts/evidence-init.sh "$REPO"
-
-# Upload each screenshot
+# Upload each screenshot (owner/repo is detected from git remote origin)
 for screenshot in ${SNAPSHOT_DIR}/step-*.png; do
-  FILENAME=$(basename "$screenshot")
-  URL=$(.flowchad/../scripts/evidence-upload.sh "$screenshot" "$REPO" "${FLOW_NAME}/${DATE}/${FILENAME}")
+  URL=$(bash "$UPLOAD" --url-only --prefix "${FLOW_NAME}/${DATE}" "$screenshot")
   # Store URL in results
 done
 
 # Upload GIF if it exists
 if [ -f "${SNAPSHOT_DIR}/${FLOW_NAME}.gif" ]; then
-  GIF_URL=$(.flowchad/../scripts/evidence-upload.sh "${SNAPSHOT_DIR}/${FLOW_NAME}.gif" "$REPO" "${FLOW_NAME}/${DATE}/${FLOW_NAME}.gif")
+  GIF_URL=$(bash "$UPLOAD" --url-only --prefix "${FLOW_NAME}/${DATE}" "${SNAPSHOT_DIR}/${FLOW_NAME}.gif")
 fi
 ```
 
@@ -289,16 +284,16 @@ Add evidence URLs to `results.json`:
 ```json
 {
   "evidence": {
-    "backend": "git",
+    "backend": "s3",
     "screenshots": {
-      "step-01-navigate": "https://raw.githubusercontent.com/owner/repo/evidence/flow/date/step-01-navigate.png"
+      "step-01-navigate": "https://<bucket>.s3.<region>.amazonaws.com/owner/repo/flow/date/3f9c0a1b2c3d4e5f-step-01-navigate.png"
     },
-    "gif": "https://raw.githubusercontent.com/owner/repo/evidence/flow/date/flow.gif"
+    "gif": "https://<bucket>.s3.<region>.amazonaws.com/owner/repo/flow/date/9a8b7c6d5e4f3a2b-flow.gif"
   }
 }
 ```
 
-If evidence upload fails (no `gh` auth, network error), log a warning and continue — evidence is best-effort, never blocks the walk.
+If evidence upload fails (secret not configured, network error), log a warning and continue — evidence is best-effort, never blocks the walk.
 
 ## Output
 

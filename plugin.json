@@ -1,7 +1,7 @@
 {
   "name": "flowchad",
   "description": "Drop-in AI QA for any web project — automated flow walking, screenshot capture, and regression detection",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repository": "https://github.com/Fellowship-dev/flowchad",
   "homepage": "https://github.com/Fellowship-dev/flowchad#readme",
   "skills": [

@@ -1,7 +1,7 @@
 ---
 name: flowchad
 description: Drop-in AI QA for any web project — automated flow walking, screenshot capture, and regression detection
-version: "0.2.0"
+version: "0.3.0"
 repository: https://github.com/Fellowship-dev/flowchad
 install: "curl -fsSL https://raw.githubusercontent.com/Fellowship-dev/flowchad/main/install.sh | bash"
 skills:
@@ -44,7 +44,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 | `/flow-diff <name>` | Compares walk snapshots across time to detect regressions |
 | `/flow-diagram <name>` | Generates Mermaid flowchart from a flow definition |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
-| `/evidence-upload` | Uploads screenshots/GIFs to configured evidence backend |
+| `/evidence-upload` | Uploads screenshots/GIFs to the public evidence S3 bucket |
 
 ## Update
 

@@ -36,7 +36,7 @@ QUALITY_SCORE.md              # Per-skill quality grades and open issues
 | `/flow-diff <name>` | Compares walk snapshots across time to detect regressions |
 | `/flow-diagram <name>` | Generates Mermaid flowchart from a flow definition |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
-| `/evidence-upload` | Uploads screenshots/GIFs to configured evidence backend |
+| `/evidence-upload` | Uploads screenshots/GIFs to the public evidence S3 bucket |
 
 ## Key Rules
 
@@ -48,5 +48,5 @@ QUALITY_SCORE.md              # Per-skill quality grades and open issues
 
 ## Reference
 
-- [Architecture](docs/architecture.md) — repo concepts: skill specs vs knowledge docs, config template, evidence branch
+- [Architecture](docs/architecture.md) — repo concepts: skill specs vs knowledge docs, config template, evidence hosting
 - [Workflows](docs/workflows.md) — how to edit skill specs, shell scripts, contributing rules

@@ -1,176 +1,124 @@
 ---
 name: evidence-upload
-description: Upload walk screenshots and GIFs to GitHub for embedding in issues and PRs. Supports orphan branch (default), S3, or Navvi backends.
+description: Upload walk screenshots, GIFs and videos to the public evidence S3 bucket for embedding in GitHub issues and PRs. Returns permanent public URLs and ready-to-paste Markdown.
 user_invocable: false
+metadata:
+  version: 2.0.0
 ---
 
 # Evidence Upload
 
-Upload visual evidence (screenshots, GIFs, videos) from flow walks to a hosting backend, returning markdown-embeddable URLs.
+Upload visual evidence (screenshots, GIFs, videos) from flow walks straight to a
+public S3 bucket and return Markdown-embeddable URLs.
+
+**Why a bucket:** GitHub does not render repo-relative or
+`raw.githubusercontent.com` images in **private** repos for viewers without a
+session on that repo, and branch-hosted links die with the branch. A public,
+content-addressed bucket renders everywhere and never expires.
+
+## Public by URL — read before uploading
+
+Anything uploaded is **publicly readable by anyone with the URL**. Never upload
+secrets, tokens, customer PII or production data. Prefer screenshots of staging
+or synthetic data; crop or redact first. The uploader cannot delete objects.
 
 ## When to Use
 
-This skill is called automatically by:
+Called by:
 - **flow-walk** — after a walk completes, upload screenshots and GIF
+- **flow-reproduce** — attach reproduction evidence to the issue
 - **flow-report** — embed evidence URLs in the friction report
-- Any command that creates GitHub issues from findings
+- Any command that creates GitHub issues or PR comments from findings
 
-## Configuration
+## Configuration (environment only)
 
-Check `.flowchad/config.yml` for the evidence backend:
+The script reads these and nothing else — never the general `AWS_*` variables,
+never command-line arguments. Never print them.
 
-```yaml
-evidence:
-  backend: git        # git (default) | s3 | navvi
-  branch: evidence    # orphan branch name (git backend)
-  # s3_bucket: my-bucket          # S3 backend
-  # s3_endpoint: https://...      # S3/R2 endpoint
-  # s3_public_url: https://...    # public base URL for embeds
-```
+| Variable | Meaning |
+|---|---|
+| `EVIDENCE_AWS_ACCESS_KEY_ID` / `EVIDENCE_AWS_SECRET_ACCESS_KEY` | Upload-only key (`s3:PutObject` on the bucket) |
+| `EVIDENCE_BUCKET` | e.g. `fellowship-evidence-503081149087` |
+| `EVIDENCE_REGION` | e.g. `us-east-1` |
+| `EVIDENCE_PUBLIC_BASE_URL` | e.g. `https://fellowship-evidence-503081149087.s3.us-east-1.amazonaws.com` |
 
-If no `evidence` config exists, default to `git` backend.
+If any is missing the script exits 2 with *"evidence upload secret is not
+configured for this environment"*. Treat that as an upload failure (see below);
+do not substitute other credentials or another host.
 
-## Backend A: Git Orphan Branch (default)
+`.flowchad/config.yml` `evidence.backend` accepts `s3` (default) or `none`
+(skip uploads). The retired `git`, `pylot` and `navvi` values are treated as `s3`.
 
-Zero external deps. Uses only the GitHub Contents API.
+## Upload
 
-### First-time setup
-
-Check if the evidence branch exists. If not, create it:
-
-```bash
-./scripts/evidence-init.sh owner/repo evidence
-```
-
-The script creates an orphan branch via the API — no local git operations needed.
-
-### Upload
-
-For each file to upload:
+Locate the script inside this skill's directory (path depends on how the skill
+was installed):
 
 ```bash
-# Detect repo from git remote
-REPO=$(git remote get-url origin | sed -E 's|.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$|\1|')
+UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
+            .claude/skills/evidence-upload/scripts/upload_evidence.sh \
+            .agents/skills/evidence-upload/scripts/upload_evidence.sh 2>/dev/null | head -1)
 
-# Upload and get URL
-URL=$(./scripts/evidence-upload.sh \
-  ".flowchad/snapshots/2026-03-24-sign-up/step-01-navigate.png" \
-  "$REPO" \
-  "sign-up/2026-03-24/step-01-navigate.png")
-
-echo "![Step 1]($URL)"
+bash "$UPLOAD" --prefix "sign-up/2026-03-24" --alt "Step 1" \
+  ".flowchad/snapshots/2026-03-24-sign-up/step-01-navigate.png"
+# https://<bucket>.s3.<region>.amazonaws.com/owner/repo/sign-up/2026-03-24/3f9c0a1b2c3d4e5f-step-01-navigate.png
+# ![Step 1](https://<bucket>.s3.<region>.amazonaws.com/owner/repo/sign-up/2026-03-24/3f9c0a1b2c3d4e5f-step-01-navigate.png)
 ```
 
-### URL format
+Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] [--url-only] [--dry-run] FILE...`
 
-```
-https://raw.githubusercontent.com/OWNER/REPO/evidence/FLOW/DATE/FILENAME
-```
+- Files: `png jpg jpeg gif webp mp4 webm pdf txt`.
+- `--repo` defaults to `git remote get-url origin`.
+- Key: `<owner>/<repo>/<YYYY>/<MM>/<sha256-first-16>-<basename>`; `--prefix`
+  replaces the `YYYY/MM` segment (flowchad uses `{flow}/{date}`).
+- Default output per file: the URL, then `![alt](url)` (images) or `[alt](url)`
+  (video/PDF/text). `--url-only` prints just the URL.
+- Exit `0` all uploaded and verified, `1` some file failed (no URL printed for
+  it), `2` usage/config error.
 
-### Limitations
-
-- `raw.githubusercontent.com` URLs require authentication for **private repos** — images won't render for users without repo access
-- Adds commits to the evidence branch (acceptable — it's an orphan branch, doesn't affect main history)
-- GitHub may cache raw URLs for up to 5 minutes
-
-## Backend B: S3/R2
-
-For teams with existing cloud storage. Reuses the speckit visual evidence pipeline.
-
-### Upload
-
-```bash
-# Upload to S3/R2
-aws s3 cp "$FILE" "s3://${S3_BUCKET}/flowchad/${FLOW}/${DATE}/${FILENAME}" \
-  --endpoint-url "$S3_ENDPOINT" \
-  --content-type "image/png"
-
-# Return public URL
-echo "${S3_PUBLIC_URL}/flowchad/${FLOW}/${DATE}/${FILENAME}"
-```
-
-### Advantages over git backend
-
-- Works for private repos (public URLs, no auth needed)
-- No git history pollution
-- Better for high-volume evidence (many walks/day)
-
-## Backend C: Navvi Browser Upload
-
-Last resort. Opens the GitHub PR/issue in a headed browser and drags the file into the comment box.
-
-### When to use
-
-- Need GitHub-hosted URLs (`user-attachments.githubusercontent.com`)
-- Private repo where raw.githubusercontent.com URLs won't render
-- No S3/R2 infrastructure available
-
-### Requirements
-
-- Navvi running with headed Chromium
-- GitHub credentials accessible to the agent (own account or shared)
-
-### Process
-
-1. Open the PR/issue URL in Navvi
-2. Click the comment text area
-3. Drag the image file into the text area
-4. Wait for upload to complete (GitHub shows the markdown URL)
-5. Extract the generated URL from the textarea content
-6. Cancel the comment (we only needed the URL)
-
-This is intentionally undocumented in detail — it's fragile and should only be used when A and B aren't viable.
+The script signs one `PUT` with `curl --aws-sigv4` (curl ≥ 7.75; no AWS CLI),
+sets `Content-Type` and `Cache-Control: public, max-age=31536000, immutable`,
+passes credentials through a temporary 0600 curl config (never argv), and
+verifies the public URL returns HTTP 200 before printing it.
 
 ## Integration with Flow Walk
 
 After a walk completes and snapshots are saved:
 
-1. Read the evidence backend from `config.yml` (default: `git`)
-2. Upload each step screenshot: `{flow}/{date}/step-{N}-{action}.png`
-3. Upload the GIF (if generated): `{flow}/{date}/{flow}.gif`
-4. Store the URLs in `results.json` under a new `evidence` key:
+1. Read `evidence.backend` from `config.yml` (default `s3`; `none` skips).
+2. Upload each step screenshot with `--url-only --prefix "{flow}/{date}"`.
+3. Upload the GIF (if generated) the same way.
+4. Store the URLs in `results.json` under the `evidence` key:
 
 ```json
 {
   "evidence": {
-    "backend": "git",
+    "backend": "s3",
     "screenshots": {
-      "step-01-navigate": "https://raw.githubusercontent.com/owner/repo/evidence/sign-up/2026-03-24/step-01-navigate.png",
-      "step-02-fill": "https://raw.githubusercontent.com/owner/repo/evidence/sign-up/2026-03-24/step-02-fill.png"
+      "step-01-navigate": "https://<bucket>.s3.<region>.amazonaws.com/owner/repo/sign-up/2026-03-24/3f9c0a1b2c3d4e5f-step-01-navigate.png"
     },
-    "gif": "https://raw.githubusercontent.com/owner/repo/evidence/sign-up/2026-03-24/sign-up.gif",
+    "gif": "https://<bucket>.s3.<region>.amazonaws.com/owner/repo/sign-up/2026-03-24/9a8b7c6d5e4f3a2b-sign-up.gif",
     "video": null
   }
 }
 ```
 
-## Integration with Flow Report
+## Integration with Flow Report and GitHub Issues
 
-When generating a report, if `evidence` URLs exist in `results.json`:
-
-- Embed screenshots inline in each finding:
-  ```markdown
-  **Screenshot:** ![Step 3](https://raw.githubusercontent.com/...)
-  ```
-- Embed GIF in the summary section:
-  ```markdown
-  **Walk recording:** ![Flow GIF](https://raw.githubusercontent.com/...)
-  ```
-
-## Integration with GitHub Issues
-
-When creating issues from Critical findings:
-
-1. Upload the relevant screenshot(s)
-2. Upload the GIF
-3. Embed in the issue body:
+Embed only URLs the script printed:
 
 ```markdown
 ## Evidence
 
-![Step where failure occurs](https://raw.githubusercontent.com/...)
+![Step where failure occurs](https://<bucket>.s3.<region>.amazonaws.com/...)
 
 ### Full walk recording
 
-![Walk GIF](https://raw.githubusercontent.com/...)
+![Walk GIF](https://<bucket>.s3.<region>.amazonaws.com/...)
 ```
+
+## Failure handling
+
+Evidence is best-effort: an upload failure never blocks a walk, but it is never
+silent. Log the reason, fall back to local paths in the report, and say the
+evidence is local-only.
