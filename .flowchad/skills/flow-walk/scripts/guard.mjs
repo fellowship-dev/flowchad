@@ -1,6 +1,7 @@
 // guard.mjs — per-host write guard and per-step error capture for FlowChad walks.
 //
 //   import { installGuard } from './guard.mjs';
+//   const browser = await chromium.launch();          // launched Chromium is the verified mode
 //   const context = await browser.newContext({ serviceWorkers: 'block', ... });
 //   const guard = await installGuard(context, {
 //     'localhost:3000': 'local-copy',
@@ -9,17 +10,22 @@
 //   ... after each step: Object.assign(stepResult, guard.take());
 //
 // Every request is classified by its host against the declared surface table.
-// A host that is not declared is read-only-live. On read-only-live hosts any
-// method except GET, HEAD and OPTIONS is aborted before it leaves the browser,
-// and WebSocket connections are refused (Playwright >= 1.48). Create the
-// context with serviceWorkers: 'block', because service-worker requests do not
-// pass through context.route.
+// Only hosts declared 'write-allowed-test' or 'local-copy' are writable; every
+// other host is read-only-live. On read-only-live hosts any method except GET,
+// HEAD and OPTIONS is aborted before it leaves the browser, and WebSocket
+// connections are refused (Playwright >= 1.48). Create the context with
+// serviceWorkers: 'block', because service-worker requests do not pass through
+// context.route. A malformed table throws before anything is navigated; an
+// error inside the guard aborts the request instead of letting it through.
 //
 // Recorded URLs keep host and path only; query strings and long token-like
 // path segments are redacted.
 
+export const MODES = new Set(['read-only-live', 'write-allowed-test', 'local-copy']);
+const WRITABLE = new Set(['write-allowed-test', 'local-copy']);
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const TOKENISH = /^[A-Za-z0-9_\-.~%]{24,}$/;
+const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 export function redactUrl(u) {
   try {
@@ -42,39 +48,68 @@ export function redactText(t) {
     .slice(0, 300);
 }
 
-export function modeFor(surfaces, url) {
+// Throws unless `surfaces` is a plain object whose every value is a known mode.
+export function validateSurfaces(surfaces) {
+  const proto = surfaces !== null && typeof surfaces === 'object' ? Object.getPrototypeOf(surfaces) : undefined;
+  if (proto !== Object.prototype && proto !== null) {
+    throw new TypeError('guard: surface table must be a plain object of host -> mode');
+  }
+  for (const [host, mode] of Object.entries(surfaces)) {
+    if (!MODES.has(mode)) {
+      throw new TypeError(`guard: unknown mode ${JSON.stringify(mode)} for host ${JSON.stringify(host)}; use one of ${[...MODES].join(', ')}`);
+    }
+  }
+}
+
+export function isWritable(surfaces, url) {
   let host;
   try {
     host = new URL(url).host;
   } catch {
-    return 'read-only-live';
+    return false;
   }
-  return surfaces[host] || 'read-only-live';
+  return hasOwn(surfaces, host) && WRITABLE.has(surfaces[host]);
 }
 
-export async function installGuard(context, surfaces = {}) {
-  const fresh = () => ({ console_errors: [], failed_requests: [], blocked_writes: [], unguarded: [] });
+// attachedOverCDP: pass true when the browser was attached with connectOverCDP.
+export async function installGuard(context, surfaces, { attachedOverCDP = false } = {}) {
+  validateSurfaces(surfaces);
+  const table = Object.freeze({ ...surfaces });
+  const unguarded = []; // persistent notes, returned by every take()
+  const note = (n) => { if (!unguarded.includes(n)) unguarded.push(n); };
+  const fresh = () => ({ console_errors: [], failed_requests: [], blocked_writes: [] });
   let log = fresh();
 
-  await context.route('**/*', (route) => {
-    const req = route.request();
-    if (SAFE_METHODS.has(req.method()) || modeFor(surfaces, req.url()) !== 'read-only-live') {
-      return route.continue();
+  if (attachedOverCDP) note('browser attached over CDP: an unverified mode for the write guard');
+  const engine = context.browser?.()?.browserType?.().name?.();
+  if (engine && engine !== 'chromium') note(`browser engine ${engine}: an unverified mode for the write guard`);
+
+  await context.route('**/*', async (route) => {
+    let req;
+    try {
+      req = route.request();
+      if (SAFE_METHODS.has(req.method()) || isWritable(table, req.url())) return await route.continue();
+      log.blocked_writes.push({ method: req.method(), where: redactUrl(req.url()), at: new Date().toISOString() });
+      return await route.abort('blockedbyclient');
+    } catch (e) {
+      note(`guard error, request aborted: ${redactText(e?.message || e)}`);
+      try { await route.abort('blockedbyclient'); } catch { /* already handled */ }
     }
-    log.blocked_writes.push({ method: req.method(), where: redactUrl(req.url()), at: new Date().toISOString() });
-    return route.abort('blockedbyclient');
   });
 
   if (typeof context.routeWebSocket === 'function') {
     await context.routeWebSocket(/.*/, (ws) => {
-      if (modeFor(surfaces, ws.url()) === 'read-only-live') {
+      try {
+        if (isWritable(table, ws.url())) return ws.connectToServer();
         log.blocked_writes.push({ method: 'WEBSOCKET', where: redactUrl(ws.url()), at: new Date().toISOString() });
         return ws.close();
+      } catch (e) {
+        note(`guard error, WebSocket closed: ${redactText(e?.message || e)}`);
+        try { ws.close(); } catch { /* already closed */ }
       }
-      ws.connectToServer();
     });
   } else {
-    log.unguarded.push('WebSockets are not intercepted (Playwright older than 1.48)');
+    note('WebSockets are not intercepted (Playwright older than 1.48)');
   }
 
   context.on('console', (m) => {
@@ -94,9 +129,9 @@ export async function installGuard(context, surfaces = {}) {
   });
 
   return {
-    // Returns what happened since the last call and starts a new step.
+    // What happened since the last call, plus every persistent `unguarded` note.
     take() {
-      const out = log;
+      const out = { ...log, unguarded: [...unguarded] };
       log = fresh();
       return out;
     },

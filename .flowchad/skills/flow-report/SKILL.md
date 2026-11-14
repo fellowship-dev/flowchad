@@ -169,7 +169,8 @@ Keep it scannable: the person reading it decides what to fix today. Quote screen
 - {for each local-copy or test surface: commit, simulated steps, settings left at defaults, switches turned on to reach a screen, test keys}
 
 ## Residual risk
-- {pages opened on live systems that might write on view; anything the write guard could not see; human-assisted steps}
+- {pages opened on live systems that might write on view; human-assisted steps}
+- {every `unguarded` note from the walk, and any unverified mode used: Firefox/WebKit, a CDP-attached browser's existing context, shared workers, 307/308-redirected POSTs, Playwright < 1.48}
 
 ## Left running
 - {nothing, or what and why}

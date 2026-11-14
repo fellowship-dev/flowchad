@@ -74,7 +74,9 @@ bash "$UPLOAD" --prefix "sign-up/2026-03-24" --alt "Step 1" \
 # ![Step 1](https://<bucket>.s3.<region>.amazonaws.com/owner/repo/sign-up/2026-03-24/3f9c0a1b2c3d4e5f-step-01-navigate.png)
 ```
 
-Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] [--url-only] [--dry-run] FILE...`
+Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] [--url-only] [--dry-run] [--gate] FILE...`
+
+**The publishing gate lives in the script.** It uploads only when `.flowchad/config.yml` (or `$FLOWCHAD_CONFIG`) has an uncommented `evidence:` → `backend: s3`, or `FLOWCHAD_UPLOAD_CONFIRMED=1` is set for this run because the user confirmed; otherwise it sends nothing and exits `3` with "evidence stays local". `--gate` checks only that (exit `0` enabled, `3` not). `--dry-run` never uploads and skips it. flow-walk and flow-reproduce call `--gate` first and fall back to local paths.
 
 - Files: `png jpg jpeg gif webp mp4 webm pdf txt`.
 - `--repo` defaults to `git remote get-url origin`.
@@ -83,7 +85,7 @@ Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] 
 - Default output per file: the URL, then `![alt](url)` (images) or `[alt](url)`
   (video/PDF/text). `--url-only` prints just the URL.
 - Exit `0` all uploaded and verified, `1` some file failed (no URL printed for
-  it), `2` usage/config error.
+  it), `2` usage/config error, `3` publishing not enabled (evidence stays local).
 
 The script signs one `PUT` with `curl --aws-sigv4` (curl ≥ 7.75; no AWS CLI),
 sets `Content-Type` and `Cache-Control: public, max-age=31536000, immutable`,

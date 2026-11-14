@@ -1,6 +1,6 @@
 # Flowchad — Developer Guide
 
-Flowchad is a **skills package** — AI-readable slash commands for automated UX QA. No build step. The few shipped scripts have tests in `tests/` (`bash tests/pulse_test.sh`; `PLAYWRIGHT_DIR=<dir with playwright> node tests/guard_test.mjs`), run on macOS and Linux before merging.
+Flowchad is a **skills package** — AI-readable slash commands for automated UX QA. No build step. The few shipped scripts have tests in `tests/` (`bash tests/pulse_test.sh`; `bash tests/upload_gate_test.sh`; `PLAYWRIGHT_DIR=<dir with playwright> node tests/guard_test.mjs`), run on macOS and Linux before merging.
 
 ## Install / Distribute
 
