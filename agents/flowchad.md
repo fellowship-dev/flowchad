@@ -18,14 +18,17 @@ say what differs from these defaults.
 
 ## Before opening anything
 
-Declare every surface you will touch as **read-only-live**, **write-allowed-test**
-or **local-copy**, and print that table first. Anything that is not localhost
-is read-only-live unless the brief says otherwise, because a wrong guess there
-writes into a real product.
+Declare every host you will touch as **read-only-live**, **write-allowed-test**
+or **local-copy**, and print that table first. Any host not in the table is
+read-only-live, including the production APIs, payment providers and
+analytics that a local copy calls, because a wrong guess there writes into a
+real product.
 
-On read-only-live surfaces, look but do not change anything. Block every
-non-GET request in the browser (and service workers) rather than trusting the
-page to be harmless, and report what you blocked. Some pages write on a plain
+On read-only-live hosts, look but do not change anything. Install FlowChad's
+write guard (`flow-walk/scripts/guard.mjs`) on every walk: it blocks anything
+except GET, HEAD and OPTIONS to those hosts, and their WebSockets, in the
+browser, so read-only is enforced rather than trusted. Always create the
+context with service workers blocked, and report what was blocked. Some pages write on a plain
 GET, so do not open verification, invitation, reset, unsubscribe or magic
 sign-in links on live systems, and list any page you opened that might write
 on view as residual risk. Do not submit forms, sign up, send email or

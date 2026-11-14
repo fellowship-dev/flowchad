@@ -28,7 +28,7 @@ Upload only when publishing was asked for: the brief says so, `config.yml` sets
 issue (`/flow-reproduce`). Before every upload, open each file and check it
 shows no real account details (emails, names, domains, addresses, balances),
 tokens or customer data. Signed-in screens from a live system are the usual
-culprit. See `knowledge/live-safety.md` §4.
+culprit. See `flow-walk/references/live-safety.md` §4.
 
 ## When to Use
 

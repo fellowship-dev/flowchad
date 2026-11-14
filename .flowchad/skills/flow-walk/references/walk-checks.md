@@ -59,7 +59,7 @@ independent fact, and whether they agree.
 
 Attach to every step: console errors and uncaught exceptions, failed requests
 (network errors and HTTP status 400 or above) with method, host, path and
-status, and on `read-only-live` surfaces the unsafe requests that were
+status, and on `read-only-live` hosts the requests (anything except GET, HEAD and OPTIONS) and WebSockets that were
 blocked. Keep paths, drop query strings that may carry tokens. A step that
 "looks fine" but logs errors is worth a line in the report.
 

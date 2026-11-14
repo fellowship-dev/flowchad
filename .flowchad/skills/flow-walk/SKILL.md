@@ -23,7 +23,7 @@ The argument is the flow name (matches `flows/{name}.yml`).
 - Chromium or Chrome running with CDP enabled, OR launch headless
 - Playwright-core installed (`npm i -g playwright-core` or local)
 - Flow definition in `.flowchad/flows/{name}.yml`
-- Read `knowledge/live-safety.md` and `knowledge/walk-checks.md` once per session. They are the default contract for every walk; a brief only needs to state what differs.
+- Read `references/live-safety.md` and `references/walk-checks.md` once per session. They are the default contract for every walk; a brief only needs to state what differs.
 
 The flow's filename (without `.yml`) is its **id**. Reports and diffs match walks by id, so it stays the same between walks.
 
@@ -31,9 +31,9 @@ The flow's filename (without `.yml`) is its **id**. Reports and diffs match walk
 
 ### Step 0: Declare Surfaces
 
-Before opening a browser, decide the mode of every surface this walk touches (see `knowledge/live-safety.md`):
+Before opening a browser, decide the mode of every host this walk touches (see `references/live-safety.md`):
 
-- From the brief first, then `config.yml` → `environments.<env>.surface`, then the default: localhost is `local-copy`, anything else is `read-only-live`.
+- From the brief first, then `config.yml` → `environments.<env>.surface` (keyed by that environment's host). A localhost URL from config with no `surface` is `local-copy`. Every other host, including APIs, payment providers and analytics the product calls, is `read-only-live` unless declared.
 - For a `local-copy`, note the commit it was built from and every way it differs from production.
 
 Print the table before starting, e.g.:
@@ -79,7 +79,16 @@ FLOW_LOCALES=$(grep '^locales:' ".flowchad/flows/${FLOW_NAME}.yml" 2>/dev/null \
 
 ### Step 0b: Start Video Recording
 
-Always walk in a fresh context (never reuse an existing browser's tabs or cookies). If the flow has `video: false`, create the context without `recordVideo`. Otherwise, start recording:
+Always walk in a fresh context (never reuse an existing browser's tabs or cookies). If the flow has `video: false`, create the context without `recordVideo`. Otherwise, start recording.
+
+Before writing anything, make sure walk output cannot be committed: `.flowchad/` is meant to be committed, but snapshots and reports can contain signed-in screens.
+
+```bash
+touch .flowchad/.gitignore
+for p in snapshots/ reports/; do
+  grep -qxF "$p" .flowchad/.gitignore || echo "$p" >> .flowchad/.gitignore
+done
+```
 
 ```javascript
 // Create snapshot directory
@@ -87,10 +96,13 @@ const snapshotDir = `.flowchad/snapshots/${date}-${flowName}`;
 await fs.mkdir(snapshotDir, { recursive: true });
 
 // Start Playwright video recording
-const viewports = flow.viewports || config.viewports || [1440, 375];
+const viewports = flow.viewports
+  || (flow.viewport && [flow.viewport.width]) // legacy single viewport
+  || config.viewports || [1440, 375];
+const heightFor = (w) => (flow.viewport && w === flow.viewport.width && flow.viewport.height) || (w < 768 ? 812 : 900);
 const context = await browser.newContext({
-  viewport: { width: viewports[0], height: 900 },
-  serviceWorkers: surface === 'read-only-live' ? 'block' : 'allow', // service-worker requests bypass context.route
+  viewport: { width: viewports[0], height: heightFor(viewports[0]) },
+  serviceWorkers: 'block', // always: service-worker requests do not pass through the write guard
   recordVideo: {
     dir: snapshotDir,
     size: { width: 1280, height: 720 }
@@ -101,33 +113,22 @@ const page = await context.newPage();
 
 ### Step 0c: Guard Writes and Watch the Network
 
-Attach these to the context before the first navigation. On a `read-only-live` surface the route guard aborts unsafe methods before they leave the browser, so "read-only" is enforced rather than assumed. On every surface, console and network errors are collected per step.
+Install the guard shipped with this skill, `scripts/guard.mjs`, before the first navigation. Always install it, whatever the surfaces are: it classifies **every request by its host** against the surface table from Step 0, and treats any host not in the table as `read-only-live`. On those hosts it aborts anything except GET, HEAD and OPTIONS before it leaves the browser, and refuses WebSocket connections (Playwright 1.48 or later). So a local-copy walk still cannot write to a production API, a payment provider or analytics that the local build calls. It also collects console errors, uncaught exceptions and failed requests from every page in the context, popups included, with query strings and token-like path segments redacted.
 
 ```javascript
-const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
-let stepLog = { console_errors: [], failed_requests: [], blocked_writes: [] };
-const where = (u) => { const x = new URL(u); return `${x.host}${x.pathname}`; }; // no query strings: they can carry tokens
+import { installGuard } from './scripts/guard.mjs'; // resolve relative to this skill's folder
 
-if (surface === 'read-only-live') {
-  await context.route('**/*', (route) => {
-    const req = route.request();
-    if (SAFE.has(req.method())) return route.continue();
-    stepLog.blocked_writes.push({ method: req.method(), where: where(req.url()) });
-    return route.abort('blockedbyclient');
-  });
-}
-page.on('console', (m) => { if (m.type() === 'error') stepLog.console_errors.push(m.text().slice(0, 300)); });
-page.on('pageerror', (e) => stepLog.console_errors.push(`uncaught: ${e.message.slice(0, 300)}`));
-page.on('requestfailed', (r) => {
-  if (r.failure()?.errorText !== 'net::ERR_BLOCKED_BY_CLIENT')
-    stepLog.failed_requests.push({ method: r.method(), where: where(r.url()), error: r.failure()?.errorText });
-});
-page.on('response', (r) => {
-  if (r.status() >= 400) stepLog.failed_requests.push({ method: r.request().method(), where: where(r.url()), status: r.status() });
-});
+// host (with port) -> mode; only list hosts the brief or config makes writable
+const surfaces = {
+  'localhost:3000': 'local-copy',
+  // 'staging.example.com': 'write-allowed-test',
+};
+const guard = await installGuard(context, surfaces);
+// after each step:
+Object.assign(stepResult, guard.take()); // console_errors, failed_requests, blocked_writes, unguarded
 ```
 
-After each step, copy `stepLog` into that step's result and reset it. Never log headers, cookies or request bodies.
+Runtime-verified (see `tests/guard_test.mjs`): the guarded methods and paths are listed in the PR that introduced it and in `README.md` → Safe on Live Systems. Anything listed in `unguarded` goes into the report's residual risk. Never log headers, cookies or request bodies.
 
 Initialize an action log to track timestamps for smart trimming:
 
@@ -164,16 +165,16 @@ For each step in the flow:
    logAction(step.action, step.selector || step.url, step.action === 'fill' ? typingDurationMs : undefined);
    ```
 
-   Record `observed_at` (ISO 8601 with offset) and count the step toward the flow's effort: each `fill` is a typed field, each `click` a click.
+   Record `observed_at` (ISO 8601 with offset) and count the step toward the flow's effort: each `fill` is a typed field, each `click` a click. Record a navigate step's `target` as host and path only, with query strings and token-like path segments removed (`redactUrl` in `scripts/guard.mjs`).
 
 3. **Wait for rendered content, then screenshot every width** — after the action, wait for what the person came for (the `expect` text, a non-empty list, the form), not just the load event; status codes do not count as success. Then capture each width in `viewports` (default `[1440, 375]`) without navigating, so toasts and inline errors are caught at every width:
 
    ```javascript
    for (const width of viewports) {
-     await page.setViewportSize({ width, height: width < 768 ? 812 : 900 });
+     await page.setViewportSize({ width, height: heightFor(width) });
      await page.screenshot({ path: `${snapshotDir}/step-${nn}-${step.action}@${width}.png` });
    }
-   await page.setViewportSize({ width: viewports[0], height: 900 });
+   await page.setViewportSize({ width: viewports[0], height: heightFor(viewports[0]) });
    ```
 
 4. **Evaluate expect** — this is the key AI step:
@@ -183,7 +184,7 @@ For each step in the flow:
    - Copy the exact words the person sees for anything that matters (headings, errors, empty states, buttons) into `words`
    - Record as `pass`, `fail`, or `error`
 
-4b. **Cross-check claims** — if the screen states a fact (a record is valid, a value to copy, "checked", "sent", a total), verify it independently and record it under `truth_checks` (see `knowledge/walk-checks.md`).
+4b. **Cross-check claims** — if the screen states a fact (a record is valid, a value to copy, "checked", "sent", a total), verify it independently and record it under `truth_checks` (see `references/walk-checks.md`).
 
 4c. **Mark first value** — if the step has `first_value: true` and passes, record the elapsed time since the flow's first navigation as `time_to_first_value_ms`.
 
@@ -200,13 +201,13 @@ For each step in the flow:
 
 If a step has `optional: true` and fails, record but don't flag as critical.
 
-If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk meets a bot check it did not expect, do not stop and do not try to defeat it. Follow `knowledge/live-safety.md` §5: switch to a local copy or test instance with the provider's test keys, or ask the person to pass that one step in a headed browser and continue in the same session (`human_assisted: true`), or use Navvi if configured. Record which route was taken.
+If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk meets a bot check it did not expect, do not stop and do not try to defeat it. Follow `references/live-safety.md` §5: switch to a local copy or test instance with the provider's test keys, or ask the person to pass that one step in a headed browser and continue in the same session (`human_assisted: true`), or use Navvi if configured. Record which route was taken.
 
 After the last step, record whether the flow reached its `goal` (`goal_reached`) and, if not, `stopped_at`: the step, the screen and the exact words where it stopped.
 
 ### Step 2a: Dead-End Pass
 
-After the happy path, spend a short pass on the dead ends in `knowledge/walk-checks.md` (used and expired links, repeated wrong password, limits, someone else's item, an empty account, back/refresh/double submit). On a `read-only-live` surface only try those that need no writes. Record each under `dead_ends` with the words shown and whether the person can recover.
+After the happy path, spend a short pass on the dead ends in `references/walk-checks.md` (used and expired links, repeated wrong password, limits, someone else's item, an empty account, back/refresh/double submit). On a `read-only-live` surface only try those that need no writes. Record each under `dead_ends` with the words shown and whether the person can recover.
 
 ### Step 2b: Stop Recording & Smart Trim
 
@@ -360,7 +361,7 @@ Create a dated snapshot directory:
 
 ### Step 4: Upload Evidence (only when asked)
 
-Evidence stays local by default. Upload only when the brief asks for published evidence or `config.yml` sets `evidence.backend: s3`. Before uploading, look at every file: nothing may show real account details, tokens or customer data (`knowledge/live-safety.md` §4). Uploads go to the public evidence bucket through the `evidence-upload` skill and cannot be deleted by the walker.
+Evidence stays local by default. Upload only when the brief asks for published evidence or `config.yml` sets `evidence.backend: s3`. Before uploading, look at every file: nothing may show real account details, tokens or customer data (`references/live-safety.md` §4). Uploads go to the public evidence bucket through the `evidence-upload` skill and cannot be deleted by the walker.
 
 ```bash
 UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
