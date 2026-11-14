@@ -209,7 +209,7 @@ Extract the base URL from `results.json` → `config.url`.
 For each Critical finding, extract the path from the failed step and curl it on production:
 
 ```bash
-# PATH_TO_CHECK: the route that failed, e.g. /es/tools/booster-pack
+# PATH_TO_CHECK: the route that failed, e.g. /es/pricing
 PROD_CHECK=$(curl -sI -o /dev/null -w "%{http_code}" --max-time 10 "${PROD_URL}${PATH_TO_CHECK}" 2>/dev/null)
 CHECK_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 ```

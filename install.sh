@@ -56,9 +56,17 @@ YAML
   # Write version tracking file
   INSTALL_SHA=$(git ls-remote https://github.com/Fellowship-dev/flowchad.git HEAD 2>/dev/null | cut -f1 || echo "unknown")
   INSTALL_DATE=$(date -u +%Y-%m-%d)
-  printf '0.2.0\n%s\n%s\n' "$INSTALL_SHA" "$INSTALL_DATE" > .flowchad/.version
+  printf '0.4.0\n%s\n%s\n' "$INSTALL_SHA" "$INSTALL_DATE" > .flowchad/.version
   echo -e "${GREEN}✓${NC} Created .flowchad/.version (${INSTALL_SHA:0:7})"
 fi
+
+# Walk output can contain signed-in screens: keep it out of git even though
+# .flowchad/ itself is committed. Runs on every install, existing dirs included.
+touch .flowchad/.gitignore
+for p in snapshots/ reports/; do
+  grep -qxF "$p" .flowchad/.gitignore || echo "$p" >> .flowchad/.gitignore
+done
+echo -e "${GREEN}✓${NC} .flowchad/.gitignore ignores snapshots/ and reports/"
 
 # Check for ffmpeg (optional, for video)
 if command -v ffmpeg &>/dev/null; then
@@ -87,5 +95,5 @@ echo "  3. Run /flowchad-setup to auto-discover flows"
 echo "  4. Or define flows manually in .flowchad/flows/"
 echo "  5. Walk a flow: /flow-walk sign-up"
 echo ""
-echo -e "${BOLD}Important:${NC} .flowchad/ contains shared project knowledge — commit it to git."
+echo -e "${BOLD}Important:${NC} commit .flowchad/ (flows, config) — snapshots/ and reports/ stay ignored."
 echo ""

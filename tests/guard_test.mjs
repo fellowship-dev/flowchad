@@ -27,7 +27,7 @@ function server() {
       const cors = { 'access-control-allow-origin': '*' };
       if (req.url === '/sw.js' || req.url === '/worker.js') {
         const js = req.url === '/sw.js'
-          ? `self.addEventListener('fetch', () => {});`
+          ? `self.addEventListener('install', (e) => e.waitUntil(fetch('/sw-post', { method: 'POST', body: 'x' }).catch(() => {})));`
           : `fetch('/w-post', { method: 'POST', body: 'x' }).catch(() => {}); postMessage('sent');`;
         res.writeHead(200, { 'content-type': 'text/javascript', ...cors });
         return res.end(js);
@@ -71,8 +71,9 @@ const exercise = async (page, base, other) => {
       setTimeout(() => r('timeout'), 3000);
     });
     out.sw = 'serviceWorker' in navigator
-      ? await navigator.serviceWorker.register(`/sw.js`).then(() => 'registered', (e) => `refused: ${e.name}`)
+      ? await navigator.serviceWorker.register(`/sw.js`).then(() => 'register() resolved', (e) => `register() rejected: ${e.name}`)
       : 'serviceWorker API absent';
+    await new Promise((r) => setTimeout(r, 2000)); // give an installing worker time to send
     if (other) out.crossToExternal = await settle(fetch(other, { method: 'POST', body: 'x', mode: 'no-cors' }));
     return out;
   }, { base, other });
@@ -120,20 +121,26 @@ async function run() {
   const c2 = await b2.newContext();
   const p2 = await c2.newPage();
   await p2.goto(liveBase + '/');
-  report.swWithoutBlock = await p2.evaluate(() => navigator.serviceWorker.register('/sw.js').then(() => 'registered', (e) => `refused: ${e.name}`));
+  const before = live.seen.writes.length;
+  report.swWithoutBlock = await p2.evaluate(async () => {
+    const r = await navigator.serviceWorker.register('/sw.js').then(() => 'register() resolved', (e) => `register() rejected: ${e.name}`);
+    await new Promise((res) => setTimeout(res, 2000));
+    return r;
+  });
+  report.swWithoutBlockReachedServer = live.seen.writes.slice(before);
   await b2.close();
 
-  report.server = { liveWrites: live.seen.writes, liveUpgrades: live.seen.upgrades, testWrites: test.seen.writes, testUpgrades: test.seen.upgrades };
+  report.server = { liveWritesWithGuard: live.seen.writes.slice(0, before), liveUpgrades: live.seen.upgrades, testWrites: test.seen.writes, testUpgrades: test.seen.upgrades };
   live.s.close(); test.s.close();
   report.playwright = require('playwright/package.json').version;
   console.log(JSON.stringify(report, null, 2));
 
   const checks = [
-    ['no write reached the undeclared (live) host', live.seen.writes.length === 0],
+    ['no write reached the undeclared (live) host, service worker included', before === 0],
     ['no WebSocket upgrade reached the live host', live.seen.upgrades === 0],
     ['writes to the declared local-copy host went through', test.seen.writes.length >= 4],
     ['external host POST was blocked', report.liveGuardLog.blocked_writes.some((b) => b.where.startsWith('example.com'))],
-    ['service worker registration refused with block', String(report.live.sw).startsWith('refused')],
+    ['without serviceWorkers block, a service worker write bypasses context.route (control)', report.swWithoutBlockReachedServer.includes('POST /sw-post')],
   ];
   let bad = 0;
   for (const [name, ok] of checks) { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}`); if (!ok) bad++; }

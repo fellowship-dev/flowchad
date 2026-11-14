@@ -34,8 +34,13 @@ real content) and write one line to `.flowchad/pulse.tsv`:
 # flow-id<TAB>url<TAB>must-contain<TAB>must-not-contain
 book-a-call	https://example.com/book	Choose a time	No booking types
 pricing-page	https://example.com/pricing	per month
-public-checker	https://example.com/api/check?domain=example.com	"status":"ok"	"error"
+public-checker	https://example.com/api/check?domain=example.com	"status":"ok"	"status":"error"
 ```
+
+Matching is a plain substring search on the **raw response body** as served
+(HTML source or JSON text), not on the rendered page. Pick strings that only
+occur in the outcome you mean: `"error"` would also match `"error":null` in a
+healthy JSON reply.
 
 - `must-contain` is a fixed string that only appears when the step works.
   `must-not-contain` is a known failure text, such as an empty state.
@@ -59,8 +64,17 @@ PULSE=$(ls .flowchad/skills/flow-pulse/scripts/pulse.sh \
 bash "$PULSE" .flowchad/pulse.tsv
 ```
 
-Each line is timestamped in UTC (`PASS` or `FAIL` with the reason). Exit code
-is `0` when all pass and `1` when any fails, so a deploy hook can alert on it.
+Each line is timestamped in UTC (`PASS` or `FAIL` with the reason) and shows
+the final URL after redirects, so a redirect to a sign-in page is visible.
+Only `http` and `https` are allowed, for the request and for redirects.
+
+| Exit | Meaning |
+|---|---|
+| `0` | every check passed |
+| `1` | at least one check failed (HTTP status, curl error such as a timeout, missing or forbidden text) |
+| `2` | usage error: no checks file, a line without a URL or with more than four fields, or no checks at all |
+
+A deploy hook should alert on any non-zero exit.
 
 Report the failures with their timestamps. A failure on a third-party host or
 on DNS is environmental: re-run once before calling it a regression, and say

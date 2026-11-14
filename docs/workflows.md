@@ -19,7 +19,7 @@ Skill specs (`.flowchad/skills/*/SKILL.md`) are the core product. They have subt
 Scripts in `scripts/` are called by skill specs. Requirements:
 
 - **Portable bash only** — no bash 4+ features (no associative arrays, no `${arr[-1]}`), no `greadlink`
-- **Test on both macOS and Linux** before merging
+- **Test on both macOS and Linux** before merging: `bash tests/pulse_test.sh` covers `pulse.sh`; `node tests/guard_test.mjs` (needs Playwright and Chromium) covers the flow-walk write guard against servers that count what arrives
 
 Scripts that ship with a skill (`.flowchad/skills/*/scripts/`) follow the same rules; they are what `npx skills add` installs, while root `scripts/` only reaches users through `update.sh`.
 

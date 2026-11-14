@@ -128,7 +128,7 @@ const guard = await installGuard(context, surfaces);
 Object.assign(stepResult, guard.take()); // console_errors, failed_requests, blocked_writes, unguarded
 ```
 
-Runtime-verified (see `tests/guard_test.mjs`): the guarded methods and paths are listed in the PR that introduced it and in `README.md` → Safe on Live Systems. Anything listed in `unguarded` goes into the report's residual risk. Never log headers, cookies or request bodies.
+What has been verified at runtime (`tests/guard_test.mjs`, Playwright 1.65.1 with Chromium headless shell on Linux, servers counting what actually arrived): on an undeclared host, no write reached the server from `fetch` POST and PUT, XHR POST, `navigator.sendBeacon`, a dedicated worker's `fetch`, a form POST navigation, a form POST inside an iframe, a `fetch` from a popup, or a WebSocket; a POST to an external undeclared host was aborted. On a declared `local-copy` host the same writes and the WebSocket went through. Without `serviceWorkers: 'block'` a service worker's write reached the server despite the route; with it, none did (`register()` still resolves, so do not read success there as a running worker). Not verified: Firefox and WebKit, a browser attached over CDP, shared workers, and POSTs that a server redirects with 307 or 308. Treat those, and anything in `unguarded`, as residual risk. Never log headers, cookies or request bodies.
 
 Initialize an action log to track timestamps for smart trimming:
 
@@ -201,7 +201,7 @@ For each step in the flow:
 
 If a step has `optional: true` and fails, record but don't flag as critical.
 
-If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk meets a bot check it did not expect, do not stop and do not try to defeat it. Follow `references/live-safety.md` §5: switch to a local copy or test instance with the provider's test keys, or ask the person to pass that one step in a headed browser and continue in the same session (`human_assisted: true`), or use Navvi if configured. Record which route was taken.
+If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk meets a bot check it did not expect, do not stop and do not try to defeat it. Follow `references/live-safety.md` §5: switch to a local copy or test instance with the provider's test keys, or, on a test or local surface only, re-run the flow headed (`headed: true`; a headless browser cannot become headed mid-walk) and ask the person to do that one step in that window, continuing in the same session (`human_assisted: true`). Record which route was taken.
 
 After the last step, record whether the flow reached its `goal` (`goal_reached`) and, if not, `stopped_at`: the step, the screen and the exact words where it stopped.
 
