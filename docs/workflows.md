@@ -19,7 +19,9 @@ Skill specs (`.flowchad/skills/*/SKILL.md`) are the core product. They have subt
 Scripts in `scripts/` are called by skill specs. Requirements:
 
 - **Portable bash only** — no bash 4+ features (no associative arrays, no `${arr[-1]}`), no `greadlink`
-- **Test on both macOS and Linux** before merging
+- **Test on both macOS and Linux** before merging: `bash tests/pulse_test.sh` covers `pulse.sh`; `bash tests/upload_gate_test.sh` covers the evidence publishing gate; `node tests/guard_test.mjs` (needs Playwright and Chromium) covers the flow-walk write guard against servers that count what arrives
+
+Scripts that ship with a skill (`.flowchad/skills/*/scripts/`) follow the same rules; they are what `npx skills add` installs, while root `scripts/` only reaches users through `update.sh`.
 
 ## Contributing
 
@@ -38,7 +40,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 To update an existing install:
 
 ```bash
-npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flowchad-setup evidence-upload -y
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 

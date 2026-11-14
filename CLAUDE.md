@@ -1,6 +1,6 @@
 # Flowchad — Developer Guide
 
-Flowchad is a **skills package** — AI-readable slash commands for automated UX QA. No source code to run, no build step, no test suite.
+Flowchad is a **skills package** — AI-readable slash commands for automated UX QA. No build step. The few shipped scripts have tests in `tests/` (`bash tests/pulse_test.sh`; `bash tests/upload_gate_test.sh`; `PLAYWRIGHT_DIR=<dir with playwright> node tests/guard_test.mjs`), run on macOS and Linux before merging.
 
 ## Install / Distribute
 
@@ -18,25 +18,27 @@ Installs all skills into the agent directory (`.claude/skills/`, `.cursor/skills
 .flowchad/config.yml          # Config template — ships to user projects on install
 .flowchad/templates/          # Example flow YAMLs users copy and customize
 scripts/                      # Portable bash utilities called by skill specs
+agents/flowchad.md            # Claude Code subagent definition (source of truth; users copy it)
 docs/                         # Agent reference documentation
 specs/                        # Accepted feature specs
 QUALITY_SCORE.md              # Per-skill quality grades and open issues
 ```
 
-## The Ten Skills
+## The Eleven Skills
 
 | Command | What it does |
 |---------|-------------|
 | `/flowchad-setup` | Auto-discovers routes, tests, analytics — scaffolds config + flow definitions |
 | `/flow-walk <name>` | Executes flow steps via Playwright CDP, captures screenshots + timing + video |
-| `/flow-report <name>` | Classifies findings as Critical/Friction/Cosmetic, files GitHub issues |
+| `/flow-report <name>` | Reach-goal table, findings ranked launch blocker / should fix / later, files GitHub issues |
 | `/flow-add <description>` | Creates a new flow YAML from natural language |
 | `/flow-update <name> <change>` | Updates an existing flow to reflect product changes |
 | `/flow-suggest <name>` | Prioritized improvement plan ranked by effort vs impact |
 | `/flow-diff <name>` | Compares walk snapshots across time to detect regressions |
 | `/flow-diagram <name>` | Generates Mermaid flowchart from a flow definition |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
-| `/evidence-upload` | Uploads screenshots/GIFs to the public evidence S3 bucket |
+| `/flow-pulse [init\|run]` | Content-matched HTTP check of each flow's key step after a deploy |
+| `/evidence-upload` | Uploads reviewed screenshots/GIFs to the public evidence S3 bucket (opt-in) |
 
 ## Key Rules
 
@@ -45,6 +47,8 @@ QUALITY_SCORE.md              # Per-skill quality grades and open issues
 3. **Scripts must be portable bash** — no bash 4+ features, no `greadlink`. Test on macOS + Linux.
 4. **Open an issue before a large refactor** — skill specs have cross-skill dependencies.
 5. **Update QUALITY_SCORE.md** when closing skill-related issues.
+6. **Live safety is a default, not a brief item** — new walking behaviour must respect `flow-walk/references/live-safety.md` (surface modes, write guard, no secrets in output, private evidence).
+7. **Keep `agents/flowchad.md` in step with the skills** — it is the short behavioural version of flow-walk + flow-report.
 
 ## Reference
 

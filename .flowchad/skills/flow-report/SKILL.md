@@ -12,10 +12,10 @@ Analyze walk results and generate a categorized friction report.
 
 ```
 /flow-report sign-up
-/flow-report login
+/flow-report all        # one report across every flow walked in this session
 ```
 
-The argument is the flow name. Uses the most recent snapshot for that flow.
+The argument is the flow id (filename without `.yml`) or `all`. Uses the most recent snapshot for each flow, and the one before it for "what improved".
 
 ## Inputs
 
@@ -26,6 +26,7 @@ The argument is the flow name. Uses the most recent snapshot for that flow.
 5. **Flow definition** — load `flows/{flow-name}.yml` for context
 6. **Knowledge docs** — reference `knowledge/friction-taxonomy.md` for severity classification
 7. **Config** — load `config.yml` for platform type, timing thresholds, business goals
+8. **Previous snapshot** — the walk before the latest one for the same flow id, if any, for the "What improved" and counts comparison
 
 ## Analysis Process
 
@@ -36,7 +37,7 @@ Find the most recent snapshot directory matching the flow name:
 ls -d .flowchad/snapshots/*-{flow-name} | sort -r | head -1
 ```
 
-Read `results.json` and all screenshots from that directory.
+Read `results.json` and all screenshots from that directory. Also load the previous snapshot of the same flow id, if one exists. Older snapshots may lack the newer fields (`goal_reached`, `counts`, `observed_at`, per-width `screenshots`); report those as "not recorded" rather than guessing.
 
 ### 2. Classify Each Finding
 
@@ -47,17 +48,35 @@ For every step that isn't a clean pass, classify using `knowledge/friction-taxon
 - Navigation failure (page didn't load)
 - Form submission returned server error
 - Redirect loop or dead end
+- `goal_reached` is false
+- A `truth_checks` entry disagrees with the independent fact and people would act on the claim
 
 **Friction** — user can complete but experience is painful:
 - Step flagged as `slow` (exceeded timing threshold)
 - Expect partially met (page loaded but content wrong)
 - Extra steps needed that aren't in the flow (unexpected modal, cookie banner)
 - Confusing UI observed in screenshot
+- Console errors or failed requests on a step that otherwise passed
+- A dead end the person can only leave with help
 
 **Cosmetic** — works fine but looks rough:
 - Minor visual issues spotted in screenshots
 - Alignment, spacing, contrast problems
 - Truncated text, placeholder text visible
+
+### 2b. Rank Each Finding for Action
+
+Severity says how bad it is for the person; rank says what to do about it. Use the ranking in `knowledge/friction-taxonomy.md`:
+
+- **Launch blocker** — a flow does not reach its goal, or the product states something untrue that people will act on.
+- **Should fix** — the goal is reached but with avoidable friction, confusion or risk.
+- **Later** — polish.
+
+For every finding record: the screen, the **exact words the person sees** (quoted, not paraphrased), why it hurts, the smallest fix, and who must act: **owner** (a decision or account setting outside the code: booking, payment, DNS, email provider, copy approval) or **code**.
+
+### 2c. Re-check the Environment Before Writing
+
+Findings about DNS, TLS, redirects, deploys or third-party pages go stale fast. Right before writing the report, re-check each one, judging by rendered content rather than status code, and record the time. If it now works, move it to "Resolved during the walk" instead of listing it as a blocker. Every finding shows when it was observed.
 
 ### 3. Consider Platform Type
 
@@ -70,9 +89,10 @@ Reference `knowledge/platform-types.md` and `config.yml`:
 ### 4. Generate Suggestions
 
 For each finding, provide:
-- **What's wrong** — specific observation
-- **Why it matters** — impact on user/business
-- **Suggested fix** — concrete, actionable recommendation
+- **What's wrong** — the screen and the exact words
+- **Why it matters** — impact on reaching the goal
+- **Smallest fix** — the one change that removes the problem
+- **Who** — owner or code
 - **Effort estimate** — low / medium / high
 
 ### 5. Cross-Reference Speckit (if available)
@@ -86,71 +106,79 @@ If `.speckit/` exists in the project, check:
 
 Generate a markdown report at:
 ```
-.flowchad/reports/{YYYY-MM-DD}-{flow-name}-report.md
+.flowchad/reports/{YYYY-MM-DD}-{flow-name}-report.md   # or {YYYY-MM-DD}-all-report.md
 ```
 
 ### Report Template
 
+Keep it scannable: the person reading it decides what to fix today. Quote screen text exactly; never paste secrets, cookies or real account details.
+
 ```markdown
-# Friction Report: {Flow Name}
+# Walk Report: {project} — {YYYY-MM-DD}
 
-**Date:** {timestamp}
-**Flow:** {flow-name}
-**URL:** {base_url}
-**Pass rate:** {passed}/{total} steps ({pass_rate}%)
-**Duration:** {total_duration}
+**Written:** {timestamp} · **Previous walk:** {date or "none"}
 
----
+## Surfaces
+| Surface | Mode | Notes |
+|---|---|---|
+| {url} | read-only-live | writes blocked: {N} requests |
+| {local url} | local-copy @ {commit} | test keys, captured mail |
 
-## Critical
+## Does each flow reach its goal today?
+| Flow (id) | Goal | Reached? | Where it stops | Since last walk |
+|---|---|---|---|---|
+| {id} | {goal} | yes / no / not walked (why) | {step, screen, "exact words"} | {fixed / new / same} |
 
+## Launch blockers
 ### 1. {Title}
-**Step {N}:** {action} → {target}
-**Observed:** {what happened}
-**Expected:** {what should happen}
-**Impact:** {why this matters}
-**Fix:** {suggested fix}
-**Effort:** {low|medium|high}
-**Screenshot:** ![Step {N}]({evidence_url or local path})
+- **Screen:** {flow id, step N, URL path} · observed {time}, re-checked {time}
+- **What the person sees:** "{exact words}"
+- **Why it hurts:** {impact on reaching the goal}
+- **Smallest fix:** {one change}
+- **Who:** owner ({booking/payment/DNS/...}) | code · **Severity:** Critical | Friction | Cosmetic
+- **Evidence:** {screenshot path or approved URL}
 
----
-
-## Friction
-
-### 2. {Title}
+## Should fix
 ...
 
----
-
-## Cosmetic
-
-### 3. {Title}
+## Later
 ...
 
----
+## Untrue statements
+| Screen | What it claims | Independent fact | Source |
+|---|---|---|---|
 
-## Summary
+## Effort and time to first value
+| Flow | Typed fields | Clicks | Time to first value | Previous |
+|---|---|---|---|---|
 
-| Category | Count |
-|----------|-------|
-| Critical | N |
-| Friction | N |
-| Cosmetic | N |
+## Dead ends
+| Case | What the person sees | Can recover? |
+|---|---|---|
 
-**Overall assessment:** {one-line verdict}
+## Errors per step
+{console errors and failed requests, grouped by flow and step; omit if none}
 
-**Video:** [{flow-name}-trimmed.mp4](snapshots/{date}-{flow-name}/{flow-name}-trimmed.mp4) ({Xs} trimmed from {Ys})
-**GIF:** ![Walk recording]({evidence_gif_url or local path})
+## What improved since last walk
+- {finding that is gone, count that went down, flow that now reaches its goal}
 
-**Recommended next steps:**
-1. {highest priority fix}
-2. {second priority}
-3. {third priority}
+## Resolved during the walk
+- {environmental finding, first seen {time}, working at {time}}
+
+## Where this differs from production
+- {for each local-copy or test surface: commit, simulated steps, settings left at defaults, switches turned on to reach a screen, test keys}
+
+## Residual risk
+- {pages opened on live systems that might write on view; human-assisted steps}
+- {every `unguarded` note from the walk, and any unverified mode used: Firefox/WebKit, a CDP-attached browser's existing context, shared workers, 307/308-redirected POSTs, Playwright < 1.48}
+
+## Left running
+- {nothing, or what and why}
 ```
 
 ## File Issues for Critical Findings
 
-For every Critical finding in the report, file a GitHub issue. Before assigning P0/P1, **verify whether production is actually affected**.
+For every Critical finding in the report, file a GitHub issue. Embed screenshots only if they are already published under the evidence rules in `flow-walk/references/live-safety.md` §4; otherwise reference local paths. Before assigning P0/P1, **verify whether production is actually affected**.
 
 ### Step 1: Resolve the Production URL
 
@@ -188,6 +216,8 @@ CHECK_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 ```
 
 If `PATH_TO_CHECK` is just a domain (no path), use `/`.
+
+A `2xx` does not prove production is healthy. If the finding is about content (an empty list, "nothing available", wrong words) or the page renders client-side, open the production page in a browser and judge what it shows; record that in the issue instead of the status code alone.
 
 ### Step 4: Assign Severity and File Issue
 

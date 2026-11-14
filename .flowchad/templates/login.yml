@@ -4,6 +4,7 @@
 #   existing-user-logs-in-with-email-and-password.yml
 
 name: Existing user logs in with email and password and reaches the dashboard
+goal: The person is signed in and sees their own dashboard
 url: https://staging.example.com
 tags: [auth, critical]
 priority: P0
@@ -33,6 +34,7 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
+    effect: write  # signing in creates a session; on live systems only if the brief allows it
     expect: >
       Redirect to /dashboard because login succeeded.
       User's name or avatar visible in the header, confirming authentication.

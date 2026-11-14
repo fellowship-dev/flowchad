@@ -39,6 +39,8 @@ Rank every suggestion by **effort vs impact**:
 
 ### Effort Estimation
 
+Mark each suggestion **owner** or **code**. Owner items (a booking calendar, payment account, DNS, email provider, approved copy) are often the fastest high-impact fixes and do not belong in an engineering backlog; list them first within their tier.
+
 - **Low**: CSS/copy change, config tweak, one-line fix. < 30 minutes.
 - **Medium**: Component refactor, API change, new validation. 1-4 hours.
 - **High**: Architecture change, new feature, third-party integration. > 4 hours.

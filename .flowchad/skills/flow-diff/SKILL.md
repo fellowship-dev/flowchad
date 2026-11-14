@@ -24,11 +24,13 @@ List all snapshot directories for the flow:
 ls -d .flowchad/snapshots/*-{flow-name} | sort
 ```
 
+Snapshots are matched by flow id (the filename). If the flow lists `previously:` ids, include their snapshots too.
+
 Need at least 2 snapshots to diff. If only 1 exists, tell the user to walk again after making changes.
 
 ### 2. Load Results
 
-Read `results.json` from the two most recent snapshots (or N for `--history`).
+Read `results.json` from the two most recent snapshots (or N for `--history`). If the two walks ran on different surfaces (for example `read-only-live` vs `local-copy`), say so at the top: differences may come from the surface, not the product.
 
 ### 3. Compare Step-by-Step
 
@@ -43,6 +45,9 @@ For each step, compare across snapshots:
 | **Fixed** | Step was fail/error, now pass | Always note (positive) |
 | **New step** | Step exists in latest, not in previous | Note (flow changed) |
 | **Removed step** | Step in previous, not in latest | Note (flow changed) |
+| **Goal** | Compare `goal_reached` and `stopped_at` | Any change; "now reaches its goal" is the headline improvement |
+| **Effort** | Compare `counts` (typed fields, clicks, time to first value) | Any change |
+| **Errors** | Compare `console_errors` / `failed_requests` per step | New errors |
 
 ### 4. Visual Comparison
 
@@ -53,9 +58,11 @@ For steps with status changes or significant timing differences, present screens
 
 | Before (Mar 18) | After (Mar 20) |
 |---|---|
-| step-03-click.png | step-03-click.png |
+| step-03-click@1440.png | step-03-click@1440.png |
 | ✓ pass, 1.2s | ✗ fail, timeout |
 ```
+
+Screenshots are per width since 0.4.0 (`steps[].screenshots`, e.g. `{"1440": "step-03-click@1440.png", "375": "step-03-click@375.png"}`); older snapshots have a single `screenshot` such as `step-03-click.png`. Compare the same width on both sides, falling back to the single file for old snapshots, and include the narrow width when the difference only shows there.
 
 Read both screenshots and describe the visual difference (e.g., "button is now disabled", "error modal appeared", "loading spinner stuck").
 

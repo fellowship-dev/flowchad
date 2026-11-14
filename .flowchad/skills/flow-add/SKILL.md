@@ -103,6 +103,22 @@ name: google-oauth-signup
 Kebab-case the scenario for the filename:
 `new-user-signs-up-with-google-oauth.yml`
 
+The filename is the flow's id. Before creating it, check that no existing flow already covers the scenario under another id; walks are compared by id.
+
+### Goal — what reaching the end means
+
+One sentence the report can answer yes or no to, in the person's terms:
+
+```yaml
+goal: The person is signed in and sees the onboarding wizard with their Google name
+```
+
+### Step markers
+
+- `effect: write | send | pay` on every step that creates or changes data, sends a message, books or charges (form submits, "Save", "Send", "Book", "Pay"). The walker never performs these on live systems.
+- `first_value: true` on the step where the person first gets a true, useful fact about their own thing.
+- `bot_check: true` on steps behind Turnstile, reCAPTCHA or hCaptcha.
+
 ### Context block — preconditions
 
 Document the starting state:
@@ -164,7 +180,7 @@ steps:
       Google OAuth consent screen appears or redirects to Google.
       User can select their Google account.
     timing: 5s
-    captcha: true
+    bot_check: true
 
   - action: wait
     selector: "[data-testid=onboarding-wizard]"

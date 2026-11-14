@@ -197,6 +197,16 @@ analytics:
 # Detected by /flowchad-setup via scripts/detect-i18n.sh
 # [en] = English-only site. [en, es] = locale-prefixed routes exist for /es/*.
 locales: [{detected_locales_csv}]
+
+# What a walk may do on each environment (flow-walk/references/live-safety.md).
+# Production is always read-only-live unless the user says otherwise.
+environments:
+  dev:
+    url: {localhost_url}
+    surface: local-copy
+  production:
+    url: {production_url}
+    surface: read-only-live
 ```
 
 ### Convert Existing Tests to Flow Definitions
@@ -207,6 +217,7 @@ For each e2e test found, generate a `.yml` flow definition in `.flowchad/flows/`
 - `name` field: a descriptive sentence explaining the scenario (actor + action + outcome)
 - Filename: the scenario as a kebab-case slug
 - Add a `context` block with relevant preconditions extracted from the test setup
+- Add a one-sentence `goal`, and mark steps that create, send, book or charge with `effect: write | send | pay`
 - Write rich `expect` strings that explain what a human would judge, not just pass/fail
 
 ```yaml

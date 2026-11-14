@@ -14,6 +14,7 @@
   <a href="#getting-started">Getting Started</a> &middot;
   <a href="#what-it-does">What It Does</a> &middot;
   <a href="#flow-definition-reference">Flow Reference</a> &middot;
+  <a href="#safe-on-live-systems">Live Safety</a> &middot;
   <a href="#evidence-upload">Evidence Upload</a> &middot;
   <a href="#how-it-compares">Compare</a>
 </p>
@@ -34,12 +35,26 @@ Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and
 |-------|-------------|
 | `/flowchad-setup` | Auto-discovers routes, tests, and analytics — scaffolds flow definitions |
 | `/flow-walk sign-up` | Walks the flow step-by-step, captures screenshots + timing + video |
-| `/flow-report sign-up` | Categorizes findings as Critical / Friction / Cosmetic |
+| `/flow-report sign-up` | Reports whether each flow reaches its goal, and ranks findings as launch blockers / should fix / later with the exact words people see |
 | `/flow-suggest sign-up` | Prioritized improvements ranked by effort vs impact |
 | `/flow-diff sign-up` | Compares runs to catch regressions |
 | `/flow-diagram sign-up` | Mermaid flowchart from your YAML definition |
 | `/flow-add <description>` | Creates a new flow from natural language, scanning your codebase for selectors |
 | `/flow-update <name> <change>` | Updates an existing flow to reflect product changes |
+| `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
+| `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser and attaches evidence to the issue |
+
+### Agent definition
+
+`agents/flowchad.md` is a Claude Code subagent that applies the same defaults without a long brief. Install or update it with:
+
+```bash
+mkdir -p ~/.claude/agents   # or .claude/agents in a project
+curl -fsSL https://raw.githubusercontent.com/Fellowship-dev/flowchad/main/agents/flowchad.md \
+  -o ~/.claude/agents/flowchad.md
+```
+
+Re-run the same command to update; `npx skills update` does not manage agent files.
 
 ## Quick Start
 
@@ -98,6 +113,7 @@ The `type` field tells the AI which evaluation criteria to apply during `/flow-r
 
 ```yaml
 name: New user signs up with email and password and lands on the dashboard
+goal: A new account exists and the dashboard shows the person's first useful result
 url: /signup
 tags: [onboarding, critical]
 priority: P0
@@ -123,10 +139,12 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
+    effect: write        # never performed on read-only-live surfaces
     expect: >
       Redirect to /dashboard because sign-up succeeded.
       Welcome message confirms account was created.
     timing: 3s
+    first_value: true    # time to first value is measured to here
 ```
 
 Or skip manual YAML and let AI create it:
@@ -147,6 +165,22 @@ Or skip manual YAML and let AI create it:
 /flow-report sign-up
 ```
 
+## Safe on Live Systems
+
+Every walk starts by declaring each host it touches (`flow-walk/references/live-safety.md`). Any host not declared, including the production APIs, payment providers and analytics a local build calls, is `read-only-live`.
+
+| Mode | The walker may |
+|---|---|
+| `read-only-live` (any host not declared) | look and click links; anything except GET, HEAD and OPTIONS, and WebSockets, is blocked in the browser and reported |
+| `write-allowed-test` | create test accounts and data, submit forms, receive captured mail |
+| `local-copy` | anything, on a build of a named commit with test keys; the report lists how it differs from production |
+
+The block is mechanical: `flow-walk/scripts/guard.mjs` is installed on every walk and classifies each request by host, and contexts always block service workers. `tests/guard_test.mjs` checks it with a real browser against servers that count what arrives (fetch, XHR, beacons, workers, form posts in pages, iframes and popups, WebSockets); see flow-walk Step 0c for exactly what is and is not verified.
+
+Steps that write carry `effect: write | send | pay` and are never performed on live systems. Secrets are never printed, evidence stays local unless you opt in, and bot checks are handled with test keys on a local copy or a human-assisted step instead of stopping the walk.
+
+Walks also apply the checks in `flow-walk/references/walk-checks.md` by default: rendered content over status codes, a timestamp on every observation with environmental findings re-checked before the report, every width captured at the same moment without reloading, truth cross-checks of what screens claim, a dead-end pass, and console and network errors per step.
+
 ## Video Recording
 
 Flow walks automatically record video. The recording is **smart-trimmed** — dead frames where nothing happens are cut out.
@@ -166,16 +200,18 @@ Disable with `video: false` in your flow YAML or config.
 
 ## Evidence Upload
 
-Screenshots and GIFs are uploaded automatically to a public S3 bucket for embedding in GitHub issues and PRs. Private repos don't render repo-relative or `raw.githubusercontent.com` images for most viewers; bucket URLs render everywhere and never expire.
+Evidence stays in `.flowchad/snapshots/` by default. Opt in to uploading screenshots and GIFs to a public S3 bucket for embedding in GitHub issues and PRs (`/flow-reproduce` uploads because attaching evidence is its job). Private repos don't render repo-relative or `raw.githubusercontent.com` images for most viewers; bucket URLs render everywhere and never expire.
 
 ```yaml
 evidence:
-  backend: s3        # s3 (default) | none
+  backend: s3        # none (default) | s3
 ```
+
+**Upgrading from 0.3:** the default changed from `s3` to `none`. If you relied on automatic uploads, set `evidence.backend: s3` explicitly; walks then still check every file before uploading.
 
 Provide the upload secret through the environment only: `EVIDENCE_AWS_ACCESS_KEY_ID`, `EVIDENCE_AWS_SECRET_ACCESS_KEY`, `EVIDENCE_BUCKET`, `EVIDENCE_REGION`, `EVIDENCE_PUBLIC_BASE_URL`. The `evidence-upload` skill ships `scripts/upload_evidence.sh` (curl ≥ 7.75, no other dependencies), which prints each public URL and a ready-to-paste Markdown line.
 
-**Anything uploaded is publicly readable by URL** — never upload secrets, customer PII or production data; prefer staging or synthetic screenshots.
+**Anything uploaded is publicly readable by URL and the uploader cannot delete it** — the walker looks at every file first and never uploads secrets, real account details, customer PII or production data; prefer staging or synthetic screenshots.
 
 ## Flow Definition Reference
 
@@ -191,7 +227,9 @@ name: sign-up
 name: New user signs up with email and password and lands on the dashboard
 ```
 
-Filenames mirror the scenario as a slug: `new-user-signs-up-with-email-and-password.yml`
+Filenames mirror the scenario as a slug: `new-user-signs-up-with-email-and-password.yml`. The filename is the flow's id: reports, diffs and pulse checks compare walks by it, so keep it stable.
+
+Every flow has a one-sentence `goal`; the report's first table says whether each flow reaches it today.
 
 ### Context Block
 
@@ -226,7 +264,9 @@ context:
     Welcome message confirms account was created.
   timing: 3s                         # flag if slower than this
   optional: true                     # don't fail the flow if this breaks
-  captcha: true                      # skip in headless, delegate to Navvi
+  effect: write                      # write | send | pay — skipped on read-only-live surfaces
+  first_value: true                  # the person's first true, useful result
+  bot_check: true                    # test keys on a local copy, or a human-assisted step
 ```
 
 **Timing thresholds** — steps that exceed `timing` are reported as Friction findings. General guidance:
@@ -252,20 +292,20 @@ context:
   cart_items: 1
   browser: mobile
 video: true           # record video (default: true)
-viewport:             # override default 1280x720
-  width: 375
-  height: 812
+viewports: [1440, 375] # widths captured at every step, same session (default)
+surface: write-allowed-test  # override the environment's mode for this flow
 ```
 
 ## Friction Reports
 
-Reports classify every finding into three levels:
+Reports open with a surface table and a per-flow "does it reach its goal today" table, then rank findings as **launch blockers / should fix / later**. Each finding names the screen, the exact words the person sees, why it hurts, the smallest fix, and whether the owner (booking, payment, DNS, copy) or code must act. Counts (typed fields, clicks, time to first value), what improved since the last walk, and where test surfaces differ from production follow.
+
+Severity is classified into three levels:
 
 - **Critical** — user cannot complete their task (blocked, data loss, crash)
 - **Friction** — user can complete but it's unnecessarily hard (slow, confusing, extra steps)
 - **Cosmetic** — works fine but looks rough (typos, alignment, placeholder text)
 
-Each finding includes what's wrong, why it matters, a suggested fix, and effort estimate.
 
 ### Issue Priority (P0 / P1 / P2)
 
@@ -318,7 +358,7 @@ The project data (config + flows) lives in `.flowchad/` and is committed to git.
 - Chrome or Chromium (for Playwright CDP, or run headless)
 
 Optional:
-- [Navvi](https://github.com/Fellowship-dev/navvi) (for flows with CAPTCHAs or bot detection)
+- [Navvi](https://github.com/Fellowship-dev/navvi) (headed automation; one option for steps behind bot checks)
 - ffmpeg (for video recording + trimming)
 
 ## How It Compares
@@ -352,7 +392,7 @@ This is a [known bug](https://github.com/vercel-labs/skills/issues/337) — `ski
 
 **Workaround — remove by skill names, then re-add:**
 ```bash
-npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flowchad-setup evidence-upload -y
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 

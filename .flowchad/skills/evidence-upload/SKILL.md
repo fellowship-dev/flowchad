@@ -20,7 +20,15 @@ content-addressed bucket renders everywhere and never expires.
 
 Anything uploaded is **publicly readable by anyone with the URL**. Never upload
 secrets, tokens, customer PII or production data. Prefer screenshots of staging
-or synthetic data; crop or redact first. The uploader cannot delete objects.
+or synthetic data; crop or redact first. The uploader cannot delete objects, so
+a wrong upload stays public until someone with more access removes it.
+
+Upload only when publishing was asked for: the brief says so, `config.yml` sets
+`evidence.backend: s3`, or the command's purpose is to attach evidence to an
+issue (`/flow-reproduce`). Before every upload, open each file and check it
+shows no real account details (emails, names, domains, addresses, balances),
+tokens or customer data. Signed-in screens from a live system are the usual
+culprit. See `flow-walk/references/live-safety.md` §4.
 
 ## When to Use
 
@@ -40,14 +48,15 @@ never command-line arguments. Never print them.
 | `EVIDENCE_AWS_ACCESS_KEY_ID` / `EVIDENCE_AWS_SECRET_ACCESS_KEY` | Upload-only key (`s3:PutObject` on the bucket) |
 | `EVIDENCE_BUCKET` | e.g. `<your-evidence-bucket>` |
 | `EVIDENCE_REGION` | e.g. `us-east-1` |
-| `EVIDENCE_PUBLIC_BASE_URL` | e.g. `https://<your-evidence-bucket>.s3.us-east-1.amazonaws.com` |
+| `EVIDENCE_PUBLIC_BASE_URL` | e.g. `https://<your-evidence-bucket>.s3.<region>.amazonaws.com` |
 
 If any is missing the script exits 2 with *"evidence upload secret is not
 configured for this environment"*. Treat that as an upload failure (see below);
 do not substitute other credentials or another host.
 
-`.flowchad/config.yml` `evidence.backend` accepts `s3` (default) or `none`
-(skip uploads). The retired `git`, `pylot` and `navvi` values are treated as `s3`.
+`.flowchad/config.yml` `evidence.backend` accepts `none` (default: evidence
+stays local) or `s3`. The retired `git`, `pylot` and `navvi` values are treated
+as `s3`.
 
 ## Upload
 
@@ -65,7 +74,9 @@ bash "$UPLOAD" --prefix "sign-up/2026-03-24" --alt "Step 1" \
 # ![Step 1](https://<bucket>.s3.<region>.amazonaws.com/owner/repo/sign-up/2026-03-24/3f9c0a1b2c3d4e5f-step-01-navigate.png)
 ```
 
-Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] [--url-only] [--dry-run] FILE...`
+Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] [--url-only] [--dry-run] [--gate] FILE...`
+
+**The publishing gate lives in the script.** It uploads only when `.flowchad/config.yml` (or `$FLOWCHAD_CONFIG`) has an uncommented `evidence:` → `backend: s3`, or `FLOWCHAD_UPLOAD_CONFIRMED=1` is set for this run because the user confirmed; otherwise it sends nothing and exits `3` with "evidence stays local". `--gate` checks only that (exit `0` enabled, `3` not). `--dry-run` never uploads and skips it. flow-walk and flow-reproduce call `--gate` first and fall back to local paths.
 
 - Files: `png jpg jpeg gif webp mp4 webm pdf txt`.
 - `--repo` defaults to `git remote get-url origin`.
@@ -74,7 +85,7 @@ Interface: `upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] 
 - Default output per file: the URL, then `![alt](url)` (images) or `[alt](url)`
   (video/PDF/text). `--url-only` prints just the URL.
 - Exit `0` all uploaded and verified, `1` some file failed (no URL printed for
-  it), `2` usage/config error.
+  it), `2` usage/config error, `3` publishing not enabled (evidence stays local).
 
 The script signs one `PUT` with `curl --aws-sigv4` (curl ≥ 7.75; no AWS CLI),
 sets `Content-Type` and `Cache-Control: public, max-age=31536000, immutable`,
@@ -85,8 +96,9 @@ verifies the public URL returns HTTP 200 before printing it.
 
 After a walk completes and snapshots are saved:
 
-1. Read `evidence.backend` from `config.yml` (default `s3`; `none` skips).
-2. Upload each step screenshot with `--url-only --prefix "{flow}/{date}"`.
+1. Read `evidence.backend` from `config.yml` (default `none`: skip uploads
+   unless the brief asks for published evidence).
+2. Review, then upload each step screenshot with `--url-only --prefix "{flow}/{date}"`.
 3. Upload the GIF (if generated) the same way.
 4. Store the URLs in `results.json` under the `evidence` key:
 

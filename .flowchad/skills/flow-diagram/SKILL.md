@@ -35,7 +35,9 @@ Map each step to a node. Connect sequentially. Add error/alternate paths based o
 **Edge labels:**
 - Steps with `expect` get a success/failure branch
 - Steps with `optional: true` get a skip path
-- Steps with `captcha: true` get a "→ Navvi" delegation edge
+- Steps with `bot_check: true` (or legacy `captcha: true`) get a "→ test keys / human step" edge
+- Steps with `effect: write`, `send` or `pay` are labelled with the effect, so the read-only-live stopping point is visible
+- The step with `first_value: true` is highlighted as the flow's first value
 
 ### 3. Generate Output
 
