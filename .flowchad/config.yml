@@ -11,6 +11,9 @@
 # See knowledge/platform-types.md for evaluation criteria per type.
 # type: saas
 
+# Widths captured at every step, in the same session (no reload between widths)
+# viewports: [1440, 375]
+
 # Default timing thresholds (seconds)
 # timing:
 #   slow: 3       # flag transitions slower than this
@@ -27,24 +30,32 @@
 #   mcp: true          # connect via MCP server if available
 
 # Evidence upload (optional — host screenshots/GIFs for issues/PRs)
-# Uploads go to the public evidence bucket; credentials come only from the
-# EVIDENCE_* env secret (see the evidence-upload skill). Public by URL.
+# Evidence stays local unless you opt in. s3 uploads to the public evidence
+# bucket (EVIDENCE_* env secret; see the evidence-upload skill): public by URL,
+# and the uploader cannot delete. Screens must show test data only.
 # evidence:
-#   backend: s3        # s3 (default) | none
+#   backend: none      # none (default) | s3
 
 # Speckit integration (optional — cross-reference specs during walks)
 # speckit:
 #   path: .speckit/    # relative path to speckit directory
 # Environments (optional — enables deployment-aware preflight)
+# surface: what a walk may do there (knowledge/live-safety.md)
+#   read-only-live     look only; unsafe requests are blocked (default for non-localhost)
+#   write-allowed-test may create test data, submit forms, receive captured mail
+#   local-copy         built locally from a named commit with test keys (default for localhost)
 # environments:
 #   dev:
 #     url: http://localhost:3000
+#     surface: local-copy
 #   staging:
 #     url: https://staging.example.com
+#     surface: write-allowed-test
 #     deploy_check: gh-actions   # gh-actions | vercel | none
 #     deploy_timeout: 300        # seconds to wait for deploy (default: 300)
 #   production:
 #     url: https://example.com
+#     surface: read-only-live
 #     deploy_check: vercel
 #     deploy_timeout: 120
 

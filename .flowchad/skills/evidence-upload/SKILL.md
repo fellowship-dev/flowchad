@@ -20,7 +20,15 @@ content-addressed bucket renders everywhere and never expires.
 
 Anything uploaded is **publicly readable by anyone with the URL**. Never upload
 secrets, tokens, customer PII or production data. Prefer screenshots of staging
-or synthetic data; crop or redact first. The uploader cannot delete objects.
+or synthetic data; crop or redact first. The uploader cannot delete objects, so
+a wrong upload stays public until someone with more access removes it.
+
+Upload only when publishing was asked for: the brief says so, `config.yml` sets
+`evidence.backend: s3`, or the command's purpose is to attach evidence to an
+issue (`/flow-reproduce`). Before every upload, open each file and check it
+shows no real account details (emails, names, domains, addresses, balances),
+tokens or customer data. Signed-in screens from a live system are the usual
+culprit. See `knowledge/live-safety.md` §4.
 
 ## When to Use
 
@@ -46,8 +54,9 @@ If any is missing the script exits 2 with *"evidence upload secret is not
 configured for this environment"*. Treat that as an upload failure (see below);
 do not substitute other credentials or another host.
 
-`.flowchad/config.yml` `evidence.backend` accepts `s3` (default) or `none`
-(skip uploads). The retired `git`, `pylot` and `navvi` values are treated as `s3`.
+`.flowchad/config.yml` `evidence.backend` accepts `none` (default: evidence
+stays local) or `s3`. The retired `git`, `pylot` and `navvi` values are treated
+as `s3`.
 
 ## Upload
 
@@ -85,8 +94,9 @@ verifies the public URL returns HTTP 200 before printing it.
 
 After a walk completes and snapshots are saved:
 
-1. Read `evidence.backend` from `config.yml` (default `s3`; `none` skips).
-2. Upload each step screenshot with `--url-only --prefix "{flow}/{date}"`.
+1. Read `evidence.backend` from `config.yml` (default `none`: skip uploads
+   unless the brief asks for published evidence).
+2. Review, then upload each step screenshot with `--url-only --prefix "{flow}/{date}"`.
 3. Upload the GIF (if generated) the same way.
 4. Store the URLs in `results.json` under the `evidence` key:
 

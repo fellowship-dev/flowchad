@@ -91,6 +91,8 @@ Use this sequence to classify a finding:
 | Feature requires workaround (refresh, back button) | **Friction** | Task is completable via workaround. If the workaround is non-discoverable (user would give up), upgrade to Critical. |
 | Mobile keyboard covers the input field | **Friction** | User can scroll to reveal it, but shouldn't have to. If scrolling doesn't help and input is unreachable, Critical. |
 | Third-party widget fails to load | Depends | If it blocks the primary flow: Critical. If it's supplementary (analytics badge, social proof): Cosmetic. |
+| Embedded page returns 200 but shows "nothing available" | Same as failing to load | Judge by what renders, not the status code. An empty booking or checkout embed on the path to the goal is Critical. |
+| Screen states something untrue (a valid record called broken, "checked" when nothing ran, advice that would break the person's setup) | **Critical** if people act on it, otherwise **Friction** | Misleading success and false advice are worse than a visible error: the person trusts them. |
 
 ## Severity Modifiers
 
@@ -100,6 +102,20 @@ Severity can shift based on context:
 - **User segment**: Issues affecting paying customers or new users during onboarding carry more weight.
 - **Workaround availability**: A well-known, documented workaround can downgrade a Critical to Friction for prioritization (but not for classification — the finding stays Critical).
 - **Trend direction**: A Friction issue that is getting worse over time (regression) should be flagged even if the current state is borderline.
+
+## Ranking for Action
+
+Severity describes the person's experience; the report also ranks each finding by what to do about it:
+
+| Rank | Use when |
+|---|---|
+| **Launch blocker** | A flow does not reach its goal, or the product states something untrue that people will act on. |
+| **Should fix** | The goal is reached, but with avoidable friction, confusion, errors in the console, or risk. |
+| **Later** | Polish that does not change whether or how easily the goal is reached. |
+
+Most Critical findings are launch blockers and most Cosmetic ones are "later", but frequency and flow priority can move a finding up (a Friction finding on the main sign-up path can be a launch blocker).
+
+Each ranked finding also names **who** must act: the **owner** when the fix is a decision or an account setting outside the code (a booking calendar, a payment account, DNS, an email provider, approved copy), otherwise **code**. Owner findings are easy to lose in an engineering queue, so they are labelled explicitly.
 
 ## Rules for the AI
 

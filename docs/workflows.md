@@ -21,6 +21,8 @@ Scripts in `scripts/` are called by skill specs. Requirements:
 - **Portable bash only** — no bash 4+ features (no associative arrays, no `${arr[-1]}`), no `greadlink`
 - **Test on both macOS and Linux** before merging
 
+Scripts that ship with a skill (`.flowchad/skills/*/scripts/`) follow the same rules; they are what `npx skills add` installs, while root `scripts/` only reaches users through `update.sh`.
+
 ## Contributing
 
 - **Open an issue before a large refactor** — skill specs have subtle cross-skill dependencies. Getting alignment first prevents wasted work.
@@ -38,7 +40,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 To update an existing install:
 
 ```bash
-npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flowchad-setup evidence-upload -y
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 

@@ -7,6 +7,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Descriptive sentence explaining the scenario (see [naming convention](#naming-convention)) |
+| `goal` | string | What reaching the end means for the person, in one sentence. The report's "does it reach its goal" table is judged against this. Required for new flows; older flows without it are judged against the last step's `expect`. |
 | `url` | string | Starting URL (base or full) |
 | `steps` | list | Ordered steps to execute |
 
@@ -19,8 +20,11 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `priority` | enum | `P1` | `P0` (critical), `P1` (important), `P2` (nice-to-have) |
 | `credentials` | map | `{}` | Env var references for auth (never hardcode) |
 | `headed` | bool | `false` | Force headed browser (delegates to Navvi if available) |
+| `surface` | enum | from config | `read-only-live`, `write-allowed-test` or `local-copy`; overrides the environment's mode for this flow. See `knowledge/live-safety.md`. |
 | `video` | bool | `true` | Record video of the walk (requires ffmpeg for trimming) |
-| `viewport` | map | `{width: 1280, height: 720}` | Browser viewport size |
+| `viewports` | list | `[1440, 375]` | Widths captured at every step, in the same session without reloading. The first is the walking width. |
+| `viewport` | map | — | Legacy single viewport; treated as `viewports: [width]` |
+| `previously` | list | `[]` | Former ids (filenames) of this flow, so reports and diffs keep its history after a rename |
 | `locales` | list | `[en]` | Confirmed locales for this flow (auto-detected by `/flowchad-setup`). Flow walk only generates locale-prefixed paths for locales in this list. `[en]` means no prefix (English-only site). See [i18n locale detection](#i18n-locale-detection). |
 
 ## Step Fields
@@ -33,7 +37,9 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `value` | string | for fill/select | Value to input or option to select |
 | `expect` | string | no | Human-readable expectation (AI evaluates against screenshot) |
 | `timing` | string | no | Max acceptable time (e.g. `2s`, `500ms`). Exceeding = friction |
-| `captcha` | bool | no | If `true`, delegates to Navvi for headed execution |
+| `effect` | enum | no | `write`, `send` or `pay` when the step changes data, sends a message or email, books, or charges. The walker stops before such steps on `read-only-live` surfaces. Omit for steps that only read. |
+| `first_value` | bool | no | Marks the step where the person first gets a true, useful fact about their own thing. Time to first value is measured to here. |
+| `bot_check` | bool | no | The step meets a bot check (Turnstile, reCAPTCHA, hCaptcha). The walker uses test keys on a local copy, a human-assisted step, or Navvi; see `knowledge/live-safety.md` §5. `captcha: true` is the legacy spelling. |
 | `optional` | bool | no | If `true`, step failure doesn't block the walk |
 
 ## Actions Reference
@@ -59,6 +65,8 @@ name: New user signs up with email and password and lands on the dashboard
 ```
 
 The filename should mirror the scenario: `new-user-signs-up-with-email-and-password.yml`.
+
+The filename without `.yml` is the flow's **id**. Reports, diffs and pulse checks match walks by id, so keep it stable once a flow has been walked. If the `name` sentence changes, keep the file; if the file really must be renamed, list the old id under `previously`.
 
 ## Context Block
 
