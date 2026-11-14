@@ -4,6 +4,7 @@
 #   logged-in-user-checks-out-cart-with-credit-card.yml
 
 name: Logged-in user checks out their cart with a credit card and sees order confirmation
+goal: The order is recorded and the person sees its confirmation
 url: https://staging.example.com
 tags: [payment, critical]
 priority: P0
@@ -45,6 +46,7 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
+    effect: pay  # test card on a test or local surface only
     expect: >
       Order confirmation page with order number and summary.
       Cart is now empty. No error messages about payment failure.

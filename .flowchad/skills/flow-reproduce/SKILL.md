@@ -245,6 +245,8 @@ Auto-proceed (do not require confirmation). The user can interrupt if the flow l
 
 Execute the inferred flow using the same Playwright CDP model as `flow-walk`. Refer to that skill for the full execution specification. Key points for reproduction:
 
+- Declare the surface first and apply `flow-walk`'s write guard (Steps 0 and 0c). If reproducing the bug needs a write on a `read-only-live` surface, reproduce it on staging or a local copy instead and say so in the issue comment.
+
 ### Connect Browser
 
 ```javascript
@@ -365,7 +367,7 @@ Save outcome to `results.json`:
 
 ### Step 5a: Upload Evidence
 
-Use the `evidence-upload` skill (public evidence bucket; needs the `EVIDENCE_*` env secret). Everything uploaded is public by URL — never capture customer data from the report; reproduce on staging or with synthetic data.
+Use the `evidence-upload` skill (public evidence bucket; needs the `EVIDENCE_*` env secret). Attaching evidence is this command's purpose, so it uploads even when `evidence.backend` is unset, but only after you have opened each file and confirmed it shows no real account details, tokens or customer data (`knowledge/live-safety.md` §4). Everything uploaded is public by URL and cannot be deleted by the uploader — reproduce on staging or with synthetic data, and never on a live system in a way that writes.
 
 ```bash
 UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \

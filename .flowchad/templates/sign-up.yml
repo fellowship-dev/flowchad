@@ -4,6 +4,7 @@
 #   new-user-signs-up-with-email-and-password.yml
 
 name: New user signs up with email and password and lands on the dashboard
+goal: A new account exists and the dashboard shows the person's first useful result
 url: https://staging.example.com
 tags: [onboarding, critical]
 priority: P0
@@ -33,7 +34,10 @@ steps:
 
   - action: click
     selector: "button[type=submit]"
+    effect: write     # creates an account: walked only on test or local surfaces
+    bot_check: false  # set true if the form has Turnstile/reCAPTCHA/hCaptcha
     expect: >
       Redirect to /dashboard because sign-up succeeded.
       Welcome message or onboarding prompt confirms account was created.
     timing: 3s
+    first_value: true

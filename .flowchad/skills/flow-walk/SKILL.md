@@ -23,10 +23,28 @@ The argument is the flow name (matches `flows/{name}.yml`).
 - Chromium or Chrome running with CDP enabled, OR launch headless
 - Playwright-core installed (`npm i -g playwright-core` or local)
 - Flow definition in `.flowchad/flows/{name}.yml`
+- Read `knowledge/live-safety.md` and `knowledge/walk-checks.md` once per session. They are the default contract for every walk; a brief only needs to state what differs.
+
+The flow's filename (without `.yml`) is its **id**. Reports and diffs match walks by id, so it stays the same between walks.
 
 ## Execution
 
-### Step 0: Load Flow, Connect Browser & Start Recording
+### Step 0: Declare Surfaces
+
+Before opening a browser, decide the mode of every surface this walk touches (see `knowledge/live-safety.md`):
+
+- From the brief first, then `config.yml` → `environments.<env>.surface`, then the default: localhost is `local-copy`, anything else is `read-only-live`.
+- For a `local-copy`, note the commit it was built from and every way it differs from production.
+
+Print the table before starting, e.g.:
+
+```
+Surfaces
+- https://www.example.com      read-only-live
+- http://localhost:3000        local-copy @ 4f2a9c1 (test keys, captured mail, domain ownership simulated)
+```
+
+### Step 0a: Load Flow & Connect Browser
 
 ```javascript
 // Launch or connect to browser
@@ -61,7 +79,7 @@ FLOW_LOCALES=$(grep '^locales:' ".flowchad/flows/${FLOW_NAME}.yml" 2>/dev/null \
 
 ### Step 0b: Start Video Recording
 
-If the flow has `video: false`, skip this step. Otherwise, start recording:
+Always walk in a fresh context (never reuse an existing browser's tabs or cookies). If the flow has `video: false`, create the context without `recordVideo`. Otherwise, start recording:
 
 ```javascript
 // Create snapshot directory
@@ -69,7 +87,10 @@ const snapshotDir = `.flowchad/snapshots/${date}-${flowName}`;
 await fs.mkdir(snapshotDir, { recursive: true });
 
 // Start Playwright video recording
+const viewports = flow.viewports || config.viewports || [1440, 375];
 const context = await browser.newContext({
+  viewport: { width: viewports[0], height: 900 },
+  serviceWorkers: surface === 'read-only-live' ? 'block' : 'allow', // service-worker requests bypass context.route
   recordVideo: {
     dir: snapshotDir,
     size: { width: 1280, height: 720 }
@@ -77,6 +98,36 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 ```
+
+### Step 0c: Guard Writes and Watch the Network
+
+Attach these to the context before the first navigation. On a `read-only-live` surface the route guard aborts unsafe methods before they leave the browser, so "read-only" is enforced rather than assumed. On every surface, console and network errors are collected per step.
+
+```javascript
+const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
+let stepLog = { console_errors: [], failed_requests: [], blocked_writes: [] };
+const where = (u) => { const x = new URL(u); return `${x.host}${x.pathname}`; }; // no query strings: they can carry tokens
+
+if (surface === 'read-only-live') {
+  await context.route('**/*', (route) => {
+    const req = route.request();
+    if (SAFE.has(req.method())) return route.continue();
+    stepLog.blocked_writes.push({ method: req.method(), where: where(req.url()) });
+    return route.abort('blockedbyclient');
+  });
+}
+page.on('console', (m) => { if (m.type() === 'error') stepLog.console_errors.push(m.text().slice(0, 300)); });
+page.on('pageerror', (e) => stepLog.console_errors.push(`uncaught: ${e.message.slice(0, 300)}`));
+page.on('requestfailed', (r) => {
+  if (r.failure()?.errorText !== 'net::ERR_BLOCKED_BY_CLIENT')
+    stepLog.failed_requests.push({ method: r.method(), where: where(r.url()), error: r.failure()?.errorText });
+});
+page.on('response', (r) => {
+  if (r.status() >= 400) stepLog.failed_requests.push({ method: r.request().method(), where: where(r.url()), status: r.status() });
+});
+```
+
+After each step, copy `stepLog` into that step's result and reset it. Never log headers, cookies or request bodies.
 
 Initialize an action log to track timestamps for smart trimming:
 
@@ -97,6 +148,8 @@ function logAction(action, detail, durationMs) {
 
 For each step in the flow:
 
+0. **Gate writes** — if the step has `effect: write`, `send` or `pay` and the surface is `read-only-live`, do not perform it. Record the step as `skipped` with reason `stopped before a write step (surface is read-only-live)`, mark the flow's `stopped_at`, and end this flow. The remaining steps belong on a test instance or local copy.
+
 1. **Perform the action:**
    - `navigate` → `page.goto(url)`
    - `click` → `page.click(selector)`
@@ -111,13 +164,28 @@ For each step in the flow:
    logAction(step.action, step.selector || step.url, step.action === 'fill' ? typingDurationMs : undefined);
    ```
 
-3. **Take screenshot** — `page.screenshot({ path: snapshotDir/step-{N}-{action}.png, fullPage: false })`
+   Record `observed_at` (ISO 8601 with offset) and count the step toward the flow's effort: each `fill` is a typed field, each `click` a click.
+
+3. **Wait for rendered content, then screenshot every width** — after the action, wait for what the person came for (the `expect` text, a non-empty list, the form), not just the load event; status codes do not count as success. Then capture each width in `viewports` (default `[1440, 375]`) without navigating, so toasts and inline errors are caught at every width:
+
+   ```javascript
+   for (const width of viewports) {
+     await page.setViewportSize({ width, height: width < 768 ? 812 : 900 });
+     await page.screenshot({ path: `${snapshotDir}/step-${nn}-${step.action}@${width}.png` });
+   }
+   await page.setViewportSize({ width: viewports[0], height: 900 });
+   ```
 
 4. **Evaluate expect** — this is the key AI step:
    - Read the `expect` string from the YAML (natural language)
-   - Look at the screenshot and current page URL/DOM
-   - Determine if the expectation is met
+   - Look at the screenshots, the current URL and the visible text (including iframes for third-party embeds)
+   - Determine if the expectation is met; an empty state or "nothing available" where the goal needs content is a `fail`
+   - Copy the exact words the person sees for anything that matters (headings, errors, empty states, buttons) into `words`
    - Record as `pass`, `fail`, or `error`
+
+4b. **Cross-check claims** — if the screen states a fact (a record is valid, a value to copy, "checked", "sent", a total), verify it independently and record it under `truth_checks` (see `knowledge/walk-checks.md`).
+
+4c. **Mark first value** — if the step has `first_value: true` and passes, record the elapsed time since the flow's first navigation as `time_to_first_value_ms`.
 
 5. **Check timing threshold** — if `timing` is specified and actual > threshold, flag as `slow`
 
@@ -132,7 +200,13 @@ For each step in the flow:
 
 If a step has `optional: true` and fails, record but don't flag as critical.
 
-If a step has `captcha: true`, skip with status `skipped` and note "requires headed browser (Navvi)".
+If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk meets a bot check it did not expect, do not stop and do not try to defeat it. Follow `knowledge/live-safety.md` §5: switch to a local copy or test instance with the provider's test keys, or ask the person to pass that one step in a headed browser and continue in the same session (`human_assisted: true`), or use Navvi if configured. Record which route was taken.
+
+After the last step, record whether the flow reached its `goal` (`goal_reached`) and, if not, `stopped_at`: the step, the screen and the exact words where it stopped.
+
+### Step 2a: Dead-End Pass
+
+After the happy path, spend a short pass on the dead ends in `knowledge/walk-checks.md` (used and expired links, repeated wrong password, limits, someone else's item, an empty account, back/refresh/double submit). On a `read-only-live` surface only try those that need no writes. Record each under `dead_ends` with the words shown and whether the person can recover.
 
 ### Step 2b: Stop Recording & Smart Trim
 
@@ -190,10 +264,10 @@ Create a dated snapshot directory:
 ```
 .flowchad/snapshots/
 └── {YYYY-MM-DD}-{flow-name}/
-    ├── step-01-navigate.png
-    ├── step-02-fill.png
-    ├── step-03-fill.png
-    ├── step-04-click.png
+    ├── step-01-navigate@1440.png
+    ├── step-01-navigate@375.png
+    ├── step-02-fill@1440.png
+    ├── ...
     ├── {flow-name}-full.webm
     ├── {flow-name}-trimmed.mp4
     ├── {flow-name}.gif
@@ -205,34 +279,60 @@ Create a dated snapshot directory:
 ```json
 {
   "flow": "sign-up",
+  "name": "New user signs up with email and password and lands on the dashboard",
+  "goal": "Account exists and the dashboard shows the person's first result",
   "timestamp": "2026-03-20T15:30:00-03:00",
+  "finished_at": "2026-03-20T15:31:12-03:00",
   "duration_ms": 8500,
   "config": {
     "url": "https://staging.example.com",
-    "headless": true
+    "headless": true,
+    "viewports": [1440, 375]
   },
+  "surface": {
+    "mode": "write-allowed-test",
+    "commit": null,
+    "differences_from_production": []
+  },
+  "goal_reached": false,
+  "stopped_at": { "step": 4, "screen": "/signup", "words": "Something went wrong. Please try again." },
+  "counts": { "typed_fields": 2, "clicks": 1, "time_to_first_value_ms": null },
   "steps": [
     {
       "index": 1,
       "action": "navigate",
       "target": "/signup",
       "status": "pass",
+      "observed_at": "2026-03-20T15:30:02-03:00",
       "timing_ms": 1200,
       "threshold_ms": 2000,
       "slow": false,
-      "screenshot": "step-01-navigate.png",
+      "screenshots": { "1440": "step-01-navigate@1440.png", "375": "step-01-navigate@375.png" },
       "expect": "registration form visible",
-      "expect_met": true
+      "expect_met": true,
+      "words": ["Create your account", "Sign up"],
+      "console_errors": [],
+      "failed_requests": [],
+      "blocked_writes": [],
+      "truth_checks": []
     },
     {
       "index": 2,
       "action": "fill",
       "target": "#email",
       "status": "pass",
+      "observed_at": "2026-03-20T15:30:04-03:00",
       "timing_ms": 150,
-      "screenshot": "step-02-fill.png"
+      "screenshots": { "1440": "step-02-fill@1440.png", "375": "step-02-fill@375.png" }
     }
   ],
+  "dead_ends": [
+    { "case": "used verification link", "words": "This link has expired", "recoverable": true, "observed_at": "2026-03-20T15:31:05-03:00" }
+  ],
+  "environment_checks": [
+    { "what": "app host resolves and serves TLS", "result": "ok", "checked_at": "2026-03-20T15:29:58-03:00" }
+  ],
+  "residual_risk": [],
   "video": {
     "full": "sign-up-full.webm",
     "trimmed": "sign-up-trimmed.mp4",
@@ -256,11 +356,11 @@ Create a dated snapshot directory:
 }
 ```
 
-### Step 4: Upload Evidence
+`steps[].screenshots` maps width to file. Snapshots written before this schema have a single `screenshot` string instead; downstream skills accept both.
 
-After snapshots are saved, upload visual evidence for embedding in issues/PRs.
+### Step 4: Upload Evidence (only when asked)
 
-Read the evidence backend from `config.yml` (default: `s3`; `none` skips). Follow the `evidence-upload` skill: files go to the public evidence bucket, which needs the `EVIDENCE_*` env secret. Everything uploaded is public by URL — walk staging or synthetic data only.
+Evidence stays local by default. Upload only when the brief asks for published evidence or `config.yml` sets `evidence.backend: s3`. Before uploading, look at every file: nothing may show real account details, tokens or customer data (`knowledge/live-safety.md` §4). Uploads go to the public evidence bucket through the `evidence-upload` skill and cannot be deleted by the walker.
 
 ```bash
 UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
@@ -295,6 +395,10 @@ Add evidence URLs to `results.json`:
 
 If evidence upload fails (secret not configured, network error), log a warning and continue — evidence is best-effort, never blocks the walk.
 
+### Step 5: Clean Up
+
+Close the page, context and browser. Stop any local server or container the walk started and any machine created for it. Print what was left running, if anything, and why.
+
 ## Output
 
 After the walk completes, print a summary:
@@ -302,12 +406,15 @@ After the walk completes, print a summary:
 ```
 ## Flow Walk: sign-up
 
-✓ step 1: navigate /signup (1.2s)
-✓ step 2: fill #email (0.15s)
+Surface: staging.example.com (write-allowed-test)
+✓ step 1: navigate /signup (1.2s)  15:30:02
+✓ step 2: fill #email (0.15s)       15:30:04
 ✗ step 3: fill #password — element not found
 ✓ step 4: click submit (2.8s) ⚠️ slow (threshold: 2s)
 
-Results: 3/4 passed, 1 slow
+Goal reached: no — stopped at step 3 (/signup)
+Results: 3/4 passed, 1 slow · typed 1 · clicks 1 · first value: not reached
+Console errors: 2 (step 4) · failed requests: 1 (POST /api/signup 500)
 Snapshot: .flowchad/snapshots/2026-03-20-sign-up/
 ```
 

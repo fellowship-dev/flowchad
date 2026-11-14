@@ -4,6 +4,7 @@
 #   new-user-completes-onboarding-wizard-and-reaches-dashboard.yml
 
 name: New user completes onboarding wizard after sign-up and reaches the main dashboard
+goal: Onboarding is finished and the person can start using the product
 url: https://staging.example.com
 tags: [onboarding, activation]
 priority: P1
@@ -36,6 +37,7 @@ steps:
 
   - action: click
     selector: "[data-testid=next-step]"
+    effect: write
     expect: >
       Second onboarding step appears. Progress indicator advances.
     timing: 2s
@@ -47,3 +49,4 @@ steps:
       No onboarding prompt remains. User can start using the product.
     timing: 3s
     optional: true
+    first_value: true

@@ -146,11 +146,11 @@ Ask: "Apply these changes?"
 
 On confirmation:
 1. Write the updated YAML to the same file
-2. If the scenario changed significantly, suggest renaming the file to match
+2. Keep the filename: it is the flow's id, and walks, reports and pulse checks are matched by it. Change the `name` sentence instead
 3. Print: "Updated `.flowchad/flows/{filename}.yml` — run `/flow-walk {name}` to verify the changes."
 
 ## Edge Cases
 
-- **Flow renamed**: if the filename should change, create the new file and delete the old one
+- **Flow renamed**: avoid renaming the file. If it really must change, create the new file, add the old id under `previously:` so history carries over, and ask before deleting the old file
 - **Multiple flows affected**: if a product change impacts several flows, list them all and offer to update each
 - **Breaking changes**: if a selector is gone and no replacement is obvious, mark the step with `# BROKEN: selector removed, needs manual fix` rather than guessing
