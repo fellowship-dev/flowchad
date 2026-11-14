@@ -177,7 +177,7 @@ Keep it scannable: the person reading it decides what to fix today. Quote screen
 
 ## File Issues for Critical Findings
 
-For every Critical finding in the report, file a GitHub issue. Embed screenshots only if they are already published under the evidence rules in `knowledge/live-safety.md` §4; otherwise reference local paths. Before assigning P0/P1, **verify whether production is actually affected**.
+For every Critical finding in the report, file a GitHub issue. Embed screenshots only if they are already published under the evidence rules in `flow-walk/references/live-safety.md` §4; otherwise reference local paths. Before assigning P0/P1, **verify whether production is actually affected**.
 
 ### Step 1: Resolve the Production URL
 

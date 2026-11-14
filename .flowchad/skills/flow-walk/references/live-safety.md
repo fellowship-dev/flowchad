@@ -8,7 +8,9 @@ form on staging"); silence never widens it.
 ## 1. Declare every surface before walking
 
 Write a surface table at the top of the walk (it is copied into `results.json`
-and the report). Each surface is one of:
+and the report). The table is per host (with port): a walk of a local copy
+usually also touches production APIs, payment providers and analytics, and
+each of those is a surface too. Each surface is one of:
 
 | Mode | Meaning | What the walker may do |
 |---|---|---|
@@ -16,8 +18,8 @@ and the report). Each surface is one of:
 | `write-allowed-test` | A staging or test instance the brief names as writable | Create test accounts and data, submit forms, receive captured mail. Never real payments or real recipients. |
 | `local-copy` | The product built locally from a named commit, with test keys and captured mail | Anything, including resetting data. |
 
-If the brief or `config.yml` does not say, treat any URL that is not localhost
-as `read-only-live`. Production is never `write-allowed-test` unless the brief
+Any host not in the table is `read-only-live`, and the write guard enforces
+that per request. Production is never `write-allowed-test` unless the brief
 says so in those words.
 
 For a `local-copy`, record the commit it was built from and list every way it
@@ -28,16 +30,18 @@ what makes local findings trustworthy.
 
 ## 2. Read-only must be verified, not assumed
 
-On a `read-only-live` surface:
+On every `read-only-live` host:
 
-- **Block unsafe methods in the browser.** Route every request and abort any
-  `POST`, `PUT`, `PATCH` or `DELETE` before it leaves the browser, first- or
-  third-party (analytics beacons included: a walk should not pollute the
-  product's numbers either). Record each blocked request with its method, host
-  and path. A blocked request on a step means that step would have written;
-  report it and do not try to work around the block. Block service workers
-  too, since their requests bypass the guard; anything else the guard cannot
-  see (WebSocket messages, for example) belongs under "Residual risk".
+- **Block unsafe methods in the browser.** The flow-walk guard
+  (`scripts/guard.mjs`) is installed on every walk and aborts anything except
+  GET, HEAD and OPTIONS sent to a `read-only-live` host before it leaves the
+  browser, first- or third-party (analytics beacons included: a walk should not
+  pollute the product's numbers either), and refuses WebSocket connections to
+  those hosts. Each blocked request is recorded with its method, host and path.
+  A blocked request on a step means that step would have written; report it
+  and do not try to work around the block. Service workers are always blocked,
+  because their requests bypass the guard. Anything the guard reports as
+  `unguarded` belongs under "Residual risk".
 - **Know that a GET can write.** Some pages store something when viewed (a
   check that saves its result, a "verify" or "refresh" page, view counters,
   tracking redirects). Do not open one-time or action links on live systems:
@@ -84,10 +88,14 @@ check. Pick one, in this order, and record which:
 1. **Local copy or test instance with the provider's test keys.** The common
    providers publish site and secret keys that always pass; the rest of the
    flow then runs normally.
-2. **Human-assisted step.** Open a headed browser, ask the person to pass the
-   check (or do the sign-in) in that window, then continue the walk in the
-   same session. Mark the step `human_assisted: true`.
-3. **Navvi** (headed automation), if the project has it configured.
+2. **Human-assisted step, on a test or local surface only.** Passing a check
+   or signing in is itself a write, so it never happens on a live system
+   without the brief allowing it. A headless browser cannot turn headed: start
+   that walk headed from the first step (`headed: true`), ask the person to do
+   the one step in that window, and continue in the same session. Mark the
+   step `human_assisted: true`.
+3. **Navvi**, if the project uses it: its headed runs hand a challenge to the
+   person at the keyboard and record the step; it does not solve challenges.
 
 The same applies to SMS codes, payment confirmations and other steps the
 walker cannot do alone: route around them on a test surface, or hand that one

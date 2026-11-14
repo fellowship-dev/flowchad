@@ -24,8 +24,17 @@ Reference material the AI reads *during* skill execution. The friction taxonomy,
 | `goal-setting.md` | Business→Product→Flow goal hierarchy |
 | `metrics-primer.md` | Latency, error rate, visual consistency guidance |
 | `platform-types.md` | Evaluation criteria per platform type (saas/website/mobile/internal) |
-| `live-safety.md` | Surface modes, write guard, secrets, private evidence, bot checks, clean-up — the default contract for every walk |
+
+### Skill References (`.flowchad/skills/flow-walk/references/`)
+
+`npx skills add` installs each skill's folder and nothing outside it (see the skills CLI README: the lock hash covers "every file in the skill folder"). `.flowchad/knowledge/` therefore reaches users only through `scripts/update.sh`. The rules every walk must follow live inside the flow-walk skill so the documented install carries them; other skills refer to them as `flow-walk/references/…`.
+
+| File | Purpose |
+|------|---------|
+| `live-safety.md` | Surface modes, per-host write guard, secrets, private evidence, bot checks, clean-up — the default contract for every walk |
 | `walk-checks.md` | Rendered content over status codes, timestamps, same-session widths, effort counts, truth cross-checks, dead ends, per-step errors |
+
+The older knowledge docs above have the same distribution gap; moving them is a separate change.
 
 ### Agent Definition (`agents/flowchad.md`)
 

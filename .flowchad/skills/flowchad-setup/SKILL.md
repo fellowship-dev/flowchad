@@ -198,7 +198,7 @@ analytics:
 # [en] = English-only site. [en, es] = locale-prefixed routes exist for /es/*.
 locales: [{detected_locales_csv}]
 
-# What a walk may do on each environment (knowledge/live-safety.md).
+# What a walk may do on each environment (flow-walk/references/live-safety.md).
 # Production is always read-only-live unless the user says otherwise.
 environments:
   dev:

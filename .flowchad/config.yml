@@ -40,8 +40,8 @@
 # speckit:
 #   path: .speckit/    # relative path to speckit directory
 # Environments (optional — enables deployment-aware preflight)
-# surface: what a walk may do there (knowledge/live-safety.md)
-#   read-only-live     look only; unsafe requests are blocked (default for non-localhost)
+# surface: what a walk may do there (flow-walk/references/live-safety.md)
+#   read-only-live     look only; anything except GET, HEAD and OPTIONS is blocked (default for any host not listed)
 #   write-allowed-test may create test data, submit forms, receive captured mail
 #   local-copy         built locally from a named commit with test keys (default for localhost)
 # environments:

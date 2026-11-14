@@ -13,7 +13,7 @@ and says "nothing available", a pricing page that lost its plans, a checker
 that answers but with an error.
 
 The pulse only sends `GET` requests, so it is safe against live systems as
-long as no URL is a one-time or action link (see `knowledge/live-safety.md`).
+long as no URL is a one-time or action link (see `flow-walk/references/live-safety.md`).
 It is a script, not a CI job: run it by hand, from a deploy hook, or from any
 scheduler you already have.
 
