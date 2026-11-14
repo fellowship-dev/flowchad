@@ -58,9 +58,11 @@ For steps with status changes or significant timing differences, present screens
 
 | Before (Mar 18) | After (Mar 20) |
 |---|---|
-| step-03-click.png | step-03-click.png |
+| step-03-click@1440.png | step-03-click@1440.png |
 | ✓ pass, 1.2s | ✗ fail, timeout |
 ```
+
+Screenshots are per width since 0.4.0 (`steps[].screenshots`, e.g. `{"1440": "step-03-click@1440.png", "375": "step-03-click@375.png"}`); older snapshots have a single `screenshot` such as `step-03-click.png`. Compare the same width on both sides, falling back to the single file for old snapshots, and include the narrow width when the difference only shows there.
 
 Read both screenshots and describe the visual difference (e.g., "button is now disabled", "error modal appeared", "loading spinner stuck").
 

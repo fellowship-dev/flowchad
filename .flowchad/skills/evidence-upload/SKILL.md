@@ -48,7 +48,7 @@ never command-line arguments. Never print them.
 | `EVIDENCE_AWS_ACCESS_KEY_ID` / `EVIDENCE_AWS_SECRET_ACCESS_KEY` | Upload-only key (`s3:PutObject` on the bucket) |
 | `EVIDENCE_BUCKET` | e.g. `<your-evidence-bucket>` |
 | `EVIDENCE_REGION` | e.g. `us-east-1` |
-| `EVIDENCE_PUBLIC_BASE_URL` | e.g. `https://<your-evidence-bucket>.s3.us-east-1.amazonaws.com` |
+| `EVIDENCE_PUBLIC_BASE_URL` | e.g. `https://<your-evidence-bucket>.s3.<region>.amazonaws.com` |
 
 If any is missing the script exits 2 with *"evidence upload secret is not
 configured for this environment"*. Treat that as an upload failure (see below);

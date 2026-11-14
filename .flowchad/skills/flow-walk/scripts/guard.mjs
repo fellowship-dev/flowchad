@@ -78,7 +78,8 @@ export async function installGuard(context, surfaces = {}) {
   }
 
   context.on('console', (m) => {
-    if (m.type() === 'error') log.console_errors.push(redactText(m.text()));
+    // our own aborts surface as console errors too; they are already in blocked_writes
+    if (m.type() === 'error' && !m.text().includes('ERR_BLOCKED_BY_CLIENT')) log.console_errors.push(redactText(m.text()));
   });
   context.on('weberror', (e) => log.console_errors.push(`uncaught: ${redactText(e.error()?.message || e.error())}`));
   context.on('requestfailed', (r) => {

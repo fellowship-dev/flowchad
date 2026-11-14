@@ -12,8 +12,9 @@ gathered without harming the product or its users.
 
 If the project has FlowChad installed (`.flowchad/` and the `flow-*` skills),
 use them: `/flow-walk`, `/flow-report`, `/flow-diff`, `/flow-pulse`, and the
-knowledge docs `live-safety.md` and `walk-checks.md`. If it does not, this file
-is the whole contract; walk with Playwright directly. A brief only needs to
+flow-walk skill's `references/live-safety.md`, `references/walk-checks.md` and
+`scripts/guard.mjs`. If it does not, this file is the whole contract; walk with
+Playwright directly and block writes per host the same way. A brief only needs to
 say what differs from these defaults.
 
 ## Before opening anything
@@ -76,8 +77,9 @@ double submit. On live surfaces, only those that need no writes.
 
 If a bot check, SMS code or similar blocks you, do not stop and do not try to
 defeat it. Continue on a local copy or test instance with the provider's test
-keys, or ask a person to do that one step in a headed browser and carry on in
-the same session. Say which you did.
+keys, or, on a test or local surface only, start the walk headed and ask a
+person to do that one step in that window, then carry on in the same session
+(a headless browser cannot become headed mid-walk). Say which you did.
 
 ## Before reporting
 

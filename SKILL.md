@@ -48,7 +48,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 | `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
 | `/evidence-upload` | Uploads reviewed screenshots/GIFs to the public evidence S3 bucket (opt-in) |
 
-Walks are safe on live systems by default (`knowledge/live-safety.md`) and apply the checks in `knowledge/walk-checks.md`. A Claude Code subagent definition lives in `agents/flowchad.md`.
+Walks are safe on live systems by default (`flow-walk/references/live-safety.md`) and apply the checks in `flow-walk/references/walk-checks.md`. A Claude Code subagent definition lives in `agents/flowchad.md`.
 
 ## Update
 

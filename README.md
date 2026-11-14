@@ -167,17 +167,19 @@ Or skip manual YAML and let AI create it:
 
 ## Safe on Live Systems
 
-Every walk starts by declaring each surface it touches (`knowledge/live-safety.md`):
+Every walk starts by declaring each host it touches (`flow-walk/references/live-safety.md`). Any host not declared, including the production APIs, payment providers and analytics a local build calls, is `read-only-live`.
 
 | Mode | The walker may |
 |---|---|
-| `read-only-live` (default for anything not on localhost) | look and click links; every non-GET request is blocked in the browser and reported |
+| `read-only-live` (any host not declared) | look and click links; anything except GET, HEAD and OPTIONS, and WebSockets, is blocked in the browser and reported |
 | `write-allowed-test` | create test accounts and data, submit forms, receive captured mail |
 | `local-copy` | anything, on a build of a named commit with test keys; the report lists how it differs from production |
 
+The block is mechanical: `flow-walk/scripts/guard.mjs` is installed on every walk and classifies each request by host, and contexts always block service workers. `tests/guard_test.mjs` checks it with a real browser against servers that count what arrives (fetch, XHR, beacons, workers, form posts in pages, iframes and popups, WebSockets); see flow-walk Step 0c for exactly what is and is not verified.
+
 Steps that write carry `effect: write | send | pay` and are never performed on live systems. Secrets are never printed, evidence stays local unless you opt in, and bot checks are handled with test keys on a local copy or a human-assisted step instead of stopping the walk.
 
-Walks also apply the checks in `knowledge/walk-checks.md` by default: rendered content over status codes, a timestamp on every observation with environmental findings re-checked before the report, every width captured at the same moment without reloading, truth cross-checks of what screens claim, a dead-end pass, and console and network errors per step.
+Walks also apply the checks in `flow-walk/references/walk-checks.md` by default: rendered content over status codes, a timestamp on every observation with environmental findings re-checked before the report, every width captured at the same moment without reloading, truth cross-checks of what screens claim, a dead-end pass, and console and network errors per step.
 
 ## Video Recording
 
@@ -204,6 +206,8 @@ Evidence stays in `.flowchad/snapshots/` by default. Opt in to uploading screens
 evidence:
   backend: s3        # none (default) | s3
 ```
+
+**Upgrading from 0.3:** the default changed from `s3` to `none`. If you relied on automatic uploads, set `evidence.backend: s3` explicitly; walks then still check every file before uploading.
 
 Provide the upload secret through the environment only: `EVIDENCE_AWS_ACCESS_KEY_ID`, `EVIDENCE_AWS_SECRET_ACCESS_KEY`, `EVIDENCE_BUCKET`, `EVIDENCE_REGION`, `EVIDENCE_PUBLIC_BASE_URL`. The `evidence-upload` skill ships `scripts/upload_evidence.sh` (curl ≥ 7.75, no other dependencies), which prints each public URL and a ready-to-paste Markdown line.
 

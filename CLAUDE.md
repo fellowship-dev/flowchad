@@ -1,6 +1,6 @@
 # Flowchad — Developer Guide
 
-Flowchad is a **skills package** — AI-readable slash commands for automated UX QA. No source code to run, no build step, no test suite.
+Flowchad is a **skills package** — AI-readable slash commands for automated UX QA. No build step. The few shipped scripts have tests in `tests/` (`bash tests/pulse_test.sh`; `PLAYWRIGHT_DIR=<dir with playwright> node tests/guard_test.mjs`), run on macOS and Linux before merging.
 
 ## Install / Distribute
 
@@ -47,7 +47,7 @@ QUALITY_SCORE.md              # Per-skill quality grades and open issues
 3. **Scripts must be portable bash** — no bash 4+ features, no `greadlink`. Test on macOS + Linux.
 4. **Open an issue before a large refactor** — skill specs have cross-skill dependencies.
 5. **Update QUALITY_SCORE.md** when closing skill-related issues.
-6. **Live safety is a default, not a brief item** — new walking behaviour must respect `knowledge/live-safety.md` (surface modes, write guard, no secrets in output, private evidence).
+6. **Live safety is a default, not a brief item** — new walking behaviour must respect `flow-walk/references/live-safety.md` (surface modes, write guard, no secrets in output, private evidence).
 7. **Keep `agents/flowchad.md` in step with the skills** — it is the short behavioural version of flow-walk + flow-report.
 
 ## Reference
