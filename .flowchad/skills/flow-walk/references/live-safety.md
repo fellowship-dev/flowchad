@@ -42,6 +42,15 @@ On every `read-only-live` host:
   and do not try to work around the block. Service workers are always blocked,
   because their requests bypass the guard. Anything the guard reports as
   `unguarded` belongs under "Residual risk".
+- **Know where the guard is proven.** Verified with servers counting what
+  arrives: a freshly launched Chromium, and a new context on a Chromium
+  attached over CDP, both with service workers blocked. Not verified, and
+  reported as residual risk whenever used: Firefox and WebKit; the existing
+  default context or tabs of a browser attached over CDP; shared workers;
+  POSTs that a server redirects with 307 or 308; Playwright older than 1.48
+  (no WebSocket interception). The guard adds a persistent `unguarded` note
+  when it can tell (CDP attach, non-Chromium engine, missing WebSocket
+  routing, an internal error that aborted a request).
 - **Know that a GET can write.** Some pages store something when viewed (a
   check that saves its result, a "verify" or "refresh" page, view counters,
   tracking redirects). Do not open one-time or action links on live systems:

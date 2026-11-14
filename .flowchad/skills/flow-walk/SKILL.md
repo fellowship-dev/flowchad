@@ -46,19 +46,14 @@ Surfaces
 
 ### Step 0a: Load Flow & Connect Browser
 
+Launch a fresh Chromium. That is the mode the write guard was verified in, and it never inherits someone's signed-in tabs or cookies. Attach to a running browser over CDP only when the brief asks for it (for example a human-assisted step in their own window), and then pass `{ attachedOverCDP: true }` to `installGuard` so every step's `unguarded` notes carry it into the report's residual risk.
+
 ```javascript
-// Launch or connect to browser
-// Prefer CDP connection if Chrome is already running on port 9222
-// Otherwise launch headless Chromium via playwright
 import { chromium } from 'playwright-core';
 
-// Try CDP first, fall back to launch
-let browser;
-try {
-  browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
-} catch {
-  browser = await chromium.launch({ headless: true });
-}
+const browser = brief.attachOverCDP
+  ? await chromium.connectOverCDP(brief.cdpUrl)   // only when asked; see residual risk
+  : await chromium.launch({ headless: !flow.headed });
 ```
 
 Load the flow YAML from `.flowchad/flows/{name}.yml`. Parse steps. Resolve `$ENV_VAR` references from environment.
@@ -123,12 +118,13 @@ const surfaces = {
   'localhost:3000': 'local-copy',
   // 'staging.example.com': 'write-allowed-test',
 };
-const guard = await installGuard(context, surfaces);
+const guard = await installGuard(context, surfaces, { attachedOverCDP: !!brief.attachOverCDP });
+// throws before any navigation if a mode is not read-only-live, write-allowed-test or local-copy
 // after each step:
 Object.assign(stepResult, guard.take()); // console_errors, failed_requests, blocked_writes, unguarded
 ```
 
-What has been verified at runtime (`tests/guard_test.mjs`, Playwright 1.65.1 with Chromium headless shell on Linux, servers counting what actually arrived): on an undeclared host, no write reached the server from `fetch` POST and PUT, XHR POST, `navigator.sendBeacon`, a dedicated worker's `fetch`, a form POST navigation, a form POST inside an iframe, a `fetch` from a popup, or a WebSocket; a POST to an external undeclared host was aborted. On a declared `local-copy` host the same writes and the WebSocket went through. Without `serviceWorkers: 'block'` a service worker's write reached the server despite the route; with it, none did (`register()` still resolves, so do not read success there as a running worker). Not verified: Firefox and WebKit, a browser attached over CDP, shared workers, and POSTs that a server redirects with 307 or 308. Treat those, and anything in `unguarded`, as residual risk. Never log headers, cookies or request bodies.
+What has been verified at runtime (`tests/guard_test.mjs`, Playwright 1.65.1 with Chromium headless shell on Linux, servers counting what actually arrived): on an undeclared host, no write reached the server from `fetch` POST and PUT, XHR POST, `navigator.sendBeacon`, a dedicated worker's `fetch`, a form POST navigation, a form POST inside an iframe, a `fetch` from a popup, or a WebSocket; a POST to an external undeclared host was aborted. On a declared `local-copy` host the same writes and the WebSocket went through. Without `serviceWorkers: 'block'` a service worker's write reached the server despite the route; with it, none did (`register()` still resolves, so do not read success there as a running worker). The same results held for a new context on a Chromium attached with `connectOverCDP`; the guard still notes CDP as unverified because a brief's attached browser may differ (its existing default context and tabs were not tested). A malformed surface table throws before any navigation, and an error inside the guard aborts the request. The modes that are not verified are listed in `references/live-safety.md` §2; anything in `unguarded` goes into the report's residual risk. Never log headers, cookies or request bodies.
 
 Initialize an action log to track timestamps for smart trimming:
 
@@ -361,22 +357,25 @@ Create a dated snapshot directory:
 
 ### Step 4: Upload Evidence (only when asked)
 
-Evidence stays local by default. Upload only when the brief asks for published evidence or `config.yml` sets `evidence.backend: s3`. Before uploading, look at every file: nothing may show real account details, tokens or customer data (`references/live-safety.md` §4). Uploads go to the public evidence bucket through the `evidence-upload` skill and cannot be deleted by the walker.
+Evidence stays local by default. The upload script enforces this itself: it uploads only when `config.yml` has an uncommented `evidence.backend: s3`, or when the brief asks for published evidence and you set `FLOWCHAD_UPLOAD_CONFIRMED=1` for that run; otherwise it exits 3 with "evidence stays local". Before uploading, look at every file: nothing may show real account details, tokens or customer data (`references/live-safety.md` §4). Uploads go to the public evidence bucket through the `evidence-upload` skill and cannot be deleted by the walker.
 
 ```bash
 UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
             .claude/skills/evidence-upload/scripts/upload_evidence.sh \
             .agents/skills/evidence-upload/scripts/upload_evidence.sh 2>/dev/null | head -1)
 
-# Upload each screenshot (owner/repo is detected from git remote origin)
-for screenshot in ${SNAPSHOT_DIR}/step-*.png; do
-  URL=$(bash "$UPLOAD" --url-only --prefix "${FLOW_NAME}/${DATE}" "$screenshot")
-  # Store URL in results
-done
-
-# Upload GIF if it exists
-if [ -f "${SNAPSHOT_DIR}/${FLOW_NAME}.gif" ]; then
-  GIF_URL=$(bash "$UPLOAD" --url-only --prefix "${FLOW_NAME}/${DATE}" "${SNAPSHOT_DIR}/${FLOW_NAME}.gif")
+if [ -z "$UPLOAD" ] || ! bash "$UPLOAD" --gate; then
+  echo "evidence stays local"   # report local paths; skip the rest of this step
+else
+  # Upload each screenshot (owner/repo is detected from git remote origin)
+  for screenshot in "${SNAPSHOT_DIR}"/step-*.png; do
+    URL=$(bash "$UPLOAD" --url-only --prefix "${FLOW_NAME}/${DATE}" "$screenshot")
+    # Store URL in results
+  done
+  # Upload GIF if it exists
+  if [ -f "${SNAPSHOT_DIR}/${FLOW_NAME}.gif" ]; then
+    GIF_URL=$(bash "$UPLOAD" --url-only --prefix "${FLOW_NAME}/${DATE}" "${SNAPSHOT_DIR}/${FLOW_NAME}.gif")
+  fi
 fi
 ```
 

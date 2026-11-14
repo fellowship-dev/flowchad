@@ -209,11 +209,25 @@ If credentials are not configured, add a comment in the YAML noting manual auth 
 Reproduce on a writable surface whenever one exists. Priority: `environments.staging.url`, then `environments.dev.url`, then top-level `url` if it is localhost. Never fall back to production or to the affected URL's host on your own.
 
 ```bash
-BASE_URL=$(grep -A2 'staging:' .flowchad/config.yml 2>/dev/null | grep 'url:' | awk '{print $2}' | head -1)
-BASE_URL="${BASE_URL:-$(grep -A2 'dev:' .flowchad/config.yml 2>/dev/null | grep 'url:' | awk '{print $2}' | head -1)}"
-TOP_URL=$(grep '^url:' .flowchad/config.yml 2>/dev/null | awk '{print $2}' | head -1)
-case "$TOP_URL" in http://localhost*|http://127.0.0.1*) BASE_URL="${BASE_URL:-$TOP_URL}" ;; esac
+# env_field ENV FIELD -> environments.ENV.FIELD from config.yml; commented lines ignored
+env_field() {
+  awk -v want="$1" -v field="$2" '
+    /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+    { sub(/[[:space:]]+#.*$/, "") }
+    /^[^[:space:]]/ { inenv = ($0 ~ /^environments:[[:space:]]*$/); cur = ""; next }
+    inenv && /^  [A-Za-z0-9_-]+:[[:space:]]*$/ { cur = $1; sub(/:$/, "", cur); next }
+    inenv && cur == want && $1 == field ":" { sub(/^[[:space:]]*[A-Za-z_]+:[[:space:]]*/, ""); gsub(/["\047]/, ""); print; exit }
+  ' .flowchad/config.yml 2>/dev/null
+}
+BASE_ENV=staging; BASE_URL=$(env_field staging url)
+[ -n "$BASE_URL" ] || { BASE_ENV=dev; BASE_URL=$(env_field dev url); }
+TOP_URL=$(awk '/^url:/ { print $2; exit }' .flowchad/config.yml 2>/dev/null)
+case "$TOP_URL" in http://localhost*|http://127.0.0.1*) [ -n "$BASE_URL" ] || { BASE_ENV=""; BASE_URL="$TOP_URL"; } ;; esac
 BASE_URL="${BASE_URL%/}"
+# Declared mode of that host; localhost without one is local-copy; anything else stays read-only-live
+BASE_SURFACE=$( [ -n "$BASE_ENV" ] && env_field "$BASE_ENV" surface )
+case "$BASE_URL" in http://localhost*|http://127.0.0.1*) BASE_SURFACE="${BASE_SURFACE:-local-copy}" ;; esac
+BASE_SURFACE="${BASE_SURFACE:-read-only-live}"
 ```
 
 If `BASE_URL` is still empty, ask the user which URL to use. If they choose production (or the affected URL's host), that host is `read-only-live`: the walk stops before every `effect: write` step, including sign-in, and the write guard blocks anything except GET, HEAD and OPTIONS. Say in the issue comment that only the read-only part was reproduced.
@@ -269,27 +283,25 @@ GUARD=$(ls .flowchad/skills/flow-walk/scripts/guard.mjs \
 [ -n "$GUARD" ] || { echo "flow-walk guard not found: install the flow-walk skill"; exit 1; }
 ```
 
+Launch a fresh Chromium; that is the mode the guard was verified in. Attach to a running browser over CDP only when the brief asks for it, and pass `{ attachedOverCDP: true }` so the report carries that as residual risk.
+
 ```javascript
 import { chromium } from 'playwright-core';
 const { installGuard } = await import(path.resolve(GUARD));
 
-let browser;
-try {
-  browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
-} catch {
-  browser = await chromium.launch({ headless: true });
-}
+const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({
   serviceWorkers: 'block', // service-worker requests do not pass through the guard
   recordVideo: { dir: SNAPSHOT_DIR, size: { width: 1280, height: 720 } },
 });
 // Only hosts declared writable in config.yml; every other host is read-only-live.
+// installGuard throws on an unknown mode; only write-allowed-test and local-copy open a host.
 const guard = await installGuard(context, { [new URL(BASE_URL).host]: BASE_SURFACE });
 const page = await context.newPage();
 // after each step: Object.assign(stepResult, guard.take());
 ```
 
-`BASE_SURFACE` is the declared mode of `BASE_URL`'s host (`write-allowed-test` or `local-copy`), or `read-only-live` when the user chose production; in that last case pass `{}`.
+`BASE_SURFACE` comes from Step 2b. A host the user chose by hand is `read-only-live` unless config declares it otherwise.
 
 ### Execute Steps
 
@@ -387,19 +399,21 @@ Upload only when `config.yml` sets `evidence.backend: s3` or the user confirms u
 UPLOAD=$(ls .flowchad/skills/evidence-upload/scripts/upload_evidence.sh \
             .claude/skills/evidence-upload/scripts/upload_evidence.sh \
             .agents/skills/evidence-upload/scripts/upload_evidence.sh 2>/dev/null | head -1)
-PREFIX="reproduce-issue-${ISSUE_NUMBER}/${DATE}"
-
-# Upload screenshots
+# The script's own gate: evidence.backend: s3 in config.yml, or FLOWCHAD_UPLOAD_CONFIRMED=1 for this run.
+# The script refuses to upload without it too (exit 3), so this is one gate, checked early.
 GIF_URL=""
-for screenshot in "${SNAPSHOT_DIR}"/step-*.png; do
-  [ -f "$screenshot" ] || continue
-  bash "$UPLOAD" --url-only --prefix "$PREFIX" "$screenshot" || true
-done
-
-# Upload GIF
-if [ -f "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif" ]; then
-  GIF_URL=$(bash "$UPLOAD" --url-only --prefix "$PREFIX" \
-    "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif") || true
+if [ -z "$UPLOAD" ] || ! bash "$UPLOAD" --gate; then
+  echo "evidence stays local"   # the comment references local paths
+else
+  PREFIX="reproduce-issue-${ISSUE_NUMBER}/${DATE}"
+  for screenshot in "${SNAPSHOT_DIR}"/step-*.png; do
+    [ -f "$screenshot" ] || continue
+    bash "$UPLOAD" --url-only --prefix "$PREFIX" "$screenshot" || true
+  done
+  if [ -f "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif" ]; then
+    GIF_URL=$(bash "$UPLOAD" --url-only --prefix "$PREFIX" \
+      "${SNAPSHOT_DIR}/reproduce-issue-${ISSUE_NUMBER}.gif") || true
+  fi
 fi
 ```
 

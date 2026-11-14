@@ -4,7 +4,7 @@
 #
 # Usage:
 #   upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text]
-#                      [--url-only] [--dry-run] FILE...
+#                      [--url-only] [--dry-run] [--gate] FILE...
 #
 # Credentials and target come ONLY from the environment (never from arguments):
 #   EVIDENCE_AWS_ACCESS_KEY_ID, EVIDENCE_AWS_SECRET_ACCESS_KEY,
@@ -16,13 +16,40 @@
 # Output (stdout), per file: the public URL, then a Markdown line.
 #   --url-only prints only the URL. --dry-run prints the key and URL without
 #   network access. Progress and errors go to stderr.
-# Exit: 0 all uploaded and verified; 1 at least one file failed; 2 usage/config.
+#
+# Publishing gate (the only one; callers rely on it): uploads happen only when
+# .flowchad/config.yml (or $FLOWCHAD_CONFIG) has an uncommented
+#   evidence:
+#     backend: s3
+# or FLOWCHAD_UPLOAD_CONFIRMED=1 is set for this run. Otherwise nothing is
+# sent and the script exits 3 with "evidence stays local". --gate only checks
+# the gate (exit 0 enabled, 3 not enabled). --dry-run never uploads and skips it.
+#
+# Exit: 0 all uploaded and verified; 1 at least one file failed; 2 usage/config;
+#       3 publishing not enabled (evidence stays local).
 set -euo pipefail
 
 die() { printf 'evidence-upload: %s\n' "$*" >&2; exit 2; }
 warn() { printf 'evidence-upload: %s\n' "$*" >&2; }
 
-REPO="" PREFIX="" ALT="" URL_ONLY=0 DRY_RUN=0
+upload_enabled() {
+  [ "${FLOWCHAD_UPLOAD_CONFIRMED:-}" = "1" ] && return 0
+  cfg="${FLOWCHAD_CONFIG:-.flowchad/config.yml}"
+  [ -f "$cfg" ] || return 1
+  # Top-level `evidence:` block, uncommented `backend: s3` inside it.
+  awk '
+    /^[[:space:]]*#/ { next }
+    /^[^[:space:]]/ { inev = ($0 ~ /^evidence:[[:space:]]*(#.*)?$/); next }
+    inev && /^[[:space:]]+backend:[[:space:]]*["\047]?s3["\047]?[[:space:]]*(#.*)?$/ { found = 1 }
+    END { exit found ? 0 : 1 }
+  ' "$cfg"
+}
+stays_local() {
+  printf 'evidence-upload: evidence stays local (set evidence.backend: s3 in .flowchad/config.yml, or FLOWCHAD_UPLOAD_CONFIRMED=1 for this run)\n' >&2
+  exit 3
+}
+
+REPO="" PREFIX="" ALT="" URL_ONLY=0 DRY_RUN=0 GATE_ONLY=0
 FILES=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -31,12 +58,19 @@ while [ $# -gt 0 ]; do
     --alt) [ $# -ge 2 ] || die "--alt needs a value"; ALT="$2"; shift 2 ;;
     --url-only) URL_ONLY=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
-    -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --gate) GATE_ONLY=1; shift ;;
+    -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     --) shift; FILES+=("$@"); break ;;
     -*) die "unknown option: $1 (credentials are read from EVIDENCE_* env vars only)" ;;
     *) FILES+=("$1"); shift ;;
   esac
 done
+if [ "$GATE_ONLY" -eq 1 ]; then
+  upload_enabled && { echo "evidence-upload: publishing enabled"; exit 0; }
+  stays_local
+fi
+[ "$DRY_RUN" -eq 1 ] || upload_enabled || stays_local
+
 [ ${#FILES[@]} -gt 0 ] || die "no files given. Usage: upload_evidence.sh [--repo owner/repo] [--prefix path] [--alt text] [--url-only] [--dry-run] FILE..."
 
 missing=()

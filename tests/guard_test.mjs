@@ -79,18 +79,17 @@ const exercise = async (page, base, other) => {
   }, { base, other });
 };
 
-async function run() {
+async function scenario(browser, attachedOverCDP, label) {
   const live = await server();
   const test = await server();
   const liveBase = `http://127.0.0.1:${live.port}`;
   const testHost = `localhost:${test.port}`;
   const testBase = `http://${testHost}`;
-  const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ serviceWorkers: 'block' });
-  const guard = await installGuard(context, { [testHost]: 'local-copy' });
+  const guard = await installGuard(context, { [testHost]: 'local-copy' }, { attachedOverCDP });
   const page = await context.newPage();
 
-  const report = {};
+  const report = { label };
   await page.goto(liveBase + '/');
   report.live = await exercise(page, liveBase, 'https://example.com/flowchad-guard-test');
   // form POST navigation on the live host
@@ -114,11 +113,10 @@ async function run() {
   report.test = await exercise(page, testBase, null);
   await page.waitForTimeout(1000);
   report.testGuardLog = guard.take();
-  await browser.close();
+  await context.close();
 
-  // negative control: no serviceWorkers block
-  const b2 = await chromium.launch({ headless: true });
-  const c2 = await b2.newContext();
+  // control: same browser, no serviceWorkers block, no guard
+  const c2 = await browser.newContext();
   const p2 = await c2.newPage();
   await p2.goto(liveBase + '/');
   const before = live.seen.writes.length;
@@ -128,20 +126,80 @@ async function run() {
     return r;
   });
   report.swWithoutBlockReachedServer = live.seen.writes.slice(before);
-  await b2.close();
+  await c2.close();
 
   report.server = { liveWritesWithGuard: live.seen.writes.slice(0, before), liveUpgrades: live.seen.upgrades, testWrites: test.seen.writes, testUpgrades: test.seen.upgrades };
   live.s.close(); test.s.close();
-  report.playwright = require('playwright/package.json').version;
   console.log(JSON.stringify(report, null, 2));
-
-  const checks = [
-    ['no write reached the undeclared (live) host, service worker included', before === 0],
-    ['no WebSocket upgrade reached the live host', live.seen.upgrades === 0],
-    ['writes to the declared local-copy host went through', test.seen.writes.length >= 4],
-    ['external host POST was blocked', report.liveGuardLog.blocked_writes.some((b) => b.where.startsWith('example.com'))],
-    ['without serviceWorkers block, a service worker write bypasses context.route (control)', report.swWithoutBlockReachedServer.includes('POST /sw-post')],
+  return [
+    [`${label}: no write reached the undeclared (live) host, service worker included`, before === 0],
+    [`${label}: no WebSocket upgrade reached the live host`, live.seen.upgrades === 0],
+    [`${label}: writes to the declared local-copy host went through`, test.seen.writes.length >= 4],
+    [`${label}: external host POST was blocked`, report.liveGuardLog.blocked_writes.some((b) => b.where.startsWith('example.com'))],
+    [`${label}: without serviceWorkers block, a service worker write bypasses context.route (control)`, report.swWithoutBlockReachedServer.includes('POST /sw-post')],
+    [`${label}: unguarded notes ${attachedOverCDP ? 'name the CDP mode' : 'are empty'}`,
+      attachedOverCDP ? report.testGuardLog.unguarded.some((n) => n.includes('CDP')) : report.testGuardLog.unguarded.length === 0],
   ];
+}
+
+async function unitChecks() {
+  const { validateSurfaces, isWritable } = await import('../.flowchad/skills/flow-walk/scripts/guard.mjs');
+  const throws = (t) => { try { validateSurfaces(t); return false; } catch { return true; } };
+  const fakeContext = () => {
+    const handlers = {};
+    return {
+      handlers,
+      route: async (_p, h) => { handlers.route = h; },
+      routeWebSocket: async (_p, h) => { handlers.ws = h; },
+      on: () => {},
+      browser: () => ({ browserType: () => ({ name: () => 'chromium' }) }),
+    };
+  };
+  const ctx = fakeContext();
+  const g = await installGuard(ctx, { 'ok.test': 'local-copy' });
+  let aborted = false; let continued = false;
+  await ctx.handlers.route({
+    request: () => { throw new Error('boom'); },
+    abort: async () => { aborted = true; },
+    continue: async () => { continued = true; },
+  });
+  const firefox = fakeContext();
+  firefox.browser = () => ({ browserType: () => ({ name: () => 'firefox' }) });
+  const gf = await installGuard(firefox, {});
+  return [
+    ['unit: typo mode is rejected', throws({ 'a.test': 'read-only' })],
+    ['unit: unknown mode is rejected', throws({ 'a.test': 'production' })],
+    ['unit: null table is rejected', throws(null)],
+    ['unit: array table is rejected', throws(['local-copy'])],
+    ['unit: installGuard rejects a bad table before routing', await installGuard(fakeContext(), { 'a.test': 'staging' }).then(() => false, () => true)],
+    ['unit: host "constructor" is not writable', !isWritable({}, 'http://constructor/x')],
+    ['unit: host "__proto__" is not writable', !isWritable({}, 'http://__proto__/x')],
+    ['unit: an own "__proto__" key with a bad mode is rejected', throws(JSON.parse('{"__proto__": "production"}'))],
+    ['unit: declared host is writable', isWritable({ 'ok.test': 'local-copy' }, 'https://ok.test/a')],
+    ['unit: read-only-live declared host is not writable', !isWritable({ 'ok.test': 'read-only-live' }, 'https://ok.test/a')],
+    ['unit: a guard error aborts the request', aborted && !continued && g.take().unguarded.some((n) => n.includes('guard error'))],
+    ['unit: unguarded notes persist across take()', g.take().unguarded.length === 1],
+    ['unit: non-Chromium engine is noted', gf.take().unguarded.some((n) => n.includes('firefox'))],
+  ];
+}
+
+async function run() {
+  const checks = await unitChecks();
+
+  const launched = await chromium.launch({ headless: true });
+  checks.push(...(await scenario(launched, false, 'launched')));
+  await launched.close();
+
+  if (process.env.GUARD_TEST_CDP !== '0') {
+    const port = 9300 + Math.floor(Math.random() * 500);
+    const host = await chromium.launch({ headless: true, args: [`--remote-debugging-port=${port}`] });
+    const attached = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+    checks.push(...(await scenario(attached, true, 'cdp')));
+    await attached.close().catch(() => {});
+    await host.close();
+  }
+
+  console.log(`playwright ${require('playwright/package.json').version}`);
   let bad = 0;
   for (const [name, ok] of checks) { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}`); if (!ok) bad++; }
   process.exit(bad ? 1 : 0);

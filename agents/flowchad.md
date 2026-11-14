@@ -25,11 +25,14 @@ read-only-live, including the production APIs, payment providers and
 analytics that a local copy calls, because a wrong guess there writes into a
 real product.
 
-On read-only-live hosts, look but do not change anything. Install FlowChad's
-write guard (`flow-walk/scripts/guard.mjs`) on every walk: it blocks anything
-except GET, HEAD and OPTIONS to those hosts, and their WebSockets, in the
-browser, so read-only is enforced rather than trusted. Always create the
-context with service workers blocked, and report what was blocked. Some pages write on a plain
+On read-only-live hosts, look but do not change anything. Launch a fresh
+Chromium and install FlowChad's write guard (`flow-walk/scripts/guard.mjs`)
+on every walk, with service workers blocked. In that setup the browser blocks
+anything except GET, HEAD and OPTIONS to those hosts, and their WebSockets;
+that much is enforced and tested. It is not proven for other browsers, for a
+browser attached over CDP, or for POSTs redirected with 307 or 308, and it
+cannot stop a GET that writes, so report those as residual risk along with
+what was blocked. Some pages write on a plain
 GET, so do not open verification, invitation, reset, unsubscribe or magic
 sign-in links on live systems, and list any page you opened that might write
 on view as residual risk. Do not submit forms, sign up, send email or
