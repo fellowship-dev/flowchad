@@ -2,7 +2,7 @@
 
 ## What Kind of Repo This Is
 
-Flowchad is a **skills package**, not an application. There is no source code to compile or run, no build step, and no test suite. The product is a set of AI-readable SKILL.md files that agents execute when users invoke slash commands.
+Flowchad is a **skills package**, not an application. There is no source code to compile or run and no build step; the few shipped scripts have tests in `tests/`. The product is a set of AI-readable SKILL.md files that agents execute when users invoke slash commands.
 
 Skills are installed into user projects via `npx skills add` and live in the agent's skill directory (`.claude/skills/`, `.cursor/skills/`, etc.). The flowchad repo is the upstream source for those files.
 
@@ -34,7 +34,18 @@ Reference material the AI reads *during* skill execution. The friction taxonomy,
 | `live-safety.md` | Surface modes, per-host write guard, secrets, private evidence, bot checks, clean-up — the default contract for every walk |
 | `walk-checks.md` | Rendered content over status codes, timestamps, same-session widths, effort counts, truth cross-checks, dead ends, per-step errors |
 
+| `measures.md` | The numbers every walk records per step and per flow, and how the gate computes flow totals |
+| `flow-maps.md` | Mermaid flow-map conventions and judging a map before anything is built |
+
 The older knowledge docs above have the same distribution gap; moving them is a separate change.
+
+### Rules (`.flowchad/skills/flow-walk/rules/`)
+
+The opinionated part: one file per concern, each rule with an id, a checkable sentence, how to check it, a severity, its basis (a linked source or failures in two independent flows), examples, and provenance. The README holds the format and the admission test; `CHANGELOG.md` names every rule id; `forbidden-terms.txt` keeps vendor names out. They sit in the flow-walk skill for the same reason as the references: they are judged on every walk and must reach users through `npx skills add`. `flow-walk/scripts/lint_rules.sh` enforces the mechanical criteria. Projects add their own in `.flowchad/rules/`.
+
+### The gate (`.flowchad/skills/flow-gate/`)
+
+`scripts/gate.mjs` combines the walker's `rule_results` with thresholds applied to the measures and decides PASS, FAIL or INCOMPLETE; `--record` writes the committed walk record to `.flowchad/walks/`. `scripts/changed.sh` maps a diff to the saved flows it touches, from each flow's `covers:` globs and its last walk record's commit. Both read the rules from `../flow-walk/rules`, so installing one skill without the other is not supported.
 
 ### Agent Definition (`agents/flowchad.md`)
 
@@ -59,6 +70,8 @@ Skills share data via `results.json` written by `/flow-walk`. Downstream skills 
 - `/flow-suggest` — reads findings to prioritize improvements
 
 Since 0.4.0 `results.json` also carries `goal`, `goal_reached`, `stopped_at`, `surface`, `counts`, `dead_ends`, `environment_checks`, `residual_risk`, and per step `observed_at`, `words`, per-width `screenshots`, `console_errors`, `failed_requests`, `blocked_writes` and `truth_checks`. Downstream skills treat these as optional so older snapshots still load.
+
+Since 0.5.0 it also carries `kind`, `value_moment`, `steps[].screen`, `steps[].measures`, `rule_results`, `rule_overrides` and `not_covered`, read by `/flow-gate` (and through it `/flow-report` and `/flow-diff`).
 
 `/flow-pulse` reads `.flowchad/pulse.tsv`, keyed by the same flow ids.
 

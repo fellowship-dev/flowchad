@@ -8,6 +8,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 |-------|------|-------------|
 | `name` | string | Descriptive sentence explaining the scenario (see [naming convention](#naming-convention)) |
 | `goal` | string | What reaching the end means for the person, in one sentence. The report's "does it reach its goal" table is judged against this. Required for new flows; older flows without it are judged against the last step's `expect`. |
+| `value_moment` | string | The first thing the person came for, in one sentence (their own result, a working install). The gate fails a flow without one (rule PATH-01). Reached at the step marked `first_value: true`. |
 | `url` | string | Starting URL (base or full) |
 | `steps` | list | Ordered steps to execute |
 
@@ -15,6 +16,10 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `kind` | enum | `screens` | `screens` (a browser walk), `docs` or `agent` (a fresh-agent walk of the docs or tools), `map` (a flow map only). Decides which rules apply. |
+| `covers` | list | `[]` | Source path globs this flow depends on (`app/signup/*`, `src/components/Wizard*`). `/flow-gate --changed` re-walks the flow when a covered file changes. |
+| `rule_overrides` | list | `[]` | `- id: DEC-01` with `reason:`. A rule that does not fit this flow, with why. The gate lists it as an accepted exception; a missing reason is an error. |
+| `friction` | list | `[]` | `- step: 4` with `what:` and `reason:` for each confirmation, expiry, code, proof or bot check on the path: the abuse or mistake it prevents (rule DEC-04). |
 | `context` | map | `{}` | Preconditions for the scenario — machine-readable, self-documenting (see [context block](#context-block)) |
 | `tags` | list | `[]` | Categorization tags for filtering |
 | `priority` | enum | `P1` | `P0` (critical), `P1` (important), `P2` (nice-to-have) |
@@ -38,9 +43,17 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `expect` | string | no | Human-readable expectation (AI evaluates against screenshot) |
 | `timing` | string | no | Max acceptable time (e.g. `2s`, `500ms`). Exceeding = friction |
 | `effect` | enum | no | `write`, `send` or `pay` when the step changes data, sends a message or email, books, or charges. The walker stops before such steps on `read-only-live` surfaces. Omit for steps that only read. |
-| `first_value` | bool | no | Marks the step where the person first gets a true, useful fact about their own thing. Time to first value is measured to here. |
+| `first_value` | bool | no | Marks the step that shows the flow's `value_moment`. Time to value and the gate's "to value" measures are counted to here. |
+| `primary` | string | no | CSS selector of the one input or button this screen asks the person to use. Default: the next step's `selector`. Measured for the fold (rule FOLD-01). |
 | `bot_check` | bool | no | The step meets a bot check (Turnstile, reCAPTCHA, hCaptcha). The walker uses test keys on a local copy, a human-assisted step, or Navvi; see `flow-walk/references/live-safety.md` §5. `captcha: true` is the legacy spelling. |
 | `optional` | bool | no | If `true`, step failure doesn't block the walk |
+
+## Flow maps
+
+A flow can be saved as a Mermaid flow chart before it is built:
+`.flowchad/flows/<id>.map.md`, same id as the YAML. See
+`flow-walk/references/flow-maps.md` for the conventions and `/flow-walk <id>
+--map` for judging it.
 
 ## Actions Reference
 

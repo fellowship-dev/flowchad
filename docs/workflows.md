@@ -14,12 +14,18 @@ Skill specs (`.flowchad/skills/*/SKILL.md`) are the core product. They have subt
 
 4. **Knowledge changes** — if the friction taxonomy or flow schema changes, update the relevant knowledge file *and* check that the affected skill specs reference the correct file path.
 
+## Editing Rules
+
+Rules live in `.flowchad/skills/flow-walk/rules/` and follow the format and admission test in its README. A change adds or edits the rule, adds a CHANGELOG line naming its id, and passes `bash .flowchad/skills/flow-walk/scripts/lint_rules.sh`. Reversing or narrowing a rule replaces it (`Replaces:`) and retires the old one; ids are never reused. Keep client and product names out of the public repo: run the lint with `FLOWCHAD_FORBIDDEN_TERMS=<private list>` before pushing.
+
+New results.json fields used by the gate (`steps[].measures`, `rule_results`, `rule_overrides`, `value_moment`, `kind`) must stay optional for older snapshots: the gate reports their blockers as not judged rather than passing them.
+
 ## Editing Shell Scripts
 
 Scripts in `scripts/` are called by skill specs. Requirements:
 
 - **Portable bash only** — no bash 4+ features (no associative arrays, no `${arr[-1]}`), no `greadlink`
-- **Test on both macOS and Linux** before merging: `bash tests/pulse_test.sh` covers `pulse.sh`; `bash tests/upload_gate_test.sh` covers the evidence publishing gate; `node tests/guard_test.mjs` (needs Playwright and Chromium) covers the flow-walk write guard against servers that count what arrives
+- **Test on both macOS and Linux** before merging: `bash tests/pulse_test.sh` covers `pulse.sh`; `bash tests/upload_gate_test.sh` covers the evidence publishing gate; `bash tests/rules_lint_test.sh` covers the rule admission lint; `bash tests/changed_test.sh` covers `flow-gate/scripts/changed.sh` in a scratch git repo; `node tests/gate_test.mjs` and `node tests/flowmap_test.mjs` (Node built-ins only) cover the gate and the flow-map measures; `node tests/guard_test.mjs` and `node tests/measure_test.mjs` (need Playwright and Chromium) cover the flow-walk write guard against servers that count what arrives, and the in-page measures
 
 Scripts that ship with a skill (`.flowchad/skills/*/scripts/`) follow the same rules; they are what `npx skills add` installs, while root `scripts/` only reaches users through `update.sh`.
 
@@ -40,7 +46,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 To update an existing install:
 
 ```bash
-npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flowchad-setup evidence-upload -y
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flow-gate flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 

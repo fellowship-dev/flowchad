@@ -56,7 +56,7 @@ YAML
   # Write version tracking file
   INSTALL_SHA=$(git ls-remote https://github.com/Fellowship-dev/flowchad.git HEAD 2>/dev/null | cut -f1 || echo "unknown")
   INSTALL_DATE=$(date -u +%Y-%m-%d)
-  printf '0.4.0\n%s\n%s\n' "$INSTALL_SHA" "$INSTALL_DATE" > .flowchad/.version
+  printf '0.5.0\n%s\n%s\n' "$INSTALL_SHA" "$INSTALL_DATE" > .flowchad/.version
   echo -e "${GREEN}✓${NC} Created .flowchad/.version (${INSTALL_SHA:0:7})"
 fi
 
@@ -93,7 +93,7 @@ echo "  1. Install skills:  npx skills add Fellowship-dev/flowchad --skill '*'"
 echo "  2. Edit .flowchad/config.yml with your project URL"
 echo "  3. Run /flowchad-setup to auto-discover flows"
 echo "  4. Or define flows manually in .flowchad/flows/"
-echo "  5. Walk a flow: /flow-walk sign-up"
+echo "  5. Walk a flow: /flow-walk sign-up, then gate it: /flow-gate sign-up"
 echo ""
-echo -e "${BOLD}Important:${NC} commit .flowchad/ (flows, config) — snapshots/ and reports/ stay ignored."
+echo -e "${BOLD}Important:${NC} commit .flowchad/ (flows, flow maps, config, walks/) — snapshots/ and reports/ stay ignored."
 echo ""

@@ -5,6 +5,8 @@
 
 name: New user completes onboarding wizard after sign-up and reaches the main dashboard
 goal: Onboarding is finished and the person can start using the product
+value_moment: The main dashboard shows the product set up with the details entered
+covers: []   # source globs this flow depends on, e.g. app/onboarding/*
 url: https://staging.example.com
 tags: [onboarding, activation]
 priority: P1

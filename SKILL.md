@@ -1,7 +1,7 @@
 ---
 name: flowchad
-description: Drop-in AI QA for any web project — automated flow walking, screenshot capture, and regression detection
-version: "0.4.0"
+description: Drop-in AI QA for any web project — opinionated flow walks judged against rules with sources, measures to value, and a gate before human testing
+version: "0.5.0"
 repository: https://github.com/Fellowship-dev/flowchad
 install: "curl -fsSL https://raw.githubusercontent.com/Fellowship-dev/flowchad/main/install.sh | bash"
 skills:
@@ -15,6 +15,7 @@ skills:
   - flow-report
   - flow-reproduce
   - flow-pulse
+  - flow-gate
   - evidence-upload
 ---
 
@@ -46,9 +47,10 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 | `/flow-diagram <name>` | Generates Mermaid flowchart from a flow definition |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
 | `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
+| `/flow-gate <name\|all> [--changed]` | PASS / FAIL / INCOMPLETE before a human tests: blockers, measures against the last walk, rough edges, changed flows |
 | `/evidence-upload` | Uploads reviewed screenshots/GIFs to the public evidence S3 bucket (opt-in) |
 
-Walks are safe on live systems by default (`flow-walk/references/live-safety.md`) and apply the checks in `flow-walk/references/walk-checks.md`. A Claude Code subagent definition lives in `agents/flowchad.md`.
+Walks are safe on live systems by default (`flow-walk/references/live-safety.md`), apply the checks in `flow-walk/references/walk-checks.md`, record the measures in `flow-walk/references/measures.md`, and are judged against the rules in `flow-walk/rules/` (each with a source; see its README for the admission test). A Claude Code subagent definition lives in `agents/flowchad.md`.
 
 ## Update
 

@@ -5,6 +5,8 @@
 
 name: Existing user logs in with email and password and reaches the dashboard
 goal: The person is signed in and sees their own dashboard
+value_moment: The signed-in home shows the person's own data
+covers: []   # source globs this flow depends on, e.g. app/login/*
 url: https://staging.example.com
 tags: [auth, critical]
 priority: P0

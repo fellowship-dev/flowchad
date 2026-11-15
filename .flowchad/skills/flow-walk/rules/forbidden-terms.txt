@@ -1,0 +1,41 @@
+# Terms that make a rule product-specific. One per line, matched as whole
+# words, case-insensitive, in each rule's title, Rule, Check, Pass and Fail
+# lines (not in Basis lines, which name their sources). Common words that are
+# also brand names (resend, react, notion) are left out on purpose.
+#
+# Keep private names (clients, unreleased products) out of this public file:
+# put them in a local file and pass it with FLOWCHAD_FORBIDDEN_TERMS=<path>.
+amazon
+auth0
+aws
+calendly
+cloudflare
+dkim
+dmarc
+dns
+firebase
+github
+gitlab
+google
+hcaptcha
+mailgun
+mixpanel
+mx record
+netlify
+next.js
+okta
+paypal
+plausible
+posthog
+recaptcha
+sendgrid
+shopify
+slack
+spf
+strapi
+stripe
+supabase
+turnstile
+txt record
+vercel
+wordpress

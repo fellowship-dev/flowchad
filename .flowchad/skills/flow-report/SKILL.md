@@ -27,6 +27,8 @@ The argument is the flow id (filename without `.yml`) or `all`. Uses the most re
 6. **Knowledge docs** — reference `knowledge/friction-taxonomy.md` for severity classification
 7. **Config** — load `config.yml` for platform type, timing thresholds, business goals
 8. **Previous snapshot** — the walk before the latest one for the same flow id, if any, for the "What improved" and counts comparison
+9. **Rules** — `flow-walk/rules/` and `.flowchad/rules/`; the walk's `rule_results` say which failed where
+10. **Gate** — the output of `flow-gate/scripts/gate.mjs` for each flow (run it if the walk did not)
 
 ## Analysis Process
 
@@ -63,6 +65,10 @@ For every step that isn't a clean pass, classify using `knowledge/friction-taxon
 - Minor visual issues spotted in screenshots
 - Alignment, spacing, contrast problems
 - Truncated text, placeholder text visible
+
+### 2a. Findings From the Rules
+
+Every failed rule in the gate output is a finding: the rule id goes in its title (`FOLD-01: the only input is below the fold at 375`). A failed `blocker` rule is a launch blocker; `should-fix` and `later` rules rank as their severity says unless frequency or flow priority moves them up. A finding that no rule covers keeps its place in the ranking and is also listed under "Not covered by a rule" as a candidate for a new rule.
 
 ### 2b. Rank Each Finding for Action
 
@@ -109,6 +115,8 @@ Generate a markdown report at:
 .flowchad/reports/{YYYY-MM-DD}-{flow-name}-report.md   # or {YYYY-MM-DD}-all-report.md
 ```
 
+`reports/` stays git-ignored: it can quote signed-in screens. The durable part goes to `.flowchad/walks/{YYYY-MM-DD}-{flow-id}.md`, written by `gate.mjs --record .flowchad/walks` (gate, measures, rule results, rough edges, not-covered findings; text only, emails, long numbers and query strings redacted). Read it before committing, and commit it with the change it judged: it is the history the next walk compares against, and `/flow-gate --changed` reads its `Commit:` line.
+
 ### Report Template
 
 Keep it scannable: the person reading it decides what to fix today. Quote screen text exactly; never paste secrets, cookies or real account details.
@@ -116,7 +124,14 @@ Keep it scannable: the person reading it decides what to fix today. Quote screen
 ```markdown
 # Walk Report: {project} — {YYYY-MM-DD}
 
-**Written:** {timestamp} · **Previous walk:** {date or "none"}
+**Written:** {timestamp} · **Previous walk:** {date or "none"} · **Rules:** {rules_version}
+
+## Gate
+| Flow (id) | Gate | Why | Known rough edges |
+|---|---|---|---|
+| {id} | PASS / FAIL / INCOMPLETE | {failed blockers, not judged, goal, target} | {count; ids} |
+
+Do not hand a flow to a human tester unless its gate is PASS. On PASS, list its rough edges first in the hand-off.
 
 ## Surfaces
 | Surface | Mode | Notes |
@@ -147,6 +162,21 @@ Keep it scannable: the person reading it decides what to fix today. Quote screen
 ## Untrue statements
 | Screen | What it claims | Independent fact | Source |
 |---|---|---|---|
+
+## Measures against the previous walk
+| Flow | Measure | Previous | Now | Change |
+|---|---|---|---|---|
+| {id} | screens_to_value, decisions_to_value, fields_to_value, clicks_to_value, words_to_value, max_scroll_before_primary_vh (1440 · 375), non_task_elements_to_value, waits / longest_wait_ms, dead_ends, loops, time_to_value_ms | | | |
+
+A measure that got worse needs a reason in one line. Thresholds come only from rules with a cited source; the rest are compared with the previous walk.
+
+## Rule results
+| Rule | Severity | Result | Where | What was seen |
+|---|---|---|---|---|
+| {id} | blocker / should-fix / later | fail / accepted ({reason}) | {step, width} | "{exact words}" or the measure |
+
+## Not covered by a rule
+- {finding with no rule, worded without the product's nouns}: candidate if it can be worded generally and has a source or a second independent flow
 
 ## Effort and time to first value
 | Flow | Typed fields | Clicks | Time to first value | Previous |

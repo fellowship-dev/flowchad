@@ -14,20 +14,36 @@ Execute a flow definition step-by-step using Playwright CDP, capturing screensho
 /flow-walk sign-up
 /flow-walk login
 /flow-walk checkout
+/flow-walk sign-up --target production   # read-only walk of the live product
+/flow-walk sign-up --map                 # judge the saved flow map, nothing built yet
 ```
 
-The argument is the flow name (matches `flows/{name}.yml`).
+The argument is the flow name (matches `flows/{name}.yml`, or `flows/{name}.map.md` with `--map`).
 
 ## Prerequisites
 
 - Chromium or Chrome running with CDP enabled, OR launch headless
 - Playwright-core installed (`npm i -g playwright-core` or local)
 - Flow definition in `.flowchad/flows/{name}.yml`
-- Read `references/live-safety.md` and `references/walk-checks.md` once per session. They are the default contract for every walk; a brief only needs to state what differs.
+- Read `references/live-safety.md`, `references/walk-checks.md`, `references/measures.md` and `rules/README.md` once per session, and the rule files the flow's kind needs. They are the default contract for every walk; a brief only needs to state what differs.
+
+Every walk is judged against the rules in `rules/`, and records the measures in `references/measures.md`. The walk ends with `/flow-gate`, which decides from those whether the flow may be handed to a human tester.
 
 The flow's filename (without `.yml`) is its **id**. Reports and diffs match walks by id, so it stays the same between walks.
 
 ## Execution
+
+### Map mode (`--map`)
+
+When the flow is only a map (`.flowchad/flows/{name}.map.md`) or the brief asks to judge the design before building, do not open a browser. Follow `references/flow-maps.md`: run `scripts/flowmap.mjs` on the map, judge the rules that apply to `map`, write `rule_results` into its result, and run `/flow-gate`. Skip the rest of this skill.
+
+### Docs and agent walks (`kind: docs` or `agent`)
+
+A flow with `kind: docs` (or `agent`) is walked by a fresh agent session with no project context, in an empty folder, given only the public docs address and the flow's goal (`rules/docs-cold-start.md`). Answer none of its questions. Record `commands_to_install`, `unanswered_questions` with the `questions` list, and `wrong_turns` in the result's `measures`, judge the `docs` and `agent` rules, and run `/flow-gate`. The same live-safety rules apply to anything the agent opens or runs against a live system.
+
+### Target
+
+Walk the target the tester will open. `--target production` (or a brief naming the live address) uses `config.yml` → `environments.production.url`, which is `read-only-live`: the write guard is installed as always, the walk stops before any `effect: write | send | pay` step, and the gate reports INCOMPLETE until the remaining steps are walked on a test surface or a local copy of the same commit. Production walks are how the gate knows the real settings (bot checks, sign-in providers, payment mode) were what the person sees; local walks with test keys find problems sooner but cannot pass a production hand-off.
 
 ### Step 0: Declare Surfaces
 
@@ -166,12 +182,20 @@ For each step in the flow:
 3. **Wait for rendered content, then screenshot every width** — after the action, wait for what the person came for (the `expect` text, a non-empty list, the form), not just the load event; status codes do not count as success. Then capture each width in `viewports` (default `[1440, 375]`) without navigating, so toasts and inline errors are caught at every width:
 
    ```javascript
+   import { measureStep, mergeWidths } from './scripts/measure.mjs'; // relative to this skill's folder
+
+   const primary = step.primary || nextStep?.selector; // the one thing this screen asks the person to do
+   const perWidth = {};
    for (const width of viewports) {
      await page.setViewportSize({ width, height: heightFor(width) });
      await page.screenshot({ path: `${snapshotDir}/step-${nn}-${step.action}@${width}.png` });
+     perWidth[width] = await measureStep(page, { primary }); // words, scroll before primary, overflow
    }
    await page.setViewportSize({ width: viewports[0], height: heightFor(viewports[0]) });
+   stepResult.measures = mergeWidths(perWidth);
    ```
+
+3b. **Count and judge the step measures** (`references/measures.md`): add `decisions`, `fields`, `clicks`, `non_task_elements` with the `non_task` list, `wait_ms` with `wait_feedback` and `wait_progress`, `dead_end` and `revisit` to `stepResult.measures`, and the step's `screen` (path, or a short screen name). Counting rules decide; when unsure, count it and say why in the list.
 
 4. **Evaluate expect** — this is the key AI step:
    - Read the `expect` string from the YAML (natural language)
@@ -186,6 +210,8 @@ For each step in the flow:
 
 5. **Check timing threshold** — if `timing` is specified and actual > threshold, flag as `slow`
 
+6. **Judge the rules** — for every rule in `rules/` (and `.flowchad/rules/`) whose `Applies to` includes `step`, look at this step at each width and record a result when it fails, and for every blocker also when it passes: `{ "id": "FOLD-01", "result": "fail", "step": 3, "width": 375, "observed": "the status report pushes the only input 1.4 screens down" }`. Quote the exact words where they matter; never put account details, tokens or real addresses in `observed`. Rules with a `Threshold` are also applied by the gate from the measures; still judge them (a measure can miss a hidden element).
+
 ### Step 2: Handle Errors
 
 **A broken step is a finding, not a failure.** If a step throws:
@@ -199,7 +225,9 @@ If a step has `optional: true` and fails, record but don't flag as critical.
 
 If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk meets a bot check it did not expect, do not stop and do not try to defeat it. Follow `references/live-safety.md` §5: switch to a local copy or test instance with the provider's test keys, or, on a test or local surface only, re-run the flow headed (`headed: true`; a headless browser cannot become headed mid-walk) and ask the person to do that one step in that window, continuing in the same session (`human_assisted: true`). Record which route was taken.
 
-After the last step, record whether the flow reached its `goal` (`goal_reached`) and, if not, `stopped_at`: the step, the screen and the exact words where it stopped.
+After the last step, record whether the flow reached its `goal` (`goal_reached`) and, if not, `stopped_at`: the step, the screen and the exact words where it stopped. Copy the flow's `value_moment`, its `rule_overrides` and its `friction` reasons into the result.
+
+Then judge the rules whose `Applies to` includes `flow` (and `docs` or `agent` for those walks) over the whole walk, the same way. Every blocker that applies must end with a result (pass, fail, or n/a with the reason); the gate treats a missing one as not judged. Anything that hurt the person but no rule covers goes in `not_covered`, worded without the product's nouns where possible: that is where new rules come from (`rules/README.md` § Growing without overfitting).
 
 ### Step 2a: Dead-End Pass
 
@@ -294,6 +322,16 @@ Create a dated snapshot directory:
   "goal_reached": false,
   "stopped_at": { "step": 4, "screen": "/signup", "words": "Something went wrong. Please try again." },
   "counts": { "typed_fields": 2, "clicks": 1, "time_to_first_value_ms": null },
+  "kind": "screens",
+  "value_moment": "The dashboard shows the person's first result",
+  "rules_version": "0.5.0",
+  "rule_results": [
+    { "id": "FOLD-01", "result": "pass", "step": 1 },
+    { "id": "DEC-02", "result": "fail", "step": 4, "observed": "the password chosen at step 2 is asked for again" },
+    { "id": "DOCS-01", "result": "n/a", "observed": "not a docs walk" }
+  ],
+  "rule_overrides": [],
+  "not_covered": [],
   "steps": [
     {
       "index": 1,
@@ -307,6 +345,15 @@ Create a dated snapshot directory:
       "screenshots": { "1440": "step-01-navigate@1440.png", "375": "step-01-navigate@375.png" },
       "expect": "registration form visible",
       "expect_met": true,
+      "screen": "/signup",
+      "measures": {
+        "words": 41, "reading_time_s": 10, "controls": 6,
+        "scroll_before_primary_vh": { "1440": 0, "375": 0 },
+        "horizontal_overflow_px": { "1440": 0, "375": 0 },
+        "decisions": 1, "fields": 0, "clicks": 0,
+        "non_task_elements": 1, "non_task": ["newsletter banner"],
+        "wait_ms": 1200, "wait_feedback": true, "dead_end": false, "revisit": false
+      },
       "words": ["Create your account", "Sign up"],
       "console_errors": [],
       "failed_requests": [],
@@ -352,6 +399,8 @@ Create a dated snapshot directory:
   }
 }
 ```
+
+`kind` is `screens` (default), `docs`, `agent` or `map`; docs and agent walks record flow-level `measures` (`commands_to_install`, `unanswered_questions`, `wrong_turns`) directly. `steps[].measures` and `rule_results` are new in 0.5.0; older snapshots without them load, but the gate reports their blockers as not judged.
 
 `steps[].screenshots` maps width to file. Snapshots written before this schema have a single `screenshot` string instead; downstream skills accept both.
 
@@ -414,6 +463,7 @@ Surface: staging.example.com (write-allowed-test)
 
 Goal reached: no — stopped at step 3 (/signup)
 Results: 3/4 passed, 1 slow · typed 1 · clicks 1 · first value: not reached
+Rules: 2 failed (FOLD-01 blocker, NOISE-01) · screens 3 · decisions 2 · scroll before primary 375: 1.4
 Console errors: 2 (step 4) · failed requests: 1 (POST /api/signup 500)
 Snapshot: .flowchad/snapshots/2026-03-20-sign-up/
 ```
@@ -441,6 +491,7 @@ This is the "magic moment" — the user sees their flow animated right in the ch
 **Video:** .flowchad/snapshots/2026-03-20-sign-up/sign-up-trimmed.mp4
 
 **Next:**
+- `/flow-gate sign-up` — may this be handed to a human tester? (blockers, measures, rough edges)
 - `/flow-report sign-up` — generate a friction report from these results
 - `/flow-suggest sign-up` — get prioritized improvement suggestions
 ```
