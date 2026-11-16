@@ -63,10 +63,10 @@ fi
 # Walk output can contain signed-in screens: keep it out of git even though
 # .flowchad/ itself is committed. Runs on every install, existing dirs included.
 touch .flowchad/.gitignore
-for p in snapshots/ reports/; do
+for p in snapshots/ reports/ atlas/; do
   grep -qxF "$p" .flowchad/.gitignore || echo "$p" >> .flowchad/.gitignore
 done
-echo -e "${GREEN}✓${NC} .flowchad/.gitignore ignores snapshots/ and reports/"
+echo -e "${GREEN}✓${NC} .flowchad/.gitignore ignores snapshots/, reports/ and atlas/"
 
 # Check for ffmpeg (optional, for video)
 if command -v ffmpeg &>/dev/null; then
@@ -95,5 +95,5 @@ echo "  3. Run /flowchad-setup to auto-discover flows"
 echo "  4. Or define flows manually in .flowchad/flows/"
 echo "  5. Walk a flow: /flow-walk sign-up, then gate it: /flow-gate sign-up"
 echo ""
-echo -e "${BOLD}Important:${NC} commit .flowchad/ (flows, flow maps, config, walks/) — snapshots/ and reports/ stay ignored."
+echo -e "${BOLD}Important:${NC} commit .flowchad/ (flows, flow maps, config, walks/) — snapshots/, reports/ and atlas/ stay ignored."
 echo ""

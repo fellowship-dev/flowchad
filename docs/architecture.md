@@ -47,6 +47,10 @@ The opinionated part: one file per concern, each rule with an id, a checkable se
 
 `scripts/gate.mjs` combines the walker's `rule_results` with thresholds applied to the measures and decides PASS, PASS-WITH-OVERRIDES, FAIL or INCOMPLETE (reading `gate.target` and deploy checks from `.flowchad/config.yml`); `--record` writes the committed walk record to `.flowchad/walks/`. `scripts/changed.sh` maps a diff to the saved flows it touches, from each flow's `covers:` globs and its last walk record's commit. Both read the rules from `../flow-walk/rules`, so installing one skill without the other is not supported.
 
+### The atlas (`.flowchad/skills/flow-atlas/`)
+
+A whole-product walk rather than a saved flow: an inventory from the code, every action labelled with one of seven labels and its evidence, per build (today and each open change). It reuses flow-walk's live-safety contract and screenshot conventions; `templates/` holds the manifest schema, the findings file and the page outline. Output goes to `.flowchad/atlas/<date>/`, ignored by git because screens can show signed-in data.
+
 ### Agent Definition (`agents/flowchad.md`)
 
 A Claude Code subagent that carries the same defaults in short behavioural prose, for use with or without the skills installed. It is the source of truth; installs are copies (see README → Agent definition).

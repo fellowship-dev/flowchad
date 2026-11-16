@@ -1,0 +1,58 @@
+{
+  "build": "today",
+  "commit": "a1b2c3d",
+  "differences_from_production": [
+    "payment provider replaced by the repo's fake in test mode",
+    "mail captured in the server log, not sent"
+  ],
+  "screens": [
+    {
+      "id": "today-b-01",
+      "path": "B",
+      "order": 1,
+      "title": "Create an account",
+      "route": "/signup",
+      "role": "signed-out visitor",
+      "state": "empty form",
+      "shots": { "375": "today-b-01-signup-375.jpg", "1440": null },
+      "actions": [
+        { "label": "Create account", "status": "WORKS", "note": "went to the code screen; the code arrived in the captured mail" },
+        { "label": "Sign in instead", "status": "WORKS", "note": "opened /signin with the address kept" },
+        { "label": "Terms", "status": "DEAD_END", "note": "404 with no way back" }
+      ]
+    },
+    {
+      "id": "today-c-03",
+      "path": "C",
+      "order": 3,
+      "title": "Your first project",
+      "route": "/projects/new",
+      "role": "owner",
+      "state": "after import",
+      "shots": { "375": "today-c-03-first-project-375.jpg", "1440": "today-c-03-first-project-1440.jpg" },
+      "actions": [
+        { "label": "Apply settings", "status": "UNTRUE", "note": "says \"updates itself daily\"; the daily job re-reads its own output (src/jobs/refresh.ts:42)" },
+        { "label": "Export", "status": "HIDDEN", "note": "switched off in this deployment (src/config.ts:17)" },
+        { "label": "Connect provider", "status": "NEEDS_LIVE_TEST", "note": "needs a real provider account and consent screen" }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "today-g-01",
+      "name": "Sign-in code",
+      "trigger": "sign up or sign in",
+      "on_in_production": "yes",
+      "subject": "Your code",
+      "shot": "today-g-01-message-code.jpg",
+      "text": "Your code is 123456.",
+      "status": "WORKS",
+      "note": "rendered from the captured message"
+    }
+  ],
+  "jobs": [
+    { "schedule": "0 4 * * *", "on_in_production": true, "does": "removes expired sessions", "ran_locally": "2 rows deleted, no errors" }
+  ],
+  "findings": { "B": ["The terms link is a dead end."] },
+  "not_walked": [ { "what": "real provider consent", "why": "needs a live account" } ]
+}
