@@ -49,7 +49,7 @@ The opinionated part: one file per concern, each rule with an id, a checkable se
 
 ### The atlas (`.flowchad/skills/flow-atlas/`)
 
-A whole-product walk rather than a saved flow: an inventory from the code, every action labelled with one of seven labels and its evidence, per build (today and each open change). It reuses flow-walk's live-safety contract and screenshot conventions; `templates/` holds the manifest schema, the findings file and the page outline. Output goes to `.flowchad/atlas/<date>/`, ignored by git because screens can show signed-in data.
+A whole-product walk rather than a saved flow: an inventory from the code, every action labelled with one of seven labels and its evidence, per build (today and each open change). It reuses flow-walk's live-safety contract and walk checks (JPEG screenshots instead of PNG, because an atlas holds hundreds); `templates/` holds the manifest schema, the findings file and the page outline. Output goes to `.flowchad/atlas/<date>/`, ignored by git because screens can show signed-in data.
 
 ### Agent Definition (`agents/flowchad.md`)
 

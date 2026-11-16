@@ -31,7 +31,7 @@
       "state": "after import",
       "shots": { "375": "today-c-03-first-project-375.jpg", "1440": "today-c-03-first-project-1440.jpg" },
       "actions": [
-        { "label": "Apply settings", "status": "UNTRUE", "note": "says \"updates itself daily\"; the daily job re-reads its own output (src/jobs/refresh.ts:42)" },
+        { "label": "Apply settings", "status": "UNTRUE", "note": "says \"saved for all members\"; only the current member's copy changed (src/settings/save.ts:42)" },
         { "label": "Export", "status": "HIDDEN", "note": "switched off in this deployment (src/config.ts:17)" },
         { "label": "Connect provider", "status": "NEEDS_LIVE_TEST", "note": "needs a real provider account and consent screen" }
       ]

@@ -31,8 +31,10 @@ separately; say so and name the conflicting files.
 
 ## Safety
 
-Every walk follows `flow-walk/references/live-safety.md`. The default is to
-walk **local copies** built from named commits, with the production settings
+Every walk follows `flow-walk/references/live-safety.md` (surface table,
+secrets never in output, private evidence, clean up); this section only says
+how an atlas applies it. The default is to walk **`local-copy`** surfaces built
+from named commits, with the production settings
 (names and non-secret values only) and stand-ins for every outside provider:
 captured mail, a fake payment provider in test mode, fake DNS and identity
 providers, the repo's own test fixtures. Production is `read-only-live`: at
@@ -67,6 +69,22 @@ Every action gets exactly one. The evidence column is required.
 An action is any button, link, form, toggle, menu item, copy button,
 destructive action or navigation item. If the same action behaves differently
 per role, label it once per role.
+
+When an action fits two labels, take the first that applies in this order and
+put the other in the note:
+
+1. **Not built**: there is no code for it.
+2. **Hidden**: the code exists, but this deployment cannot reach it.
+3. **Broken**: you did it and it failed or did something else, including when
+   its only way onward is missing (a failed action that strands the person is
+   Broken, with "dead end" in the note).
+4. **Dead end**: the action itself did what it said, but the screen it leads
+   to has no way forward or back.
+5. **Needs live test**: everything that can be done locally works, and the
+   rest depends on a real outside service. If the local part fails, it is
+   Broken.
+6. **Untrue text**: it works, but a sentence on screen is false.
+7. **Works**.
 
 ## Method
 
@@ -110,11 +128,22 @@ Walk several builds in parallel when you can, one isolated machine per build.
 
 ### 3. Walk every action
 
+Cover every role the code knows: signed-out visitor, invited person, each
+member role, the operator or admin, and an agent client where the product
+offers one. Apply `flow-walk/references/walk-checks.md` on every screen
+(rendered content not status codes, cross-check what the product claims,
+console and network errors, the dead-end hunt); its cross-checks are what
+decide **Untrue text**. Saved flows are still judged against
+`flow-walk/rules/` by `/flow-walk` and `/flow-gate`; an atlas does not
+restate or replace them.
+
 For each screen, in path order and for each role that can reach it:
 
 1. Screenshot every distinct screen and state: 375 px wide always; 1440 px for
    dense pages (dashboards, detail pages, settings). JPEG, quality about 70,
-   at most 1,800 CSS px tall, each under 400 KB. Name files
+   at most 1,800 CSS px tall, each under 400 KB (an atlas holds hundreds of
+   images, so it uses JPEG where a flow walk uses PNG). Take every width at the
+   same moment, as walk-checks describes. Name files
    `<build>-<path>-<NN>-<slug>-<width>.jpg`.
 2. Do every action and label it with evidence. For a destructive action, do it
    on seeded data and record what it removed.
