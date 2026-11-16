@@ -29,7 +29,7 @@ same flow. A number that gets worse needs a stated reason in the report.
 | `clicks` | counted | Clicks or taps, including opening menus and dismissing things. |
 | `words` | measured | Visible words in the main content (`main`, else the body). |
 | `reading_time_s` | computed | `words / 238 * 60`, the average silent reading rate (Brysbaert, 2019). |
-| `scroll_before_primary_vh` | measured | Per width: viewport heights between the top of the page and the bottom of the step's primary element. `0` means fully visible without scrolling. `null` if the element was not found or is hidden. |
+| `scroll_before_primary_vh` | measured | Per width: viewport heights between the top of the page and the bottom of the step's primary element: the `primary` selector, else the first required input of the step (the first input if none is required), else, only when the step has no input, its primary action (`primary_source` says which). `0` means fully visible without scrolling. `null` if the element was not found or is hidden. |
 | `horizontal_overflow_px` | measured | Per width: how many pixels the page is wider than the viewport. |
 | `controls` | measured | Visible interactive elements on the screen (links, buttons, inputs). Context for `non_task_elements`. |
 | `non_task_elements` | judged | Visible badges, banners, scores, widgets and secondary controls the step does not need. Fallbacks behind a link do not count. List them in `non_task`. |

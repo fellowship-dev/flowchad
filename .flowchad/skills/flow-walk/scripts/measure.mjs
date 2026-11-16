@@ -6,7 +6,10 @@
 //   for (const width of viewports) {
 //     await page.setViewportSize({ width, height: heightFor(width) });
 //     await page.screenshot({ path: ... });
-//     perWidth[width] = await measureStep(page, { primary: step.primary || nextStep?.selector });
+//     // the first input the step needs (rules/primary-action.md, FOLD-01); with no
+//     // selector the page picks the first required input, then the first input,
+//     // and only a step with no input falls back to its primary action
+//     perWidth[width] = await measureStep(page, { primary: step.primary || firstFilledSelector });
 //   }
 //   stepResult.measures = { ...mergeWidths(perWidth), decisions, fields, clicks, ... };
 //
@@ -33,9 +36,33 @@ export function pageMetrics(primary) {
       'a[href], button, input:not([type=hidden]), select, textarea, [role=button], [role=link]',
     )).filter(visible).length,
   };
+  // FOLD-01: the primary element is the first input the step needs, not the
+  // submit button. Without a selector: the first visible required input in the
+  // main column, else its first visible input; only a step with no input at
+  // all falls back to its primary action (a submit button, then any button,
+  // then a link).
+  let el = null;
+  let source = null;
   if (primary) {
-    let el = null;
     try { el = document.querySelector(primary); } catch (e) { el = null; }
+    source = 'selector';
+  } else if (root) {
+    const usable = (n) => visible(n) && !n.disabled;
+    const inputs = Array.from(root.querySelectorAll(
+      'input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=image]), select, textarea, [contenteditable=""], [contenteditable=true], [role=textbox], [role=combobox]',
+    )).filter(usable);
+    const required = inputs.filter((n) => n.required || n.getAttribute('aria-required') === 'true');
+    if (required.length) { el = required[0]; source = 'required-input'; }
+    else if (inputs.length) { el = inputs[0]; source = 'input'; }
+    else {
+      for (const sel of ['button[type=submit], input[type=submit]', 'button, [role=button], input[type=button]', 'a[href]']) {
+        const hit = Array.from(root.querySelectorAll(sel)).filter(usable)[0];
+        if (hit) { el = hit; source = 'action'; break; }
+      }
+    }
+  }
+  if (source) {
+    out.primary_source = source;
     out.primary_found = !!el;
     out.primary_visible = !!el && visible(el);
     out.scroll_before_primary_vh = null;
@@ -71,5 +98,6 @@ export function mergeWidths(perWidth) {
     horizontal_overflow_px: byWidth('horizontal_overflow_px'),
   };
   if ('scroll_before_primary_vh' in first) m.scroll_before_primary_vh = byWidth('scroll_before_primary_vh');
+  if ('primary_source' in first) m.primary_source = first.primary_source;
   return m;
 }

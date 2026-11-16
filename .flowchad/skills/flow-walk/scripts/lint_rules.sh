@@ -14,6 +14,9 @@
 # compared after normalising both sides: lowercase, punctuation and spaces
 # removed, an optional trailing "s" (so Acme-Corp, Acme Corp and AcmeCorps all
 # match acmecorp).
+# Dates in "(checked YYYY-MM-DD)" must be real calendar dates, not before
+# 2020 and not after the run date (UTC, one day of slack for time zones);
+# FLOWCHAD_LINT_TODAY=YYYY-MM-DD sets the run date (for tests).
 # Exit: 0 all rules pass, 1 a rule fails, 2 usage (no rule files found).
 # Portable: bash 3.2 and POSIX awk (macOS and Linux).
 
@@ -34,6 +37,8 @@ EXTRA=${FLOWCHAD_FORBIDDEN_TERMS:-}
 if [ -n "$EXTRA" ] && [ ! -f "$EXTRA" ]; then
   echo "lint_rules: FLOWCHAD_FORBIDDEN_TERMS file not found: $EXTRA" >&2; exit 2
 fi
+TODAY=${FLOWCHAD_LINT_TODAY:-$(date -u +%Y-%m-%d)}
+case "$TODAY" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) echo "lint_rules: bad FLOWCHAD_LINT_TODAY: $TODAY" >&2; exit 2 ;; esac
 [ -f "$MEASURES" ] || { echo "lint_rules: measures reference not found: $MEASURES" >&2; exit 2; }
 
 FILES=()
@@ -55,7 +60,7 @@ for d in "${DIRS[@]}"; do
 done
 [ "${#FILES[@]}" -gt 0 ] || { echo "lint_rules: no rule files in: ${DIRS[*]}" >&2; exit 2; }
 
-LC_ALL=C awk -v terms_file="$TERMS" -v extra_file="$EXTRA" -v measures_file="$MEASURES" '
+LC_ALL=C awk -v terms_file="$TERMS" -v extra_file="$EXTRA" -v measures_file="$MEASURES" -v today="$TODAY" '
 function err(msg) { printf "%s:%d: %s%s\n", FILENAME, FNR, (cur != "" ? cur ": " : ""), msg; errors++ }
 function rerr(id, msg) { printf "%s: %s: %s\n", file_of[id], id, msg; errors++ }
 function dirof(p,   q) { q = p; sub(/\/[^\/]*$/, "", q); return q }
@@ -76,8 +81,33 @@ function load_terms(path,   line, t) {
 function term_hit(g,   b) {
   if (g in tset) return tset[g]
   if (length(g) > 2 && substr(g, length(g), 1) == "s") { b = substr(g, 1, length(g) - 1); if (b in tset) return tset[b] }
+  if (length(g) > 4 && substr(g, length(g) - 1, 2) == "es") { b = substr(g, 1, length(g) - 2); if (b in tset) return tset[b] }
   if (length(g) > 3 && ((g "s") in tset)) return tset[g "s"]
   return ""
+}
+# Day number of a calendar date, or -1 if it is not a real date.
+function daynum(s,   y, m, d, mdays, mp) {
+  if (s !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/) return -1
+  y = substr(s, 1, 4) + 0; m = substr(s, 6, 2) + 0; d = substr(s, 9, 2) + 0
+  if (m < 1 || m > 12 || d < 1) return -1
+  split("31 28 31 30 31 30 31 31 30 31 30 31", mdays, " ")
+  if (m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0)) mdays[2] = 29
+  if (d > mdays[m] + 0) return -1
+  if (m <= 2) { y--; mp = m + 9 } else mp = m - 3
+  return 365 * y + int(y / 4) - int(y / 100) + int(y / 400) + int((153 * mp + 2) / 5) + d
+}
+# A checked date must be real, not before 2020 and not after today (+1 day).
+function check_date(s, what,   n) {
+  n = daynum(s)
+  if (n < 0) { err(what " date is not a real calendar date: " s); return }
+  if (n < daynum("2020-01-01")) err(what " date is before 2020: " s)
+  else if (n > daynum(today) + 1) err(what " date is in the future: " s)
+}
+# Words in a claim: tokens with a letter or digit.
+function nwords(s,   n, parts, i, c) {
+  n = split(s, parts, /[ \t]+/); c = 0
+  for (i = 1; i <= n; i++) if (parts[i] ~ /[A-Za-z0-9]/) c++
+  return c
 }
 # Words are compared one by one and joined in runs of up to three, so a term
 # split by a hyphen, a dot or a space ("Cloud-flare", "Next js") still matches.
@@ -198,7 +228,16 @@ cur != "" && /^- \*\*[A-Za-z ]+:\*\* / {
   if (k == "Threshold") numeric[cur] = 1
   if (k == "TSource") {
     check_terms(nolinks(v), "Threshold source")
-    if (match(v, /<https?:\/\/[^ >]+>/)) tslink[cur] = substr(v, RSTART + 1, RLENGTH - 2)
+    if (match(v, /<https?:\/\/[^ >]+>/)) {
+      tslink[cur] = substr(v, RSTART + 1, RLENGTH - 2)
+      rest = substr(v, RSTART + RLENGTH)
+      if (match(rest, /^ \(checked [^)]*\)/)) check_date(substr(rest, 11, 10), "Threshold source checked")
+      else err("Threshold source must say when the link was checked: <link> (checked YYYY-MM-DD)")
+    }
+    claim = v; tool = 0
+    if (claim ~ /^tool standard: /) { tool = 1; sub(/^tool standard: /, "", claim) }
+    gsub(/<[a-z]+:[^>]*>/, "", claim); gsub(/\(checked [^)]*\)/, "", claim)
+    if (nwords(claim) < 4) err(tool ? "a tool-standard Threshold source needs its reason in at least 4 words" : "Threshold source needs a claim of at least 4 words saying what the source gives")
   }
   if (k == "Basis") {
     if (v ~ /^source — /) {
@@ -207,18 +246,25 @@ cur != "" && /^- \*\*[A-Za-z ]+:\*\* / {
         nsource[cur]++; srclink[cur, substr(v, RSTART + 1, RLENGTH - 2)] = 1
         claim = substr(v, RSTART + RLENGTH)
         check_terms(claim, "Basis claim")
-        if (claim !~ /^ \(checked [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) err("source basis must say when the link was opened and checked: <link> (checked YYYY-MM-DD)")
+        if (match(claim, /^ \(checked [^)]*\)/)) {
+          check_date(substr(claim, 11, 10), "source basis checked")
+          said = substr(claim, RSTART + RLENGTH); sub(/^:/, "", said)
+          if (nwords(said) < 4) err("source basis needs a claim of at least 4 words after the date, saying what the source supports")
+        } else err("source basis must say when the link was opened and checked: <link> (checked YYYY-MM-DD)")
       } else err("source basis needs a link in <https://...>")
     } else if (v ~ /^field — /) {
       fv = v; sub(/^field — /, "", fv); check_terms(fv, "Basis")
       if (v !~ /maintainer field note/) err("field basis must say \"maintainer field note\" and name no person, client or product")
-      # one opaque field-note id per observation, kept in the maintainer ledger
+      # one field-note id per observation; the observation itself is recorded privately by the maintainer
       ids = v; nid = 0; split("", idseen)
-      while (match(ids, /FN-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9]*/)) {
-        fid = substr(ids, RSTART, RLENGTH); if (!(fid in idseen)) { idseen[fid] = 1; nid++ }
-        ids = substr(ids, RSTART + RLENGTH)
+      while (match(ids, /FN-[0-9A-Za-z-]*/)) {
+        fid = substr(ids, RSTART, RLENGTH); sub(/-+$/, "", fid); ids = substr(ids, RSTART + RLENGTH)
+        if (fid !~ /^FN-[0-9][0-9][0-9][0-9]$/) { err("field-note id must be a sequence number FN-NNNN: " fid); continue }
+        if (fid == "FN-0000") { err("field-note id FN-0000 is not an id"); continue }
+        if (!(fid in idseen)) { idseen[fid] = 1; nid++ }
       }
-      if (nid == 0) err("field basis needs a field-note id for each observation (FN-YYYY-MM-NN)")
+      if (match(v, /maintainer field note, [0-9][0-9][0-9][0-9]-[0-9][0-9]/)) check_date(substr(v, RSTART + RLENGTH - 7, 7) "-01", "field note month")
+      if (nid == 0) err("field basis needs a field-note id for each observation (FN-NNNN)")
       if (match(v, /[0-9]+ (flows?|screens?|walks?) in [0-9]+ products?/)) {
         f = substr(v, RSTART, RLENGTH); split(f, fp, " ")
         if (fp[2] ~ /^flow/) {

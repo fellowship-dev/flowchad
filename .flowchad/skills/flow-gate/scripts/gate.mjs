@@ -15,9 +15,13 @@
 // the previous walk, and the known rough edges. --record writes the durable
 // walk record (text only, redacted best-effort) into <dir>, for committing.
 //
+// It checks that a walk record is complete, judged against every blocker rule
+// and fresh for the stated target; it cannot prove the walk took place.
+//
 // Exit: 0 PASS, 1 FAIL or INCOMPLETE, 2 bad input (unknown rule id, missing
-// file, unsafe flow id, an override that is not allowed or lacks its reason,
-// who or when), 3 PASS-WITH-OVERRIDES (a blocker failed and was overridden).
+// file, unsafe flow id, a walk timestamp in the future, an override that is
+// not allowed or lacks its reason, who or a possible date), 3
+// PASS-WITH-OVERRIDES (a blocker failed and was overridden).
 // Node built-ins only.
 
 import fs from 'node:fs';
@@ -35,7 +39,19 @@ export const MIN_BLOCKER_REASON = { chars: 20, words: 4 };
 // Flow ids name files: letters, digits, hyphen, underscore; no dots or slashes.
 export const FLOW_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,119}$/;
 
+// Clock slack for a walk timestamp or an override date ahead of this machine.
+export const CLOCK_SLACK_MS = 5 * 60 * 1000;
+
 export class InputError extends Error {}
+
+// A YYYY-MM-DD string that names a real calendar day.
+export function isCalendarDate(s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return Number.isFinite(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+// Someone named: at least one letter or digit, not only punctuation.
+const named = (s) => /[\p{L}\p{N}]/u.test(s);
 
 // ---------- rules ----------
 
@@ -283,8 +299,11 @@ function applyThreshold(rule, t, results, fm) {
   return { status: evidence.length ? 'fail' : 'pass', evidence };
 }
 
-function checkOverrides(results, rules) {
+function checkOverrides(results, rules, now) {
   const overrides = new Map();
+  const walkDay = typeof results.timestamp === 'string' && isCalendarDate(results.timestamp.slice(0, 10)) ? results.timestamp.slice(0, 10) : null;
+  // the latest calendar day anywhere on Earth right now
+  const latestDay = new Date(now + 14 * 3600 * 1000).toISOString().slice(0, 10);
   for (const o of results.rule_overrides || []) {
     const rule = rules.get(o?.id);
     if (!rule) throw new InputError(`rule_overrides names unknown rule ${o?.id}`);
@@ -299,7 +318,13 @@ function checkOverrides(results, rules) {
         throw new InputError(`rule_overrides ${o.id} overrides a blocker: the reason must say why in at least ${MIN_BLOCKER_REASON.words} words and ${MIN_BLOCKER_REASON.chars} characters`);
       }
       if (!by) throw new InputError(`rule_overrides ${o.id} overrides a blocker: say who accepted it (by:)`);
-      if (!/^\d{4}-\d{2}-\d{2}/.test(date) || !Number.isFinite(Date.parse(date))) throw new InputError(`rule_overrides ${o.id} overrides a blocker: say when (date: YYYY-MM-DD)`);
+      if (!date) throw new InputError(`rule_overrides ${o.id} overrides a blocker: say when (date: YYYY-MM-DD)`);
+    }
+    if (by && !named(by)) throw new InputError(`rule_overrides ${o.id}: by: must name who accepted it, not only punctuation`);
+    if (date) {
+      if (!isCalendarDate(date)) throw new InputError(`rule_overrides ${o.id}: say when (date: YYYY-MM-DD, a real date): ${JSON.stringify(date.slice(0, 40))}`);
+      if (date > latestDay) throw new InputError(`rule_overrides ${o.id}: date ${date} is in the future`);
+      if (walkDay && date < walkDay) throw new InputError(`rule_overrides ${o.id}: date ${date} is before the walk (${walkDay}); an override accepts a failure that walk found`);
     }
     overrides.set(o.id, { reason, by: by || null, date: date || null, blocker });
   }
@@ -307,6 +332,11 @@ function checkOverrides(results, rules) {
 }
 
 export function evaluate(results, rules, opts = {}) {
+  const now = Number.isFinite(opts.now) ? opts.now : Date.now();
+  const walkedAt = Date.parse(results.timestamp || '');
+  if (Number.isFinite(walkedAt) && walkedAt > now + CLOCK_SLACK_MS) {
+    throw new InputError(`walk timestamp ${String(results.timestamp).slice(0, 40)} is in the future; a record of a walk that has not happened yet is refused`);
+  }
   const scopes = scopesFor(results.kind);
   const isMap = scopes.has('map');
   const fm = flowMeasures(results);
@@ -367,7 +397,7 @@ export function evaluate(results, rules, opts = {}) {
   }
 
   // 4. overrides
-  const overrides = checkOverrides(results, rules);
+  const overrides = checkOverrides(results, rules, now);
 
   // 5. classify
   const failedBlockers = []; const notJudged = []; const roughEdges = []; const accepted = [];
@@ -444,7 +474,9 @@ function hostOf(u) {
 // segments that look like tokens become [token]. Then known secret shapes,
 // secret-like key=value pairs, email addresses, long hex or base64 strings,
 // card-like numbers (Luhn), 12+ digit account-like numbers and phone-like
-// numbers are replaced. It cannot know every secret: review a record before
+// numbers are replaced. URLs without a scheme lose their query string too,
+// data: URIs lose their payload, and a token split across a line break is
+// joined before matching. It cannot know every secret: review a record before
 // committing it.
 
 const SECRET_SHAPES = [
@@ -458,10 +490,21 @@ const SECRET_SHAPES = [
   /\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]*/g, // JWTs
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g,
 ];
-const SECRET_KEY = '[A-Za-z0-9_.-]*?(?:token|secret|passw(?:or)?d|pwd|api[_-]?key|apikey|access[_-]?key|private[_-]?key|client[_-]?secret|auth|session|sessid|sid|signature|sig|cookie|otp|credential|key)s?';
+const SECRET_KEY = '[A-Za-z0-9_.-]*?(?:token|secret|passw(?:or)?d|passwd|pwd|api[_-]?key|apikey|access[_-]?key|private[_-]?key|client[_-]?secret|auth|session|sessid|sid|signature|sig|cookie|otp|credential|key)s?(?:[_-]?id)?';
 const KV_EQ = new RegExp(`\\b(${SECRET_KEY})(\\s*=\\s*)("[^"]*"|'[^']*'|[^\\s&,;|"'<>]+)`, 'gi');
 const KV_COLON = /\b((?:password|passwd|secret|token|api[_ -]?key|access[_ -]?key|client[_ -]?secret|private[_ -]?key))(\s*:\s*)("[^"]*"|'[^']*'|[^\s,;|"'<>]+)/gi;
-const URL_RE = /\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>`|\]]+/gi;
+// scheme://, an optional [IPv6] host, then the rest of the address
+const URL_RE = /\b[a-z][a-z0-9+.-]*:\/\/(?:[^\s"'<>`|\[\]@\/]*@)?(?:\[[0-9A-Fa-f:.%a-zA-Z]*\])?[^\s"'<>`|\[\]]*/gi;
+// host.tld/path?query without a scheme: the query and fragment are removed
+const BARE_URL_QUERY = /\b((?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?(?:\/[^\s?#"'<>`|]*)?)[?#](?=[A-Za-z0-9_%-])[^\s"'<>`|]*/gi;
+const DATA_URI = /\bdata:([a-z0-9.+-]+\/[a-z0-9.+-]+)?((?:;[a-z0-9.+-]+(?:=[^;,\s]*)?)*),[^\s"'<>)\]]*/gi;
+// "password hunter2", "password is hunter2": the word after it, unless it is
+// ordinary prose about the field
+const PASSWORD_PROSE = /\b(pass(?:word|wd|code|phrase)|pwd)(\s+(?:is|was|=|:)\s*|\s+)([^\s,;.)]+)/gi;
+const PROSE_AFTER_PASSWORD = new Set(['field', 'fields', 'box', 'input', 'inputs', 'manager', 'managers', 'reset', 'resets', 'change', 'changes', 'rule', 'rules', 'policy', 'step', 'page', 'screen', 'form', 'prompt', 'again', 'twice', 'once', 'and', 'or', 'the', 'a', 'an', 'to', 'for', 'from', 'of', 'on', 'in', 'with', 'that', 'which', 'is', 'was', 'are', 'were', 'must', 'should', 'can', 'cannot', 'could', 'will', 'would', 'autofill', 'paste', 'pasted', 'typed', 'entered', 'strength', 'hint', 'hints', 'requirement', 'requirements', 'login', 'recovery', 'entry', 'fill', 'fills', 'reuse', 'expired', 'not', 'no', 'as', 'by', 'it', 'they', 'blocks', 'block', 'accepted', 'rejected', 'required', 'optional', 'length', 'only', 'four', 'two', 'three', 'chosen', 'set', 'sets', 'new', 'old', 'here', 'there', 'later', 'first', 'next', 'without', 'under', 'before', 'after']);
+// a run that looks like a secret once joined across a line break
+const looksSecret = (s) => SECRET_SHAPES.some((re) => new RegExp(re.source).test(s))
+  || (s.length >= 32 && /\d/.test(s) && /[a-z]/.test(s) && /[A-Z]/.test(s));
 
 function luhn(digits) {
   let sum = 0;
@@ -502,11 +545,17 @@ export function redactUrl(u) {
 
 function redactText(s) {
   let out = String(s ?? '');
+  // a token wrapped onto the next line is joined first, when the join looks like a secret
+  out = out.replace(/([A-Za-z0-9_+/=.-]{12,})[ \t]*\r?\n[ \t]*([A-Za-z0-9_+/=.-]{4,})(?=[\s"'<>),;]|$)/g, (m, a, b) => (looksSecret(a + b) ? a + b : m));
+  out = out.replace(DATA_URI, (m, type, params) => `data:${type || ''}${params || ''},[data]`);
+  out = out.replace(BARE_URL_QUERY, '$1');
   for (const re of SECRET_SHAPES) out = out.replace(re, '[secret]');
-  out = out.replace(/\b(Bearer|Basic|Token)\s+[A-Za-z0-9._~+/=-]{8,}/gi, '$1 [secret]');
+  out = out.replace(/\b(Bearer)\s+[^\s"'<>,;]+/gi, '$1 [secret]');
+  out = out.replace(/\b(Basic|Token)\s+[A-Za-z0-9._~+/=-]{8,}/gi, '$1 [secret]');
   out = out.replace(KV_EQ, '$1$2[secret]').replace(KV_COLON, '$1$2[secret]');
-  out = out.replace(/\b[^\s:@/]+:[^\s:@/]+@(?=[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '[credentials]@');
-  out = out.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[email]');
+  out = out.replace(PASSWORD_PROSE, (m, word, gap, val) => (val === '[secret]' || (!/[=:]/.test(gap) && PROSE_AFTER_PASSWORD.has(val.toLowerCase().replace(/['’]s$/, ''))) ? m : `${word}${gap}[secret]`));
+  out = out.replace(/\b[^\s:@/]+:[^\s:@/]+@(?=[\p{L}\p{N}.-]+\.[\p{L}]{2,})/gu, '[credentials]@');
+  out = out.replace(/[\p{L}\p{N}._%+-]+@(?:[\p{L}\p{N}-]+\.)+(?:xn--[a-z0-9-]+|[\p{L}]{2,})/gu, '[email]');
   out = out.replace(/\b[0-9a-f]{32,}\b/gi, '[hex]');
   out = out.replace(/[A-Za-z0-9+/_-]{32,}={0,2}/g, (m) => (/\d/.test(m) && /[a-z]/.test(m) && /[A-Z]/.test(m) ? '[secret]' : m));
   out = out.replace(/\b[A-Za-z0-9]{40,}\b/g, (m) => (/\d/.test(m) && /[A-Za-z]/.test(m) ? '[secret]' : m));

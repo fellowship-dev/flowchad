@@ -15,8 +15,8 @@ cannot answer from the docs is recorded, not answered for it.
 - **Severity:** blocker
 - **Applies to:** docs
 - **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/> (checked 2026-11-15): "Aspire to perfect reliability"; the tutorial "works for every user, every time."
-- **Basis:** source — Jeff Sauro, "10 Things To Know About Completion Rates" (MeasuringU, 2011), <https://measuringu.com/completion-rates/> (checked 2026-11-15): "Completion rates are the fundamental usability metric".
-- **Threshold source:** <https://diataxis.fr/tutorials/> (checked 2026-11-15): a guide that works for every user, every time leaves no question unanswered; zero is that standard, not a number from the source.
+- **Basis:** source — Jeff Sauro, "10 Things To Know About Completion Rates" (MeasuringU, 2011), <https://measuringu.com/completion-rates/> (checked 2026-11-15): "If users cannot complete a task, not much else matters with respect to usability or utility."
+- **Threshold source:** tool standard: zero unanswered questions is FlowChad's own standard, not a number from the source; it follows from a tutorial that works for every user, every time, <https://diataxis.fr/tutorials/> (checked 2026-11-15).
 - **Pass:** From an empty folder, the agent follows the install page, runs five commands and shows the first result, without asking anything.
 - **Fail:** The agent stops to ask which of two install methods applies, because the docs describe both and never say who each is for.
 - **Since:** 0.5.0

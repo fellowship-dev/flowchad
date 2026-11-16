@@ -54,7 +54,7 @@ await test('hidden and missing primary elements', async () => {
   const missing = await measureStep(page, { primary: '#nope' });
   assert.equal(missing.primary_found, false); assert.equal(missing.scroll_before_primary_vh, null);
   const none = await measureStep(page, {});
-  assert.equal('scroll_before_primary_vh' in none, false);
+  assert.equal('scroll_before_primary_vh' in none, false); // nothing visible to act on
 });
 
 await test('words count the main column only', async () => {
@@ -82,6 +82,30 @@ await test('a sticky primary button counts where it is on screen', async () => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.setContent(`<main>${report(3000)}<button id="go" style="position:fixed;bottom:0">Continue</button></main>`);
   assert.equal((await measureStep(page, { primary: '#go' })).scroll_before_primary_vh, 0);
+});
+
+// FOLD-01: with no selector the measure takes the first input the step needs,
+// not the submit button (each case failed before: no selector meant no measure,
+// and the walker fell back to the next step's selector, often the button).
+await test('no selector: the first input is measured, not a submit button below the fold', async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.setContent(`<body style="margin:0"><main><label>Site <input id="site"></label>${report(2000)}<button type="submit">Continue</button></main></body>`);
+  const m = await measureStep(page, {});
+  assert.equal(m.primary_source, 'input'); assert.equal(m.scroll_before_primary_vh, 0);
+});
+await test('no selector: the first required input wins over an optional one above it', async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.setContent(`<body style="margin:0"><main><label>Note <input id="note"></label>${report(1500)}<label>Site <input id="site" required></label><button>Go</button></main></body>`);
+  const m = await measureStep(page, {});
+  assert.equal(m.primary_source, 'required-input'); assert.ok(m.scroll_before_primary_vh > 0, `got ${m.scroll_before_primary_vh}`);
+});
+await test('no selector and no input: the primary action is measured', async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.setContent(`<body style="margin:0"><main>${report(1500)}<a href="/x">Details</a><button type="submit">Continue</button></main></body>`);
+  const m = await measureStep(page, {});
+  assert.equal(m.primary_source, 'action'); assert.ok(m.scroll_before_primary_vh > 0, `got ${m.scroll_before_primary_vh}`);
+  assert.equal(mergeWidths({ 375: m }).primary_source, 'action');
+  await page.setViewportSize({ width: 1440, height: 900 });
 });
 
 await browser.close();

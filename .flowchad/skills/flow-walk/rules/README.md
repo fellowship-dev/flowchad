@@ -42,8 +42,8 @@ Measures named by rules are defined in
 - **Severity:** blocker | should-fix | later
 - **Applies to:** step, flow, map, docs, agent (one or more)
 - **Basis:** source — Author, *Title* (year), <https://…> (checked YYYY-MM-DD): what it says that supports the rule, quoted where possible.
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02).
-- **Threshold source:** <https://…> (checked YYYY-MM-DD): where the number comes from (required when the Rule, Check or Threshold has a number).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0001, FN-0002).
+- **Threshold source:** <https://…> (checked YYYY-MM-DD): where the number comes from (required when the Rule, Check or Threshold has a number), or `tool standard: <reason> <https://…> (checked YYYY-MM-DD)`.
 - **Pass:** A product-neutral example that passes.
 - **Fail:** A product-neutral example that fails.
 - **Since:** 0.5.0
@@ -59,10 +59,13 @@ later).
 
 **Threshold source** names which cited source a number comes from. Any digit
 in the Rule or Check sentence, and any `Threshold`, needs one; its link must be
-one of the rule's `source` bases. When the source motivates the number without
-stating it (FOLD-01's zero scroll, ERR-01's zero dead ends), the line says so
-and that the number is FlowChad's own standard. The lint can check only that
-the line exists and points at a cited source; the reviewer checks the number.
+one of the rule's `source` bases, and it says in a few words what the source
+gives. When the number is FlowChad's own and a source only motivates it
+(FOLD-01's zero scroll, ERR-01's zero dead ends, DOCS-01's zero unanswered
+questions), the line starts `tool standard:`, says the number is FlowChad's
+own standard, and cites the source that motivates it. The lint checks that the
+line exists, carries a claim and a valid check date, and points at a cited
+source; the reviewer checks the number.
 
 **Threshold** syntax: `measure op number` or `measure = true|false`, optionally
 followed by `when measure op number`. `op` is one of `=`, `<=`, `>=`, `<`, `>`.
@@ -90,17 +93,28 @@ reviewer's job in the pull request that adds the rule.
    is. *(lint: one sentence, at most 45 words, check present)*
 3. **Based.** At least one `source` basis naming a public source with a link
    and the date it was opened and checked, or a `field` basis showing the rule
-   failed in **at least two flows**. Field notes name no person, client or
-   product: they say how many flows and products, "maintainer field note" with
-   the month, and one opaque field-note id per observation (`FN-2026-11-01`).
-   *(lint: a link and a `(checked YYYY-MM-DD)` date on every source; at least
-   one id on every field basis and as many distinct ids as flows counted)*
-   The ids point into a private ledger the maintainer keeps outside this
-   repository (what was walked, when, and what failed); it is private because
-   it names the products walked. The lint cannot see the ledger, so it cannot
-   tell whether two flows were independent (different user goals, not two
-   screens of one flow): the reviewer asks the maintainer to confirm from the
-   ledger. The reviewer also opens every source link and checks that it says
+   failed in **at least two flows**. Two flows count as independent when
+   they serve different user goals, not when they are two screens of one
+   flow; they may belong to the same product. Field notes name no person,
+   client or product: they say how many flows and products, "maintainer field
+   note" with the month, and one field-note id per observation (`FN-0001`, a
+   plain sequence number). *(lint: a link, a claim of a few words and a real
+   `(checked YYYY-MM-DD)` date, not in the future and not before 2020, on every
+   source; ids of the form `FN-NNNN`, never `FN-0000`; at least one id on every
+   field basis and as many distinct ids as flows counted)*
+   Each field note has an id. The observation behind it (what was walked,
+   when, and what the person had to do or could not see) is recorded
+   privately by the maintainer and is not published, because it names the
+   products walked. A rule that rests only on field notes says so: it has no
+   `source` basis, and the README and CHANGELOG list it as resting on field
+   notes alone. The lint cannot see those records, so it cannot tell whether
+   two flows were independent; that is the reviewer's judgement, and a reader
+   who cannot see the records should weigh a field-only rule accordingly.
+   Anyone proposing a rule from their own observation supplies their own
+   note: a short description in the pull request of each flow where the
+   problem happened (the kind of product, the step, what the person had to do
+   or could not see, the date), which the maintainer records and assigns an
+   id. The reviewer also opens every source link and checks that it says
    what the line claims; a book whose claim cannot be read online is not
    enough on its own.
 4. **No silent contradiction.** A rule that reverses, narrows or widens an
@@ -112,11 +126,14 @@ reviewer's job in the pull request that adds the rule.
    (`example.com`, "a setup wizard", "a billing page"). *(lint)*
 7. **Provenance.** `Since:` and a line in [CHANGELOG.md](CHANGELOG.md) naming
    the rule id. *(lint)*
-8. **Numbers only where a source sets them.** A rule with a `Threshold`, or a
-   number in its Rule or Check sentence ("within 3 seconds"), has a `source`
-   basis and a `Threshold source` line pointing at it; field notes do not set
-   numbers. *(lint)* Everything else is measured against the previous walk,
-   not a target.
+8. **Numbers only where a source sets or motivates them.** A rule with a
+   `Threshold`, or a number in its Rule or Check sentence ("within 3
+   seconds"), has a `source` basis and a `Threshold source` line pointing at
+   it; field notes do not set numbers. A number may be FlowChad's own stated
+   standard only when the rule says so explicitly (`Threshold source: tool
+   standard: <reason>`) and cites the source whose evidence motivates it.
+   *(lint)* Everything else is measured against the previous walk, not a
+   target.
 
 Ids are `PREFIX-NN`, unique across all files, and never reused, even after a
 rule is retired. *(lint)*

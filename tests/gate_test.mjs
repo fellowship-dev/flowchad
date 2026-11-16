@@ -434,5 +434,68 @@ test('B the record redacts every free-text field, including flow name, value mom
   assert.match(text, /Review before committing/);
 });
 
+// C: second review. Each case failed before the fix.
+const NOW = Date.parse('2026-11-16T12:00:00Z');
+test('C a walk timestamp in the future is refused', () => {
+  assert.throws(() => evaluate(walk({ timestamp: '2026-11-17T12:00:00Z' }), rules, { now: NOW }), /in the future/);
+  assert.throws(() => evaluate(walk({ timestamp: '2099-01-01T00:00:00Z' }), rules), InputError);
+  assert.equal(evaluate(walk(), rules, { now: NOW }).status, 'PASS');
+});
+test('C cli: a walk timestamp in the future is bad input (exit 2)', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gate-fut-'));
+  const f = path.join(dir, 'w.json'); fs.writeFileSync(f, JSON.stringify(walk({ timestamp: '2099-01-01T00:00:00Z' })));
+  const r = spawnSync(process.execPath, [GATE, f, '--target', 'https://www.example.com'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(r.status, 2); assert.match(r.stderr, /in the future/);
+});
+test('C an override by nobody or only punctuation is refused', () => {
+  for (const by of ['', '   ', '-', '...', '?!', '—']) {
+    assert.throws(() => evaluate(failDec02({ rule_overrides: [{ ...OVR, by }] }), rules, { now: NOW }), /who accepted it|only punctuation/, JSON.stringify(by));
+  }
+  // also when the rule is not a blocker and by: is given
+  assert.throws(() => evaluate(walk({ rule_overrides: [{ id: 'NOISE-01', reason: 'fine here', by: '--' }] }), rules, { now: NOW }), /only punctuation/);
+});
+test('C an override dated in the future, before the walk or on no real day is refused', () => {
+  assert.throws(() => evaluate(failDec02({ rule_overrides: [{ ...OVR, date: '2026-12-01' }] }), rules, { now: NOW }), /in the future/);
+  assert.throws(() => evaluate(failDec02({ rule_overrides: [{ ...OVR, date: '2026-11-14' }] }), rules, { now: NOW }), /before the walk/);
+  assert.throws(() => evaluate(failDec02({ rule_overrides: [{ ...OVR, date: '2026-02-30' }] }), rules, { now: NOW }), /a real date/);
+  assert.throws(() => evaluate(failDec02({ rule_overrides: [{ ...OVR, date: '2026-11-15T10:00' }] }), rules, { now: NOW }), /a real date/);
+  assert.equal(evaluate(failDec02({ rule_overrides: [{ ...OVR, date: '2026-11-16' }] }), rules, { now: NOW }).status, 'PASS-WITH-OVERRIDES');
+});
+
+const MORE = {
+  ipv6Query: ['opened http://[2001:db8::1]:8080/reset?token=sekret42 today', 'sekret42'],
+  ipv6Bare: ['opened http://[::1]/a?session=abc123xyz', 'abc123xyz'],
+  bareQuery: ['see app.example.org/reset?code=zq81ab done', 'zq81ab'],
+  sessionid: ['cookie sessionid=s3ss10nvalue1', 's3ss10nvalue1'],
+  session: ['session=qwerty9876', 'qwerty9876'],
+  sid: ['sid=abcd1234', 'abcd1234'],
+  auth: ['auth=xyz9876', 'xyz9876'],
+  passwd: ['passwd=letmein77', 'letmein77'],
+  secretKv: ['client_secret=s3cr3tv4l', 's3cr3tv4l'],
+  keyKv: ['x-api-key=k3yv4lue', 'k3yv4lue'],
+  passwordProse: ['typed password hunter2 twice', 'hunter2'],
+  passwordIs: ['the password is Tr0ub4dor', 'Tr0ub4dor'],
+  bearerShort: ['Authorization: Bearer abc', 'abc'],
+  dataUri: [J('img data:image/png;base64,', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB'), 'iVBORw0KGgo'],
+  dataUriText: ['link data:text/plain,hello-secret-value', 'hello-secret-value'],
+  idnEmail: ['write to jörg@exämple.test now', 'jörg@'],
+  idnEmail2: ['write to 用户@例子.测试 now', '用户@'],
+  punycodeEmail: ['mail ana@xn--exmple-cua.xn--zckzah', 'ana@'],
+  splitToken: [J('token gh', 'p_AbCdEfGhIjKlMnOp\n', 'QrStUvWxYz0123456789 end'), 'QrStUvWxYz0123456789'],
+};
+for (const [name, [input, leak]] of Object.entries(MORE)) {
+  test(`C redact: ${name}`, () => {
+    const out = redact(input);
+    assert.ok(!out.includes(leak), `${JSON.stringify(input)} -> ${JSON.stringify(out)}`);
+  });
+}
+test('C redact: prose about passwords, hosts and punctuation survive', () => {
+  assert.equal(redact('the password field blocks paste and the password manager fills it'), 'the password field blocks paste and the password manager fills it');
+  assert.equal(redact('Did it reach example.com? Yes.'), 'Did it reach example.com? Yes.');
+  assert.equal(redactUrl('http://[2001:db8::1]:8080/reset?token=x'), 'http://[2001:db8::1]:8080/reset');
+  assert.match(redact('opened http://[::1]:3000/a?x=1 and more'), /^opened http:\/\/\[::1\]:3000\/a and more$/);
+  assert.equal(redact('see data:image/png;base64,AAAA'), 'see data:image/png;base64,[data]');
+});
+
 console.log(failures ? `\n${failures} gate test(s) failed` : '\nall gate tests passed');
 process.exitCode = failures ? 1 : 0;

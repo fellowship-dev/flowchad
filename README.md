@@ -180,21 +180,23 @@ noise, wording, navigation, waiting, errors, docs cold start, agent
 experience). Each rule is one sentence a reviewer can pass or fail on one
 screen, says how to check it during a walk, has a severity, and names its
 basis: a public source with a link, opened and checked on a stated date
-(Nielsen Norman Group, GOV.UK, WCAG 2.2, Krug, Diátaxis, MeasuringU, Brysbaert,
+(Nielsen Norman Group, GOV.UK, WCAG 2.2, Diátaxis, MeasuringU, Brysbaert,
 Laws of UX, the llms.txt proposal, Biilmann, clig.dev, the MCP specification),
-or failures seen in at least two flows, each recorded as a field-note id in
-the maintainer's private ledger. Today 41 rules rest on a cited source (12 of
-them also on field notes) and 3 on field notes alone.
+or failures seen in at least two independent flows. Each field note has an
+id (`FN-0001`); the observation behind it is recorded privately by the
+maintainer and is not published. Today 41 rules rest on a cited source (12 of
+them also on field notes) and 3 on field notes alone (PATH-04, PATH-06,
+NAV-04), labelled as such.
 
 ```markdown
 ### FOLD-01 · The first input is visible without scrolling
 
 - **Rule:** The first input a step needs is fully visible without scrolling in a 375 × 812 px viewport and in a 1440 × 900 px viewport.
-- **Check:** In each viewport, before scrolling, measure how far the bottom of the primary element (the first input, not the submit button) sits below the viewport (`scroll_before_primary_vh`). Fail if it is above 0 in either viewport, or the element is hidden.
+- **Check:** In each viewport, before scrolling, measure how far the bottom of the primary element sits below the viewport (`scroll_before_primary_vh`, which takes the first required input of the step and falls back to the primary action only when the step has no input). Fail if it is above 0 in either viewport, or the element is hidden.
 - **Threshold:** `scroll_before_primary_vh = 0`
 - **Severity:** blocker
 - **Basis:** source — Nielsen Norman Group, "Scrolling and Attention" (2018), <https://www.nngroup.com/articles/scrolling-and-attention/> (checked 2026-11-15): "users spent about 57% of their page-viewing time above the fold".
-- **Threshold source:** the same article: the attention shares motivate the threshold; zero scroll is FlowChad's own standard, not a number from the source.
+- **Threshold source:** tool standard: zero scroll in these two viewports is FlowChad's own standard, not a number from the source; it is motivated by the attention shares above the fold reported in <https://www.nngroup.com/articles/scrolling-and-attention/> (checked 2026-11-15).
 ```
 
 **Measures, not adjectives.** Every walk records, per step and per flow:
@@ -209,10 +211,14 @@ each number against the previous walk. Thresholds exist only where a rule
 with a cited source sets one.
 
 **A gate before "test it".** `/flow-gate` says PASS, PASS-WITH-OVERRIDES,
-FAIL or INCOMPLETE. It takes nothing on the walk's word: the value moment
+FAIL or INCOMPLETE. The gate checks that a walk record is complete, judged
+against every blocker rule and fresh for the stated target; it cannot prove
+the walk took place. It takes nothing on the walk's word: the value moment
 counts as reached only from recorded steps up to the step marked
 `first_value`; every blocker needs a judgement or a measure recorded on every
-step ("not applicable" needs a reason); the target address comes from
+step ("not applicable" needs a reason); a walk timestamp in the future, or an
+override signed by nobody or dated in the future or before the walk, is
+refused; the target address comes from
 `--target` or `gate.target` in the config, and without one the gate says
 INCOMPLETE; a walk of another host fails, and so does one older than the last
 deploy (`--not-before`, required when the config tracks deploys). Rough edges
@@ -251,9 +257,13 @@ lists the criteria; `bash .flowchad/skills/flow-walk/scripts/lint_rules.sh`
 enforces the ones a script can check (format, unique ids, a basis with a
 dated link or two field-note ids, no vendor or brand names in any text file of
 the folder, both examples, a CHANGELOG line, numbers only with a cited
-`Threshold source`). Whether two flows were independent, and whether a source
-says what the line claims, is the reviewer's check: the lint cannot read the
-maintainer's private field-note ledger or the cited pages. Rules are retired,
+`Threshold source`, real check dates). Whether two flows were independent,
+and whether a source says what the line claims, is the reviewer's check: the
+lint cannot read the cited pages or the observations behind field notes, which
+the maintainer records privately. To propose a rule from your own
+observation, describe each flow where it happened in the pull request (kind of
+product, step, what the person had to do or could not see, date); the
+maintainer records it and assigns a field-note id. Rules are retired,
 never deleted or reused, when better evidence contradicts them.
 
 **Disagree with a rule?** For one flow, add a `rule_overrides` entry with

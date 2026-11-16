@@ -13,7 +13,7 @@ sign-in), it must bring them back.
 - **Severity:** later
 - **Applies to:** step, flow
 - **Basis:** source — Page Laubheimer, "Menu-Design Checklist: 17 UX Guidelines" (Nielsen Norman Group, 2024), guideline 16, <https://www.nngroup.com/articles/menu-design/> (checked 2026-11-15): "Optimize for Easy Physical Access to Frequently Used Commands": put "the most common items close to the link target that launches the dropdown".
-- **Basis:** source — Jon Yablonski, "Serial Position Effect" (Laws of UX), <https://lawsofux.com/serial-position-effect/> (checked 2026-11-15): "Users have a propensity to best remember the first and last items in a series."
+- **Basis:** source — Jon Yablonski, "Serial Position Effect" (Laws of UX), <https://lawsofux.com/serial-position-effect/> (checked 2026-11-15): "Positioning key actions on the far left and right within elements such as navigation can increase memorization."
 - **Pass:** A new account's menu in a booking tool reads "Calendar, Services, Clients, Settings", the order of first setup.
 - **Fail:** A new account's menu starts with "Audit log" and "API", and the item that starts setup is fifth.
 - **Since:** 0.5.0
@@ -36,7 +36,7 @@ sign-in), it must bring them back.
 - **Severity:** should-fix
 - **Applies to:** step, flow
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 5, error prevention, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "the best designs carefully prevent problems from occurring in the first place."
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-21, FN-2026-11-22).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0021, FN-0022).
 - **Pass:** "Team invites" is shown with "Available after your first project is created" and no link until then.
 - **Fail:** "Team invites" is in the menu from the start, and every attempt ends on a "Not configured" error.
 - **Since:** 0.5.0
@@ -47,7 +47,7 @@ sign-in), it must bring them back.
 - **Check:** For every step that leaves the flow, note where the person lands on return. Fail if they land anywhere other than the step they left, or if their earlier input is gone.
 - **Severity:** should-fix
 - **Applies to:** step, flow, map
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-23, FN-2026-11-24).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0008, FN-0009).
 - **Pass:** "Connect your account" opens the provider, and after approving the person is back on the same setup step with the connection shown.
 - **Fail:** A "fix this" button opens a separate page that asks again for the item to fix, and after fixing it there is no way back to the setup step.
 - **Since:** 0.5.0

@@ -184,8 +184,10 @@ For each step in the flow:
    ```javascript
    import { measureStep, mergeWidths } from './scripts/measure.mjs'; // relative to this skill's folder
 
-   // the first input this screen needs, not the submit button (rules/primary-action.md)
-   const primary = step.primary || firstInputStepOnThisScreen?.selector || nextStep?.selector;
+   // the first input this screen needs, not the submit button (rules/primary-action.md);
+   // with no selector, measure.mjs takes the first required input, and falls back
+   // to the primary action only when the step has no input
+   const primary = step.primary || firstInputStepOnThisScreen?.selector;
    const perWidth = {};
    for (const width of viewports) {
      await page.setViewportSize({ width, height: heightFor(width) });

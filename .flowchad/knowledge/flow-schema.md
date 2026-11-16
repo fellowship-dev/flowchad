@@ -44,7 +44,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `timing` | string | no | Max acceptable time (e.g. `2s`, `500ms`). Exceeding = friction |
 | `effect` | enum | no | `write`, `send` or `pay` when the step changes data, sends a message or email, books, or charges. The walker stops before such steps on `read-only-live` surfaces. Omit for steps that only read. |
 | `first_value` | bool | no | Marks the step that shows the flow's `value_moment`. Time to value and the gate's "to value" measures are counted to here. |
-| `primary` | string | no | CSS selector of the first input this screen needs (not the submit button). Default: the selector of the first `fill` or `select` step on this screen, else the next step's `selector`. Measured for the fold (rule FOLD-01). |
+| `primary` | string | no | CSS selector of the first input this screen needs (not the submit button). Default: the selector of the first `fill` or `select` step on this screen; else `measure.mjs` takes the first required input in the main column (the first input if none is required), and the primary action only when the screen has no input. Measured for the fold (rule FOLD-01). |
 | `bot_check` | bool | no | The step meets a bot check (Turnstile, reCAPTCHA, hCaptcha). The walker uses test keys on a local copy, a human-assisted step, or Navvi; see `flow-walk/references/live-safety.md` §5. `captcha: true` is the legacy spelling. |
 | `optional` | bool | no | If `true`, step failure doesn't block the walk |
 

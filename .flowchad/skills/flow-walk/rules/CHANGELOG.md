@@ -32,7 +32,7 @@ Revised in review, before release (each rule keeps id and `Since: 0.5.0`):
   stating neither claim); PATH-04 now rests on its field basis alone.
   Book-only citations whose claim cannot be read online were replaced or
   dropped: NAV-02 (NN/g "Navigation: You Are Here"), FOLD-03 (GOV.UK Design
-  System Button, Krug's published excerpt), FOLD-02, NOISE-03, NOISE-04,
+  System Button), FOLD-02, NOISE-03, NOISE-04,
   WORD-01 (NN/g menu-design guideline 7) and NAV-01. PATH-01 and DOCS-01 cite
   MeasuringU's completion-rates article instead of its homepage; AGENT-02 the
   dated MCP authorization section; AGENT-01 and AGENT-02 quote Biilmann
@@ -56,12 +56,36 @@ Revised in review, before release (each rule keeps id and `Since: 0.5.0`):
   PATH-02, PATH-04, NOISE-01, NOISE-03, NOISE-05, WORD-01, WORD-03, WORD-04,
   WORD-05, DEC-01, DEC-03, WAIT-01, WAIT-03, WAIT-04, FOLD-04, NAV-01, NAV-03,
   DOCS-02.
-- Field bases carry one field-note id per observation (FN-2026-11-01 to
-  FN-2026-11-29); numbers in a Rule or Check carry a `Threshold source`
+- Field bases carry one field-note id per observation (FN-0001 to
+  FN-0025); numbers in a Rule or Check carry a `Threshold source`
   (FOLD-01, FOLD-04, DEC-01, NOISE-03, WAIT-01, WAIT-02, ERR-01, DOCS-01,
   AGENT-04).
 - The shipped forbidden-terms list keeps vendor and brand names only; generic
   protocol and record-type terms were removed.
+
+Corrected in second review, before release (same ids, `Since: 0.5.0`):
+
+- Field-note ids are plain sequence numbers (`FN-0001` to `FN-0025`), not
+  dates. One observation now has one id wherever it is cited: DEC-02 and
+  PATH-06 share FN-0003; DEC-02 and NAV-04 share FN-0008 and FN-0009; NOISE-01
+  cites FN-0009 with FN-0012; NAV-03 and ERR-04 share FN-0022; ERR-01 and
+  ERR-04 share FN-0024. FOLD-01 lists one id per screen (FN-0005, FN-0006).
+  PATH-04, PATH-06 and NAV-04 rest on field notes alone.
+- FOLD-01: the Check names the element `scripts/measure.mjs` measures (the
+  first required input, the primary action only when the step has no input);
+  its Threshold source, and those of ERR-01 and DOCS-01, are marked `tool
+  standard:` under the amended admission criterion 8.
+- Sources that did not back their claim: FOLD-03 drops the Krug excerpt (about
+  obviousness, not one main action) and quotes GOV.UK's button guidance in
+  full; NAV-01 quotes the serial-position page's takeaway on positioning key
+  actions first and last; AGENT-02 is reworded to what the MCP authorization
+  specification describes (a standard flow the client runs, or credentials
+  from the environment, with the person signing in and approving) and renamed
+  "Access through one standard, documented flow"; AGENT-01 cites the
+  llms.txt proposal for the file and Biilmann for the agent-experience idea
+  only; WORD-03 cites GOV.UK's warning-text guidance for the wording and the
+  confirmation-dialog article only for how often to warn; PATH-01 and DOCS-01
+  quote MeasuringU's sentence exactly. Re-checked 2026-11-15.
 
 Considered and not admitted:
 

@@ -15,8 +15,8 @@ most of these are found.
 - **Severity:** blocker
 - **Applies to:** step, flow, map
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 3, user control and freedom, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): people need "a clearly marked 'emergency exit' to leave the unwanted action without having to go through an extended process."
-- **Basis:** field — failed in 3 flows in 2 products (maintainer field note, 2026-11; FN-2026-11-25, FN-2026-11-26, FN-2026-11-27).
-- **Threshold source:** <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): a way out of every unwanted state; zero dead ends follows from the rule itself and is FlowChad's own standard, not a number from the source.
+- **Basis:** field — failed in 3 flows in 2 products (maintainer field note, 2026-11; FN-0023, FN-0024, FN-0025).
+- **Threshold source:** tool standard: zero dead ends is FlowChad's own standard, not a number from the source; it follows from the heuristic's way out of every unwanted state, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15).
 - **Pass:** A booking embed with no free times says so and offers "Email us instead" and the next date with times.
 - **Fail:** Every "Book a call" link opens a booking page that shows no available times and no other way to reach anyone.
 - **Since:** 0.5.0
@@ -51,7 +51,7 @@ most of these are found.
 - **Severity:** should-fix
 - **Applies to:** step, agent
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 9, help users recognize, diagnose and recover from errors, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "Error messages should be expressed in plain language (no error codes), precisely indicate the problem, and constructively suggest a solution."
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-28, FN-2026-11-29).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0022, FN-0024).
 - **Pass:** "We couldn't connect your account because the approval window closed. Try again" with a button.
 - **Fail:** Pressing "Allow access" shows a raw JSON object with an error code and nothing else.
 - **Since:** 0.5.0

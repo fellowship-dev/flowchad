@@ -21,7 +21,7 @@ GOOD='- **Rule:** The one input a step needs is visible without scrolling.
 - **Threshold:** `scroll_before_primary_vh = 0`
 - **Severity:** blocker
 - **Applies to:** step
-- **Basis:** source — Example Source, "An article" (2020), <https://example.com/article> (checked 2026-11-15): says so.
+- **Basis:** source — Example Source, "An article" (2020), <https://example.com/article> (checked 2026-11-15): the article says the input must be visible.
 - **Threshold source:** <https://example.com/article> (checked 2026-11-15): the zero comes from the article.
 - **Pass:** A setup step shows its input at the top.
 - **Fail:** A setup step shows a report above its input.
@@ -73,27 +73,27 @@ $(printf '%s\n' "$GOOD" | sed 's/, <https:\/\/example.com\/article>//')"
 case_ "field note from one flow is not enough" 1 "at least 2 independent flows" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 1 flow in 1 product (maintainer field note, 2026-11; FN-2026-11-01)./')"
+$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 1 flow in 1 product (maintainer field note, 2026-11; FN-0001)./')"
 
 case_ "field note from two flows is enough" 0 "admission lint passed" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02)./')"
+$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0001, FN-0002)./')"
 
 case_ "two screens of one flow are not two flows" 1 "at least 2 independent flows" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed on 2 screens in 1 product (maintainer field note, 2026-11; FN-2026-11-01)./')"
+$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed on 2 screens in 1 product (maintainer field note, 2026-11; FN-0001)./')"
 
 case_ "field note must not name its origin" 1 "maintainer field note" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (seen by a client; FN-2026-11-01, FN-2026-11-02)./')"
+$(printf '%s\n' "$GOOD" | grep -v Threshold | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (seen by a client; FN-0001, FN-0002)./')"
 
 case_ "threshold needs a source" 1 "Threshold needs a cited source" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 3 flows in 2 products (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02, FN-2026-11-03)./')"
+$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 3 flows in 2 products (maintainer field note, 2026-11; FN-0001, FN-0002, FN-0003)./')"
 
 case_ "bad threshold syntax" 1 "Threshold syntax" "<!-- prefix: X -->
 ### X-01 · Visible input
@@ -179,7 +179,7 @@ $GOOD
 - **Owner:** someone"
 
 # ---- review fixes: each case failed before the fix ----
-FIELD2='- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02).'
+FIELD2='- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0001, FN-0002).'
 NOTHR=$(printf '%s\n' "$GOOD" | grep -v Threshold)
 
 # private_case NAME WANT_EXIT WANT_TEXT RULE_BODY [CHANGELOG] [EXTRA_FILE_NAME EXTRA_FILE_BODY]
@@ -197,12 +197,12 @@ private_case() {
 private_case "C1 private term in a field basis line" 1 "Basis contains a product-specific term: acmecorp" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in the Acmecorp portal (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02)./')"
+$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in the Acmecorp portal (maintainer field note, 2026-11; FN-0001, FN-0002)./')"
 
 case_ "C1 vendor in a source claim fails" 1 "Basis claim contains a product-specific term: stripe" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | sed 's/: says so\./: the Stripe checkout does it./')"
+$(printf '%s\n' "$GOOD" | sed 's/: the article says the input must be visible\./: the Stripe checkout does it./')"
 
 case_ "C1 vendor as the cited author passes" 0 "admission lint passed" "<!-- prefix: X -->
 ### X-01 · Visible input
@@ -279,12 +279,84 @@ $(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field 
 case_ "C6 two flows need two ids" 1 "lists 1 field-note id" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-01)./')"
+$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0001, FN-0001)./')"
 
 case_ "F source basis must record when it was checked" 1 "(checked YYYY-MM-DD)" "<!-- prefix: X -->
 ### X-01 · Visible input
 
-$(printf '%s\n' "$GOOD" | sed 's/ (checked 2026-11-15): says so/: says so/')"
+$(printf '%s\n' "$GOOD" | sed 's/ (checked 2026-11-15): the article says/: the article says/')"
+
+# ---- second review: placeholder values the lint accepted before ----
+src_date() { printf '%s\n' "$GOOD" | sed "s/^\(- \*\*Basis:\*\* source.*\)(checked 2026-11-15)/\1(checked $1)/"; }
+for c in "9999-99-99|not a real calendar date" "2026-02-30|not a real calendar date" "2099-01-01|in the future" "2019-12-31|before 2020"; do
+  dt=${c%%|*}; want=${c#*|}
+  case_ "G source checked $dt" 1 "$want" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(src_date "$dt")"
+done
+case_ "G threshold source date in the future" 1 "Threshold source checked date is in the future" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/^\(- \*\*Threshold source:\*\* .*\)(checked 2026-11-15)/\1(checked 2031-01-01)/')"
+case_ "G a date checked today passes" 0 "admission lint passed" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(src_date "$(date -u +%Y-%m-%d)")"
+case_ "G source line with no claim" 1 "needs a claim of at least 4 words" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/(checked 2026-11-15): the article says the input must be visible\./(checked 2026-11-15)./')"
+case_ "G source line with a one-word claim" 1 "needs a claim of at least 4 words" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/(checked 2026-11-15): the article says the input must be visible\./(checked 2026-11-15): yes./')"
+case_ "G threshold source with only a link" 1 "Threshold source needs a claim" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Threshold source:\*\* .*/- **Threshold source:** <https:\/\/example.com\/article> (checked 2026-11-15)/')"
+case_ "G threshold source with a one-character claim" 1 "Threshold source needs a claim" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Threshold source:\*\* .*/- **Threshold source:** <https:\/\/example.com\/article> (checked 2026-11-15): x/')"
+case_ "G threshold source without a check date" 1 "Threshold source must say when" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Threshold source:\*\* .*/- **Threshold source:** <https:\/\/example.com\/article>: the zero comes from the article./')"
+case_ "G a tool standard with its reason and citation passes" 0 "admission lint passed" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed "s/^- \*\*Threshold source:\*\* .*/- **Threshold source:** tool standard: zero is the tool's own standard, motivated by <https:\/\/example.com\/article> (checked 2026-11-15)./")"
+case_ "G a tool standard without a reason fails" 1 "tool-standard Threshold source needs its reason" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Threshold source:\*\* .*/- **Threshold source:** tool standard: <https:\/\/example.com\/article> (checked 2026-11-15)./')"
+case_ "G a tool standard must still cite a rule source" 1 "not one of the rule source bases" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed "s/^- \*\*Threshold source:\*\* .*/- **Threshold source:** tool standard: zero is the tool's own standard, motivated by <https:\/\/example.com\/other> (checked 2026-11-15)./")"
+case_ "G field-note id zero" 1 "FN-0000 is not an id" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0000, FN-0002)./')"
+case_ "G date-shaped field-note id" 1 "must be a sequence number FN-NNNN: FN-2026-11-01" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-0002)./')"
+case_ "G field note month in the future" 1 "field note month date is in the future" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$NOTHR" | sed 's/^- \*\*Basis:\*\* source.*/- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2099-11; FN-0001, FN-0002)./')"
+private_case "G -es plural of a private term" 1 "product-specific term: acmecorp" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/A setup step shows its input/Two Acmecorpes show their input/')"
+case_ "G -es plural of a shipped term" 1 "product-specific term: paypal" "<!-- prefix: X -->
+### X-01 · Visible input
+
+$(printf '%s\n' "$GOOD" | sed 's/A setup step shows its input/Two PayPales show their input/')"
+out=$(FLOWCHAD_LINT_TODAY=2026-11-01 bash "$LINT" "$ROOT/.flowchad/skills/flow-walk/rules" 2>&1); got=$?
+if [ "$got" = 1 ] && printf '%s' "$out" | grep -q "in the future"; then ok "G shipped rules checked after the run date fail"; else fail "G shipped rules checked after the run date fail (exit $got)" "$out"; fi
 
 # D: the shipped list holds vendor and brand names only
 for t in dkim dmarc spf dns "mx record" "txt record"; do

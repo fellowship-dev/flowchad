@@ -32,7 +32,7 @@ an address) is one decision.
 - **Severity:** blocker
 - **Applies to:** step, flow, map
 - **Basis:** source — W3C, WCAG 2.2, Success Criterion 3.3.7 Redundant Entry (2023), <https://www.w3.org/TR/WCAG22/#redundant-entry> (checked 2026-11-15): information previously entered that is required again in the same process is auto-populated or available to select.
-- **Basis:** field — failed in 3 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-07, FN-2026-11-08, FN-2026-11-09).
+- **Basis:** field — failed in 3 flows in 1 product (maintainer field note, 2026-11; FN-0003, FN-0008, FN-0009).
 - **Pass:** The email address typed on the landing page is already filled in on the sign-up screen.
 - **Fail:** The password chosen at sign-up is asked for again, twice, under "Set a new password" after the email link.
 - **Since:** 0.5.0
@@ -46,7 +46,7 @@ an address) is one decision.
 - **Applies to:** step, flow, map
 - **Basis:** source — Nielsen Norman Group, "Website Forms Usability: Top 10 Recommendations" (2016), <https://www.nngroup.com/articles/web-form-design/> (checked 2026-11-15): "Remove fields which collect information that can be (a) derived in some other way, (b) collected more conveniently at a later date, or (c) simply omitted."
 - **Basis:** source — GOV.UK Service Manual, "Designing good questions", <https://www.gov.uk/service-manual/design/designing-good-questions> (checked 2026-11-15): "make sure you know why you're asking every question."
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-10, FN-2026-11-11).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0010, FN-0011).
 - **Pass:** After the person connects their calendar, the booking tool reads their working hours from it, and asks only if the calendar has none.
 - **Fail:** After the person connects their calendar, they must type their working hours again, day by day, although the calendar holds them.
 - **Since:** 0.5.0

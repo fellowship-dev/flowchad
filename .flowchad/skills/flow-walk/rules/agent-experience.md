@@ -13,20 +13,20 @@ use.
 - **Check:** Fetch the machine-readable index (for example `/llms.txt`) and each linked page without cookies. Fail if there is none, it has no summary, it links to pages that need a sign-in or render only with scripts, or it omits the install and first-value pages.
 - **Severity:** later
 - **Applies to:** agent, docs
-- **Basis:** source — Jeremy Howard, "The /llms.txt file" (2024, a proposal, not a standard), <https://llmstxt.org/> (checked 2026-11-15): "A proposal to standardise on using an /llms.txt file to provide information to help agents use a website": a heading, a short summary and links to clean Markdown versions of pages.
-- **Basis:** source — Mathias Biilmann, "Introducing AX: Why Agent Experience Matters" (2025), <https://biilmann.blog/articles/introducing-ax/> (checked 2026-11-15): "Are there machine-ready documentation and context for LLMs and agents to properly use the available platform and SDKs?"
+- **Basis:** source — Jeremy Howard, "The /llms.txt file" (2024, revised 2026, a proposal, not a standard), <https://llmstxt.org/> (checked 2026-11-15): the file itself, "A proposal to standardise on using an /llms.txt file to provide information to help agents use a website", with a heading, a short summary and links to Markdown versions of pages.
+- **Basis:** source — Mathias Biilmann, "Introducing AX: Why Agent Experience Matters" (2025), <https://biilmann.blog/articles/introducing-ax/> (checked 2026-11-15): the agent-experience idea only, not the file format; "Are there machine-ready documentation and context for LLMs and agents to properly use the available platform and SDKs?"
 - **Pass:** `/llms.txt` lists "Install", "First result" and "API reference", each linking to a `.md` page that fetches without a session.
 - **Fail:** No machine-readable index such as `/llms.txt`, and the docs pages return an empty shell until scripts run in a signed-in browser.
 - **Since:** 0.5.0
 
-### AGENT-02 · Access in one documented step
+### AGENT-02 · Access through one standard, documented flow
 
-- **Rule:** An agent can get access on a person's behalf through one documented step, such as a CLI login, a scoped token or a standard authorization flow, described in one place.
-- **Check:** From the docs, find how an agent gets access. Count the steps and the pages needed to learn them. Fail if access needs more than one step by the person, is described on more than one page, or is not described.
+- **Rule:** An agent gets access on a person's behalf through a standard authorization flow or a credential it reads from its environment, in which the person only signs in and approves, and the docs describe it on one page.
+- **Check:** From the docs, find how an agent gets access and list what the person must do themselves, apart from what the agent or its client does. Fail if the person must do more than sign in and approve (for example ask support for a key, or copy values between settings pages), if access is described across several pages, or if it is not described.
 - **Severity:** should-fix
 - **Applies to:** agent
 - **Basis:** source — Mathias Biilmann, "Introducing AX: Why Agent Experience Matters" (2025), <https://biilmann.blog/articles/introducing-ax/> (checked 2026-11-15): "Is it simple for an Agent to get access to operating a platform on behalf of a user?"
-- **Basis:** source — Model Context Protocol, Specification 2026-07-28, "Authorization", <https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization> (checked 2026-11-15): authorization at the transport level enables clients "to make requests to restricted MCP servers on behalf of resource owners."
+- **Basis:** source — Model Context Protocol, Specification 2026-07-28, "Authorization", <https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization> (checked 2026-11-15): authorization enables clients "to make requests to restricted MCP servers on behalf of resource owners"; over HTTP the client runs one OAuth 2.1 based flow that opens the person's browser to approve, and "Implementations using an STDIO transport SHOULD NOT follow this specification, and instead retrieve credentials from the environment."
 - **Pass:** "Run `tool login`, approve in the browser, done" on the one page about agents.
 - **Fail:** Access needs a support request for an API key, then a separate settings page to scope it, each described on a different page.
 - **Since:** 0.5.0

@@ -13,7 +13,7 @@ moment backwards.
 - **Measure:** `time_to_value_ms`, `screens_to_value`
 - **Severity:** blocker
 - **Applies to:** flow, map
-- **Basis:** source — Jeff Sauro, "10 Things To Know About Completion Rates" (MeasuringU, 2011), <https://measuringu.com/completion-rates/> (checked 2026-11-15): "Completion rates are the fundamental usability metric"; if people cannot complete the task, not much else matters.
+- **Basis:** source — Jeff Sauro, "10 Things To Know About Completion Rates" (MeasuringU, 2011), <https://measuringu.com/completion-rates/> (checked 2026-11-15): "If users cannot complete a task, not much else matters with respect to usability or utility."
 - **Pass:** A booking tool's sign-up flow declares "the calendar shows the person's first bookable slot", and the walk ends on that screen.
 - **Fail:** A sign-up flow ends on "Your account has been created" with nothing of the person's own on screen, and the flow file names no value moment.
 - **Since:** 0.5.0
@@ -47,7 +47,7 @@ moment backwards.
 - **Check:** On every result screen (a quote, a preview, an estimate, a score), look at the visually dominant action. Fail if it leads sideways (another tool, more detail, a newsletter) while the step toward value is missing or secondary.
 - **Severity:** should-fix
 - **Applies to:** step, flow, map
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0001, FN-0002).
 - **Pass:** A moving company's quote calculator ends with the price and one button, "Book this move".
 - **Fail:** The quote calculator ends with "See the detailed breakdown" and links to three other calculators, and no way to book.
 - **Since:** 0.5.0
@@ -70,7 +70,7 @@ moment backwards.
 - **Measure:** `loops`
 - **Severity:** should-fix
 - **Applies to:** flow, map
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-03, FN-2026-11-04).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0003, FN-0004).
 - **Pass:** After confirming their email, the person continues at the step they left.
 - **Fail:** After confirming their email, the person is sent back to the plan screen they already completed.
 - **Since:** 0.5.0

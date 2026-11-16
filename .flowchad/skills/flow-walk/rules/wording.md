@@ -35,8 +35,8 @@ a button will do, and whether what the screen says is true.
 - **Check:** For each warning, caution or "insecure" label, write the consequence and how likely it is. Fail warnings with no concrete consequence, warnings on routine short-lived actions, and alarm words ("insecure", "danger", "critical") for normal states.
 - **Severity:** should-fix
 - **Applies to:** step, docs
-- **Basis:** source — Jakob Nielsen, "Confirmation Dialogs Can Prevent User Errors (If Not Overused)" (Nielsen Norman Group, 2018), <https://www.nngroup.com/articles/confirmation-dialog/> (checked 2026-11-15): "if you cry wolf too many times, people will stop paying attention to the question".
-- **Basis:** source — GOV.UK Design System, "Error message", <https://design-system.service.gov.uk/components/error-message/> (checked 2026-11-15): "Describe what has happened and tell them how to fix it. The message must be in plain English, use positive language and get to the point."
+- **Basis:** source — GOV.UK Design System, "Warning text", <https://design-system.service.gov.uk/components/warning-text/> (checked 2026-11-15): for the wording, "Use the warning text component when you need to warn users about something important, such as legal consequences of an action, or lack of action, that they might take."
+- **Basis:** source — Jakob Nielsen, "Confirmation Dialogs Can Prevent User Errors (If Not Overused)" (Nielsen Norman Group, 2018), <https://www.nngroup.com/articles/confirmation-dialog/> (checked 2026-11-15): for how often to warn, not how to word it, "Do not use confirmation dialogs for routine actions", because "if you cry wolf too many times, people will stop paying attention to the question".
 - **Pass:** "Anyone with this link can view these photos until Friday." on a share dialog.
 - **Fail:** "Warning: insecure! Your files may be exposed." on every share dialog, including links limited to named people.
 - **Since:** 0.5.0
@@ -48,7 +48,7 @@ a button will do, and whether what the screen says is true.
 - **Severity:** should-fix
 - **Applies to:** step, flow, docs
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 4, consistency and standards, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "Users should not have to wonder whether different words, situations, or actions mean the same thing."
-- **Basis:** field — failed in 1 flow in 2 products of one maker (maintainer field note, 2026-11; FN-2026-11-16).
+- **Basis:** field — failed in 1 flow in 2 products of one maker (maintainer field note, 2026-11; FN-0016).
 - **Pass:** The pricing page, the app and the welcome email all call the shared space a "Team folder".
 - **Fail:** The pricing page calls it a "Team folder", the app calls the same thing a "Workspace" and the welcome email calls it a "Shared drive".
 - **Since:** 0.5.0
@@ -60,7 +60,7 @@ a button will do, and whether what the screen says is true.
 - **Severity:** blocker
 - **Applies to:** step, docs
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 1, visibility of system status, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "keep users informed about what is going on, through appropriate feedback within a reasonable amount of time."
-- **Basis:** field — failed in 4 flows in 2 products (maintainer field note, 2026-11; FN-2026-11-17, FN-2026-11-18, FN-2026-11-19, FN-2026-11-20).
+- **Basis:** field — failed in 4 flows in 2 products (maintainer field note, 2026-11; FN-0017, FN-0018, FN-0019, FN-0020).
 - **Pass:** "Sent at 14:02 to the address you gave", and the captured mail arrived at 14:02.
 - **Fail:** An invoicing app marks an invoice "Paid" while the payment provider shows the payment as refunded.
 - **Since:** 0.5.0

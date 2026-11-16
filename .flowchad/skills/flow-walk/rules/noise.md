@@ -17,7 +17,7 @@ not need to complete this step. Fallbacks behind a link do not count.
 - **Severity:** should-fix
 - **Applies to:** step
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 8, aesthetic and minimalist design, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "Every extra unit of information in an interface competes with the relevant units of information and diminishes their relative visibility."
-- **Basis:** field — failed on 2 screens in 1 product (maintainer field note, 2026-11; FN-2026-11-12).
+- **Basis:** field — failed on 2 screens in 1 product (maintainer field note, 2026-11; FN-0009, FN-0012).
 - **Pass:** An email confirmation screen shows the address the email went to, what to do next and one quiet "Not seeing it?" link.
 - **Fail:** An email confirmation screen shows a plan badge, a "Profile 40% complete" meter, a feedback widget and a promotion banner around the instruction.
 - **Since:** 0.5.0
@@ -29,7 +29,7 @@ not need to complete this step. Fallbacks behind a link do not count.
 - **Severity:** should-fix
 - **Applies to:** step
 - **Basis:** source — Nielsen Norman Group, "Progressive Disclosure" (2006), <https://www.nngroup.com/articles/progressive-disclosure/> (checked 2026-11-15): "Initially, show users only a few of the most important options. Offer a larger set of specialized options upon request."
-- **Basis:** field — failed on 1 screen in 1 product and passed on the same step of a reference product (maintainer field note, 2026-11; FN-2026-11-13).
+- **Basis:** field — failed on 1 screen in 1 product and passed on the same step of a reference product (maintainer field note, 2026-11; FN-0013).
 - **Pass:** "Check your inbox" with the address, and a small "Didn't get it?" link that reveals the resend button and the human check.
 - **Fail:** A human-check widget sits in the middle of the confirmation screen and draws more attention than the sentence saying what to do.
 - **Since:** 0.5.0
@@ -66,7 +66,7 @@ not need to complete this step. Fallbacks behind a link do not count.
 - **Severity:** should-fix
 - **Applies to:** step
 - **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 2, match between the system and the real world, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "Use words, phrases, and concepts familiar to the user, rather than internal jargon."
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-14, FN-2026-11-15).
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-0014, FN-0015).
 - **Pass:** An invoice page shows "Due 30 June" and the client's name.
 - **Fail:** An invoice page shows "undefined" where the due date should be and a temporary record code under the total.
 - **Since:** 0.5.0

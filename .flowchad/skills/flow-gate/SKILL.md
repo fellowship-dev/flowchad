@@ -31,7 +31,9 @@ before it), the rules in `flow-walk/rules/` plus the project's
 | **FAIL** | The goal or the value moment was not reached, a blocker failed (by the walker's judgement or by a threshold on the measures), the walk ran on another host than the target, or it is older than the last deploy. |
 | **INCOMPLETE** | Nothing failed, but something the gate needs is missing: evidence of the value moment, a judgement on a blocker, the target, the deploy time when deploys are tracked, or the rest of a walk that stopped before a write step on a read-only-live surface. |
 
-The gate never takes a walk's word for it:
+The gate checks that a walk record is complete, judged against every blocker
+rule and fresh for the stated target; it cannot prove the walk took place.
+Within that, it never takes a walk's word for it:
 
 - **The value moment needs evidence.** At least one recorded step, every step
   up to the value step with its index, status and measures, and the value step
@@ -49,6 +51,10 @@ The gate never takes a walk's word for it:
   `deploy_check` other than `none`, the walk needs `--not-before <time of the
   last deploy>`; without it the result is INCOMPLETE. With no deploy check
   configured the gate notes that staleness was not checked.
+- **Times must be possible.** A walk timestamp in the future is refused (bad
+  input, exit 2), and so is an override whose `by:` is empty or only
+  punctuation, or whose `date:` is not a real date, is in the future or is
+  before the walk.
 
 `should-fix` and `later` failures never fail the gate; they are listed as
 **known rough edges**, which go first in any hand-off so the tester does not
