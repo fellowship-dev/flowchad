@@ -47,6 +47,13 @@ From the first step to the value step (`first_value: true`), inclusive. When
 the value moment is not reached, the totals cover every step walked and the
 report says so.
 
+A flow measure exists only when **every** step on that path recorded the step
+measure it is built from: a missing `dead_end` is not `false`, and a walk that
+recorded `words` on two steps of three has no `words_to_value`. The gate then
+treats a rule that depends on it as not measured, so a blocker needs the
+walker's own judgement. Record every step measure on every step, `false` and
+`0` included.
+
 | Measure | How | What it counts |
 |---|---|---|
 | `screens_to_value` | computed | Distinct `screen` values (path, or the step's screen name). |

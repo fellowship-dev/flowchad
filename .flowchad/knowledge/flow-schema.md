@@ -18,7 +18,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 |-------|------|---------|-------------|
 | `kind` | enum | `screens` | `screens` (a browser walk), `docs` or `agent` (a fresh-agent walk of the docs or tools), `map` (a flow map only). Decides which rules apply. |
 | `covers` | list | `[]` | Source path globs this flow depends on (`app/signup/*`, `src/components/Wizard*`). `/flow-gate --changed` re-walks the flow when a covered file changes. |
-| `rule_overrides` | list | `[]` | `- id: DEC-01` with `reason:`. A rule that does not fit this flow, with why. The gate lists it as an accepted exception; a missing reason is an error. |
+| `rule_overrides` | list | `[]` | `- id: DEC-01` with `reason:`. A rule that does not fit this flow, with why. The gate lists every override under known rough edges; a missing reason is an error. Overriding a `blocker` also needs `by:` (who accepted it) and `date:` (YYYY-MM-DD), and a reason of at least four words; the gate then says PASS-WITH-OVERRIDES, never PASS. PATH-01 (the value moment was reached) cannot be overridden. |
 | `friction` | list | `[]` | `- step: 4` with `what:` and `reason:` for each confirmation, expiry, code, proof or bot check on the path: the abuse or mistake it prevents (rule DEC-04). |
 | `context` | map | `{}` | Preconditions for the scenario — machine-readable, self-documenting (see [context block](#context-block)) |
 | `tags` | list | `[]` | Categorization tags for filtering |
@@ -44,7 +44,7 @@ Every flow lives in `.flowchad/flows/*.yml`. One file per flow.
 | `timing` | string | no | Max acceptable time (e.g. `2s`, `500ms`). Exceeding = friction |
 | `effect` | enum | no | `write`, `send` or `pay` when the step changes data, sends a message or email, books, or charges. The walker stops before such steps on `read-only-live` surfaces. Omit for steps that only read. |
 | `first_value` | bool | no | Marks the step that shows the flow's `value_moment`. Time to value and the gate's "to value" measures are counted to here. |
-| `primary` | string | no | CSS selector of the one input or button this screen asks the person to use. Default: the next step's `selector`. Measured for the fold (rule FOLD-01). |
+| `primary` | string | no | CSS selector of the first input this screen needs (not the submit button). Default: the selector of the first `fill` or `select` step on this screen, else the next step's `selector`. Measured for the fold (rule FOLD-01). |
 | `bot_check` | bool | no | The step meets a bot check (Turnstile, reCAPTCHA, hCaptcha). The walker uses test keys on a local copy, a human-assisted step, or Navvi; see `flow-walk/references/live-safety.md` §5. `captcha: true` is the legacy spelling. |
 | `optional` | bool | no | If `true`, step failure doesn't block the walk |
 

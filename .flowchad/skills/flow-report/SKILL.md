@@ -115,7 +115,7 @@ Generate a markdown report at:
 .flowchad/reports/{YYYY-MM-DD}-{flow-name}-report.md   # or {YYYY-MM-DD}-all-report.md
 ```
 
-`reports/` stays git-ignored: it can quote signed-in screens. The durable part goes to `.flowchad/walks/{YYYY-MM-DD}-{flow-id}.md`, written by `gate.mjs --record .flowchad/walks` (gate, measures, rule results, rough edges, not-covered findings; text only, emails, long numbers and query strings redacted). Read it before committing, and commit it with the change it judged: it is the history the next walk compares against, and `/flow-gate --changed` reads its `Commit:` line.
+`reports/` stays git-ignored: it can quote signed-in screens. The durable part goes to `.flowchad/walks/{YYYY-MM-DD}-{flow-id}.md`, written by `gate.mjs --record .flowchad/walks` (gate, measures, rule results, rough edges, not-covered findings; text only, redacted best-effort: see flow-gate § Run it). Read it before committing, and commit it with the change it judged: it is the history the next walk compares against, and `/flow-gate --changed` reads its `Commit:` line.
 
 ### Report Template
 

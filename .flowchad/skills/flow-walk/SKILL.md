@@ -184,7 +184,8 @@ For each step in the flow:
    ```javascript
    import { measureStep, mergeWidths } from './scripts/measure.mjs'; // relative to this skill's folder
 
-   const primary = step.primary || nextStep?.selector; // the one thing this screen asks the person to do
+   // the first input this screen needs, not the submit button (rules/primary-action.md)
+   const primary = step.primary || firstInputStepOnThisScreen?.selector || nextStep?.selector;
    const perWidth = {};
    for (const width of viewports) {
      await page.setViewportSize({ width, height: heightFor(width) });
@@ -195,7 +196,7 @@ For each step in the flow:
    stepResult.measures = mergeWidths(perWidth);
    ```
 
-3b. **Count and judge the step measures** (`references/measures.md`): add `decisions`, `fields`, `clicks`, `non_task_elements` with the `non_task` list, `wait_ms` with `wait_feedback` and `wait_progress`, `dead_end` and `revisit` to `stepResult.measures`, and the step's `screen` (path, or a short screen name). Counting rules decide; when unsure, count it and say why in the list.
+3b. **Count and judge the step measures** (`references/measures.md`): add `decisions`, `fields`, `clicks`, `non_task_elements` with the `non_task` list, `wait_ms` with `wait_feedback` and `wait_progress`, `dead_end` and `revisit` to `stepResult.measures`, and the step's `screen` (path, or a short screen name). Record each on every step, `false` and `0` included: the gate counts a missing value as not measured, never as zero. Counting rules decide; when unsure, count it and say why in the list.
 
 4. **Evaluate expect** — this is the key AI step:
    - Read the `expect` string from the YAML (natural language)
@@ -227,7 +228,7 @@ If a step has `bot_check: true` (or the legacy `captcha: true`), or the walk mee
 
 After the last step, record whether the flow reached its `goal` (`goal_reached`) and, if not, `stopped_at`: the step, the screen and the exact words where it stopped. Copy the flow's `value_moment`, its `rule_overrides` and its `friction` reasons into the result.
 
-Then judge the rules whose `Applies to` includes `flow` (and `docs` or `agent` for those walks) over the whole walk, the same way. Every blocker that applies must end with a result (pass, fail, or n/a with the reason); the gate treats a missing one as not judged. Anything that hurt the person but no rule covers goes in `not_covered`, worded without the product's nouns where possible: that is where new rules come from (`rules/README.md` § Growing without overfitting).
+Then judge the rules whose `Applies to` includes `flow` (and `docs` or `agent` for those walks) over the whole walk, the same way. Every blocker that applies must end with a result (pass, fail, or n/a with the reason in `reason` or `observed`); the gate treats a missing one, or an n/a without a reason, as not judged. The gate takes the value moment as reached only from the evidence: the step marked `first_value: true`, with every step up to it recorded (index, status, measures). A `value_reached` flag in the result is not evidence. Anything that hurt the person but no rule covers goes in `not_covered`, worded without the product's nouns where possible: that is where new rules come from (`rules/README.md` § Growing without overfitting).
 
 ### Step 2a: Dead-End Pass
 

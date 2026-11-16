@@ -41,8 +41,9 @@ Measures named by rules are defined in
 - **Threshold:** `scroll_before_primary_vh = 0` (optional, only with a cited source)
 - **Severity:** blocker | should-fix | later
 - **Applies to:** step, flow, map, docs, agent (one or more)
-- **Basis:** source — Author, *Title* (year), <https://…>: what it says that supports the rule.
-- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11).
+- **Basis:** source — Author, *Title* (year), <https://…> (checked YYYY-MM-DD): what it says that supports the rule, quoted where possible.
+- **Basis:** field — failed in 2 flows in 1 product (maintainer field note, 2026-11; FN-2026-11-01, FN-2026-11-02).
+- **Threshold source:** <https://…> (checked YYYY-MM-DD): where the number comes from (required when the Rule, Check or Threshold has a number).
 - **Pass:** A product-neutral example that passes.
 - **Fail:** A product-neutral example that fails.
 - **Since:** 0.5.0
@@ -55,6 +56,13 @@ Optional lines: `**Replaces:** ID` (this rule supersedes a retired one),
 every walk it applies to; `should-fix` and `later` are listed as known rough
 edges. The words match the report's ranking (launch blocker / should fix /
 later).
+
+**Threshold source** names which cited source a number comes from. Any digit
+in the Rule or Check sentence, and any `Threshold`, needs one; its link must be
+one of the rule's `source` bases. When the source motivates the number without
+stating it (FOLD-01's zero scroll, ERR-01's zero dead ends), the line says so
+and that the number is FlowChad's own standard. The lint can check only that
+the line exists and points at a cited source; the reviewer checks the number.
 
 **Threshold** syntax: `measure op number` or `measure = true|false`, optionally
 followed by `when measure op number`. `op` is one of `=`, `<=`, `>=`, `<`, `>`.
@@ -70,18 +78,31 @@ reviewer's job in the pull request that adds the rule.
 
 1. **General.** No product names, vendor names, client names or product-internal
    nouns in the rule, check or examples. It must make sense for a product the
-   author has never seen. *(lint: the terms in `forbidden-terms.txt`, plus any
-   private list you pass in `FLOWCHAD_FORBIDDEN_TERMS`)*
+   author has never seen. *(lint: every text file in the folder, including
+   group intro prose, Basis claims, README and CHANGELOG, against the vendor
+   and brand names in `forbidden-terms.txt` plus any private list you pass in
+   `FLOWCHAD_FORBIDDEN_TERMS`; both sides are normalised, so `Acme-Corp`,
+   `Acme Corp` and `AcmeCorps` all match `acmecorp`. Only the cited work's
+   author and title in a source Basis line, and links, are exempt.)*
 2. **Checkable.** The rule is one sentence, and the check says what to look at
    or count and what a fail looks like. "Feels cluttered" is not a check;
    "a badge, banner or widget visible on the step that the step does not need"
    is. *(lint: one sentence, at most 45 words, check present)*
-3. **Based.** At least one `source` basis naming a public source with a link,
-   or a `field` basis showing the rule failed in **at least two independent
-   flows** (different user goals, not two screens of one flow). Field notes
-   name no person, client or product: they say only how many flows and
-   products, and "maintainer field note" with the month. *(lint)* The reviewer
-   checks that the source really says what the line claims.
+3. **Based.** At least one `source` basis naming a public source with a link
+   and the date it was opened and checked, or a `field` basis showing the rule
+   failed in **at least two flows**. Field notes name no person, client or
+   product: they say how many flows and products, "maintainer field note" with
+   the month, and one opaque field-note id per observation (`FN-2026-11-01`).
+   *(lint: a link and a `(checked YYYY-MM-DD)` date on every source; at least
+   one id on every field basis and as many distinct ids as flows counted)*
+   The ids point into a private ledger the maintainer keeps outside this
+   repository (what was walked, when, and what failed); it is private because
+   it names the products walked. The lint cannot see the ledger, so it cannot
+   tell whether two flows were independent (different user goals, not two
+   screens of one flow): the reviewer asks the maintainer to confirm from the
+   ledger. The reviewer also opens every source link and checks that it says
+   what the line claims; a book whose claim cannot be read online is not
+   enough on its own.
 4. **No silent contradiction.** A rule that reverses, narrows or widens an
    existing rule replaces it: the new rule says `Replaces: ID`, the old one is
    retired in the same change. *(lint: a replaced rule must be retired)* The
@@ -91,9 +112,11 @@ reviewer's job in the pull request that adds the rule.
    (`example.com`, "a setup wizard", "a billing page"). *(lint)*
 7. **Provenance.** `Since:` and a line in [CHANGELOG.md](CHANGELOG.md) naming
    the rule id. *(lint)*
-8. **Thresholds only where a source sets them.** A rule with a `Threshold` has
-   a `source` basis; field notes do not set numbers. *(lint)* Everything else is
-   measured against the previous walk, not a target.
+8. **Numbers only where a source sets them.** A rule with a `Threshold`, or a
+   number in its Rule or Check sentence ("within 3 seconds"), has a `source`
+   basis and a `Threshold source` line pointing at it; field notes do not set
+   numbers. *(lint)* Everything else is measured against the previous walk,
+   not a target.
 
 Ids are `PREFIX-NN`, unique across all files, and never reused, even after a
 rule is retired. *(lint)*
@@ -115,8 +138,10 @@ beats it. When observed user behaviour contradicts a rule, the rule changes.
 
 - **For one flow:** add a `rule_overrides` entry to the flow file with the rule
   id and a reason (for example `DEC-01`, "expert users repeat this screen
-  daily; one page with three answers tested faster"). The gate lists the
-  override under accepted exceptions; it does not hide it.
+  daily; one page with three answers tested faster"). The gate lists every
+  override under known rough edges; it does not hide it. Overriding a
+  `blocker` also needs `by:` and `date:` and a reason of at least four words,
+  and the gate then says PASS-WITH-OVERRIDES. PATH-01 cannot be overridden.
 - **For everyone:** open a pull request that changes, replaces or retires the
   rule, with evidence: a source, or walks of independent flows. "I don't like
   it" is not evidence; "these two flows failed the rule and were better for

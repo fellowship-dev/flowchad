@@ -45,7 +45,7 @@ The opinionated part: one file per concern, each rule with an id, a checkable se
 
 ### The gate (`.flowchad/skills/flow-gate/`)
 
-`scripts/gate.mjs` combines the walker's `rule_results` with thresholds applied to the measures and decides PASS, FAIL or INCOMPLETE; `--record` writes the committed walk record to `.flowchad/walks/`. `scripts/changed.sh` maps a diff to the saved flows it touches, from each flow's `covers:` globs and its last walk record's commit. Both read the rules from `../flow-walk/rules`, so installing one skill without the other is not supported.
+`scripts/gate.mjs` combines the walker's `rule_results` with thresholds applied to the measures and decides PASS, PASS-WITH-OVERRIDES, FAIL or INCOMPLETE (reading `gate.target` and deploy checks from `.flowchad/config.yml`); `--record` writes the committed walk record to `.flowchad/walks/`. `scripts/changed.sh` maps a diff to the saved flows it touches, from each flow's `covers:` globs and its last walk record's commit. Both read the rules from `../flow-walk/rules`, so installing one skill without the other is not supported.
 
 ### Agent Definition (`agents/flowchad.md`)
 

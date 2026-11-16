@@ -117,7 +117,11 @@ Run the gate (`/flow-gate`, or the same logic by hand): PASS only if the
 value moment was reached and no blocker failed or went unjudged on the
 target the tester will open. Anything else means: do not hand it to a human
 tester yet, and say what must change. On PASS, list the known rough edges
-(failed should-fix and later rules) first.
+(failed should-fix and later rules) first. PASS-WITH-OVERRIDES means blocker
+rules failed and the flow file overrides them: name every override, with who
+accepted it and why, before anything else. The gate takes the value moment
+only from recorded steps up to the step marked `first_value`, and needs the
+target address; give it both.
 
 The report contains, in this order: the gate per flow; the surface table; a table of each flow
 with its goal, whether it reaches it today, where it stops, and what changed

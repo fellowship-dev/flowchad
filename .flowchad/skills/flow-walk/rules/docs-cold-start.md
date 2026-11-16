@@ -14,8 +14,9 @@ cannot answer from the docs is recorded, not answered for it.
 - **Threshold:** `unanswered_questions = 0`
 - **Severity:** blocker
 - **Applies to:** docs
-- **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/>: aspire to perfect reliability; a tutorial must work for every reader, every time.
-- **Basis:** source — Jeff Sauro and James R. Lewis, *Quantifying the User Experience* (2nd ed., 2016), MeasuringU, <https://measuringu.com/>: task completion without assistance is the basic success measure.
+- **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/> (checked 2026-11-15): "Aspire to perfect reliability"; the tutorial "works for every user, every time."
+- **Basis:** source — Jeff Sauro, "10 Things To Know About Completion Rates" (MeasuringU, 2011), <https://measuringu.com/completion-rates/> (checked 2026-11-15): "Completion rates are the fundamental usability metric".
+- **Threshold source:** <https://diataxis.fr/tutorials/> (checked 2026-11-15): a guide that works for every user, every time leaves no question unanswered; zero is that standard, not a number from the source.
 - **Pass:** From an empty folder, the agent follows the install page, runs five commands and shows the first result, without asking anything.
 - **Fail:** The agent stops to ask which of two install methods applies, because the docs describe both and never say who each is for.
 - **Since:** 0.5.0
@@ -26,8 +27,8 @@ cannot answer from the docs is recorded, not answered for it.
 - **Check:** Read the install guide from top to bottom. Fail if it branches without saying who takes which branch, if a step has no visible result to confirm it worked, or if background explanation sits between the steps.
 - **Severity:** should-fix
 - **Applies to:** docs
-- **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/>: deliver visible results early and often, and keep explanation to a minimum, linking to it instead.
-- **Pass:** "1. Install. You should see `ready`. 2. Connect your account. You should see your sites listed." with a link to "How it works".
+- **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/> (checked 2026-11-15): "Deliver visible results early and often"; "Ruthlessly minimise explanation" and link to it instead.
+- **Pass:** "1. Install. You should see `ready`. 2. Connect your account. You should see your projects listed." with a link to "How it works".
 - **Fail:** An install page that opens with the architecture, then offers three install methods without saying which one to use.
 - **Since:** 0.5.0
 
@@ -38,7 +39,7 @@ cannot answer from the docs is recorded, not answered for it.
 - **Measure:** `wrong_turns`
 - **Severity:** should-fix
 - **Applies to:** docs
-- **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/>: the steps must produce the result they promise, every time.
+- **Basis:** source — Diátaxis, "Tutorials", <https://diataxis.fr/tutorials/> (checked 2026-11-15): when you ask the reader to do something, "they must see the result you promise."
 - **Pass:** `export API_TOKEN=<your token from Settings › Tokens>` followed by commands that work unchanged.
 - **Fail:** A command uses a flag that the current version no longer accepts, and the guide does not mention the version it was written for.
 - **Since:** 0.5.0

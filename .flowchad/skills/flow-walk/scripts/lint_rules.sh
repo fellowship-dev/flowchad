@@ -5,8 +5,15 @@
 #   bash lint_rules.sh                 # the shipped rules, plus .flowchad/rules if present
 #   bash lint_rules.sh DIR [DIR ...]   # these rule folders (each with a CHANGELOG.md)
 #
+# Every text file in each folder is checked: rule files (*.md), README.md,
+# CHANGELOG.md and any other .md/.txt/.yml/.json file. forbidden-terms.txt is
+# the only file exempt from the term check.
+#
 # FLOWCHAD_FORBIDDEN_TERMS=<file> adds private terms (one per line) to the
-# shipped forbidden-terms.txt without publishing them.
+# shipped forbidden-terms.txt without publishing them. Terms and text are
+# compared after normalising both sides: lowercase, punctuation and spaces
+# removed, an optional trailing "s" (so Acme-Corp, Acme Corp and AcmeCorps all
+# match acmecorp).
 # Exit: 0 all rules pass, 1 a rule fails, 2 usage (no rule files found).
 # Portable: bash 3.2 and POSIX awk (macOS and Linux).
 
@@ -30,42 +37,79 @@ fi
 [ -f "$MEASURES" ] || { echo "lint_rules: measures reference not found: $MEASURES" >&2; exit 2; }
 
 FILES=()
+PROSE=()
 CHANGELOGS=()
 for d in "${DIRS[@]}"; do
   [ -d "$d" ] || { echo "lint_rules: not a folder: $d" >&2; exit 2; }
   [ -f "$d/CHANGELOG.md" ] || { echo "$d: missing CHANGELOG.md" >&2; exit 1; }
   CHANGELOGS+=("$d/CHANGELOG.md")
-  for f in "$d"/*.md; do
-    case "$(basename "$f")" in README.md|CHANGELOG.md) continue ;; esac
-    [ -f "$f" ] && FILES+=("$f")
+  for f in "$d"/*; do
+    [ -f "$f" ] || continue
+    case "$(basename "$f")" in
+      CHANGELOG.md|forbidden-terms.txt) continue ;;
+      README.md) PROSE+=("$f") ;;
+      *.md) FILES+=("$f") ;;
+      *.txt|*.yml|*.yaml|*.json|*.csv) PROSE+=("$f") ;;
+    esac
   done
 done
 [ "${#FILES[@]}" -gt 0 ] || { echo "lint_rules: no rule files in: ${DIRS[*]}" >&2; exit 2; }
 
-awk -v terms_file="$TERMS" -v extra_file="$EXTRA" -v measures_file="$MEASURES" '
+LC_ALL=C awk -v terms_file="$TERMS" -v extra_file="$EXTRA" -v measures_file="$MEASURES" '
 function err(msg) { printf "%s:%d: %s%s\n", FILENAME, FNR, (cur != "" ? cur ": " : ""), msg; errors++ }
 function rerr(id, msg) { printf "%s: %s: %s\n", file_of[id], id, msg; errors++ }
 function dirof(p,   q) { q = p; sub(/\/[^\/]*$/, "", q); return q }
-function norm(s) { s = tolower(s); gsub(/[^a-z0-9.]+/, " ", s); gsub(/\.( |$)/, " ", s); return " " s " " }
+function base(p,   q) { q = p; sub(/.*\//, "", q); return q }
+function tnorm(s) { s = tolower(s); gsub(/[^a-z0-9]/, "", s); return s }
 function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
-function load_terms(path,   line) {
+function nolinks(s) { gsub(/<[a-z]+:[^>]*>/, "", s); gsub(/\]\([^)]*\)/, "]", s); gsub(/[a-z]+:\/\/[^ )>]+/, "", s); return s }
+function load_terms(path,   line, t) {
   if (path == "") return
   while ((getline line < path) > 0) {
     line = trim(line)
     if (line == "" || substr(line, 1, 1) == "#") continue
-    nterms++; term[nterms] = norm(line); term_raw[nterms] = line
+    t = tnorm(line); if (t == "") continue
+    tset[t] = line; nterms++
   }
   close(path)
 }
-function check_terms(text, what,   i) {
-  text = norm(text)
-  for (i = 1; i <= nterms; i++)
-    if (index(text, term[i]) > 0) err(what " contains a product-specific term: " term_raw[i])
+function term_hit(g,   b) {
+  if (g in tset) return tset[g]
+  if (length(g) > 2 && substr(g, length(g), 1) == "s") { b = substr(g, 1, length(g) - 1); if (b in tset) return tset[b] }
+  if (length(g) > 3 && ((g "s") in tset)) return tset[g "s"]
+  return ""
 }
-function finish(   n, w, s, i, parts, k, ok, nf, has_source, field_ok) {
+# Words are compared one by one and joined in runs of up to three, so a term
+# split by a hyphen, a dot or a space ("Cloud-flare", "Next js") still matches.
+function check_terms(text, what,   n, parts, i, j, g, hit, seen) {
+  if (nterms == 0) return
+  n = split(tolower(text), parts, /[^a-z0-9]+/)
+  split("", seen)
+  for (i = 1; i <= n; i++) {
+    if (parts[i] == "") continue
+    g = ""
+    for (j = i; j <= n && j < i + 3; j++) {
+      if (parts[j] == "") break
+      g = g parts[j]
+      hit = term_hit(g)
+      if (hit != "" && !(hit in seen)) { seen[hit] = 1; err(what " contains a product-specific term: " hit) }
+    }
+  }
+}
+# Text checks for every line of every file: email addresses and account-like
+# numbers (12 or more digits, also when grouped with spaces or hyphens).
+function check_line(line,   plain, s, r, d) {
+  plain = line; gsub(/<https?:[^>]*>/, "", plain)   # links may carry ISBNs and DOIs
+  if (plain ~ /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z][A-Za-z]+/) err("contains an email address")
+  s = plain
+  while (match(s, /[0-9]([0-9]|[ -][0-9])*/)) {
+    r = substr(s, RSTART, RLENGTH); d = r; gsub(/[^0-9]/, "", d)
+    if (length(d) >= 12) { err("contains a 12-digit number (account-like): " r); break }
+    s = substr(s, RSTART + RLENGTH)
+  }
+}
+function finish(   n, w, s, i, parts, k, has_source) {
   if (cur == "") return
-  if (!(cur in seen_rule) ) seen_rule[cur] = 1
-  # required single fields
   split("Rule Check Severity Applies Pass Fail Since", req, " ")
   for (i = 1; i <= 7; i++) {
     k = req[i]
@@ -92,10 +136,17 @@ function finish(   n, w, s, i, parts, k, ok, nf, has_source, field_ok) {
   if (val[cur, "Since"] != "" && val[cur, "Since"] !~ /^[0-9]+\.[0-9]+\.[0-9]+$/) rerr(cur, "Since must be a version like 0.5.0")
   if (val[cur, "Pass"] != "" && val[cur, "Pass"] == val[cur, "Fail"]) rerr(cur, "Pass and Fail examples are identical")
   has_source = (nsource[cur] > 0)
-  field_ok = (field_flows[cur] >= 2)
-  if (cnt[cur, "Basis"] > 0 && !has_source && !field_ok)
+  if (cnt[cur, "Basis"] > 0 && !has_source && field_flows[cur] < 2)
     rerr(cur, "Basis needs a cited source with a link, or a field note of failures in at least 2 independent flows")
   if (cnt[cur, "Threshold"] > 0 && !has_source) rerr(cur, "a Threshold needs a cited source basis")
+  if (numeric[cur]) {
+    if (!has_source) rerr(cur, "a number in the Rule or Check needs a cited source basis (field notes do not set numbers)")
+    if (cnt[cur, "TSource"] == 0) rerr(cur, "a number in the Rule, Check or Threshold needs a Threshold source line naming the cited source it comes from")
+  }
+  if (cnt[cur, "TSource"] > 0) {
+    if (tslink[cur] == "") rerr(cur, "Threshold source needs a link in <https://...>")
+    else if (!((cur, tslink[cur]) in srclink)) rerr(cur, "Threshold source links to " tslink[cur] ", which is not one of the rule source bases")
+  }
   if (cnt[cur, "Retired"] > 0) retired[cur] = 1
   cur = ""
 }
@@ -105,17 +156,19 @@ BEGIN {
     if (line ~ /^\| `[a-z_]+` \|/) { m = line; sub(/^\| `/, "", m); sub(/`.*/, "", m); measure[m] = 1 }
   close(measures_file)
 }
-FILENAME ~ /CHANGELOG\.md$/ { clog[dirof(FILENAME)] = clog[dirof(FILENAME)] " " $0 " "; next }
+FILENAME ~ /CHANGELOG\.md$/ {
+  clog[dirof(FILENAME)] = clog[dirof(FILENAME)] " " $0 " "
+  check_line($0); check_terms(nolinks($0), "CHANGELOG"); next
+}
+base(FILENAME) == "README.md" || base(FILENAME) !~ /\.md$/ {
+  check_line($0); check_terms(nolinks($0), base(FILENAME)); next
+}
 FNR == 1 {
   finish()
   prefix = ""
   if ($0 ~ /^<!-- prefix: [A-Z]+ -->$/) { prefix = $3 } else { cur = ""; err("first line must be <!-- prefix: NAME -->") }
 }
-{
-  plain = $0; gsub(/<https?:[^>]*>/, "", plain)   # links may carry ISBNs and DOIs
-  if (plain ~ /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z][A-Za-z]+/) err("contains an email address")
-  if (plain ~ /[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/) err("contains a 12-digit number (account-like)")
-}
+{ check_line($0) }
 /^### / {
   finish()
   h = substr($0, 5)
@@ -135,20 +188,43 @@ cur != "" && /^- \*\*[A-Za-z ]+:\*\* / {
   v = trim(v)
   if (k == "Applies to") k = "Applies"
   if (k == "Replaced by") k = "ReplacedBy"
-  if (k !~ /^(Rule|Check|Measure|Threshold|Severity|Applies|Basis|Pass|Fail|Since|Replaces|Retired|ReplacedBy)$/) { err("unknown field: " k); next }
+  if (k == "Threshold source") k = "TSource"
+  if (k !~ /^(Rule|Check|Measure|Threshold|TSource|Severity|Applies|Basis|Pass|Fail|Since|Replaces|Retired|ReplacedBy)$/) { err("unknown field: " k); next }
   cnt[cur, k]++
   if (k != "Basis") val[cur, k] = v
   lastkey = k
   if (k == "Rule" || k == "Check" || k == "Pass" || k == "Fail") check_terms(v, k)
+  if (k == "Rule" || k == "Check") { nb = v; gsub(/`[^`]*`/, "", nb); if (nb ~ /[0-9]/) numeric[cur] = 1 }
+  if (k == "Threshold") numeric[cur] = 1
+  if (k == "TSource") {
+    check_terms(nolinks(v), "Threshold source")
+    if (match(v, /<https?:\/\/[^ >]+>/)) tslink[cur] = substr(v, RSTART + 1, RLENGTH - 2)
+  }
   if (k == "Basis") {
     if (v ~ /^source — /) {
-      if (v ~ /<https?:\/\/[^ >]+>/) nsource[cur]++
-      else err("source basis needs a link in <https://...>")
+      # the cited work (author and title) and its link are exempt; the claim is not
+      if (match(v, /<https?:\/\/[^ >]+>/)) {
+        nsource[cur]++; srclink[cur, substr(v, RSTART + 1, RLENGTH - 2)] = 1
+        claim = substr(v, RSTART + RLENGTH)
+        check_terms(claim, "Basis claim")
+        if (claim !~ /^ \(checked [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) err("source basis must say when the link was opened and checked: <link> (checked YYYY-MM-DD)")
+      } else err("source basis needs a link in <https://...>")
     } else if (v ~ /^field — /) {
+      fv = v; sub(/^field — /, "", fv); check_terms(fv, "Basis")
       if (v !~ /maintainer field note/) err("field basis must say \"maintainer field note\" and name no person, client or product")
+      # one opaque field-note id per observation, kept in the maintainer ledger
+      ids = v; nid = 0; split("", idseen)
+      while (match(ids, /FN-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9]*/)) {
+        fid = substr(ids, RSTART, RLENGTH); if (!(fid in idseen)) { idseen[fid] = 1; nid++ }
+        ids = substr(ids, RSTART + RLENGTH)
+      }
+      if (nid == 0) err("field basis needs a field-note id for each observation (FN-YYYY-MM-NN)")
       if (match(v, /[0-9]+ (flows?|screens?|walks?) in [0-9]+ products?/)) {
         f = substr(v, RSTART, RLENGTH); split(f, fp, " ")
-        if (fp[2] ~ /^flow/ && fp[1] + 0 > field_flows[cur] + 0) field_flows[cur] = fp[1] + 0
+        if (fp[2] ~ /^flow/) {
+          if (nid < fp[1] + 0) err("field basis counts " fp[1] " flows but lists " nid " field-note id(s); list one per flow")
+          else if (fp[1] + 0 > field_flows[cur] + 0) field_flows[cur] = fp[1] + 0
+        }
       } else err("field basis needs a count: \"N flows in M products\"")
     } else err("Basis must start with \"source — \" or \"field — \"")
   }
@@ -166,6 +242,8 @@ cur != "" && /^- \*\*[A-Za-z ]+:\*\* / {
   next
 }
 cur != "" && /^  +[^ ]/ && lastkey != "" { err("a field must fit on one line"); next }
+# everything else in a rule file (group intro prose, the group title) is text
+{ check_terms(nolinks($0), "text") }
 END {
   finish()
   active = 0
@@ -183,4 +261,4 @@ END {
   if (errors > 0) { printf "\n%d problem(s) in %d rule(s)\n", errors, nrules; exit 1 }
   printf "%d rules (%d active, %d retired): admission lint passed\n", nrules, active, nrules - active
 }
-' "${CHANGELOGS[@]}" "${FILES[@]}"
+' "${CHANGELOGS[@]}" ${PROSE[@]+"${PROSE[@]}"} "${FILES[@]}"

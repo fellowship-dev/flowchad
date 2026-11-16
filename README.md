@@ -179,19 +179,22 @@ in ten groups (path to value, the primary action and the fold, decisions,
 noise, wording, navigation, waiting, errors, docs cold start, agent
 experience). Each rule is one sentence a reviewer can pass or fail on one
 screen, says how to check it during a walk, has a severity, and names its
-basis: a public source with a link (Nielsen Norman Group, Krug, GOV.UK, WCAG
-2.2, Refactoring UI, Hulick, Rosenfeld/Morville/Arango, Diátaxis, Sauro & Lewis,
-llms.txt, clig.dev, the MCP spec) or failures seen in at least two independent
-flows.
+basis: a public source with a link, opened and checked on a stated date
+(Nielsen Norman Group, GOV.UK, WCAG 2.2, Krug, Diátaxis, MeasuringU, Brysbaert,
+Laws of UX, the llms.txt proposal, Biilmann, clig.dev, the MCP specification),
+or failures seen in at least two flows, each recorded as a field-note id in
+the maintainer's private ledger. Today 41 rules rest on a cited source (12 of
+them also on field notes) and 3 on field notes alone.
 
 ```markdown
-### FOLD-01 · The primary action is visible without scrolling
+### FOLD-01 · The first input is visible without scrolling
 
-- **Rule:** The one input or primary action a step needs is fully visible without scrolling at 375 and at 1440 wide.
-- **Check:** At each width, before scrolling, measure how far the bottom of the primary element sits below the viewport (`scroll_before_primary_vh`). Fail if it is above 0 at either width, or the element is hidden.
+- **Rule:** The first input a step needs is fully visible without scrolling in a 375 × 812 px viewport and in a 1440 × 900 px viewport.
+- **Check:** In each viewport, before scrolling, measure how far the bottom of the primary element (the first input, not the submit button) sits below the viewport (`scroll_before_primary_vh`). Fail if it is above 0 in either viewport, or the element is hidden.
 - **Threshold:** `scroll_before_primary_vh = 0`
 - **Severity:** blocker
-- **Basis:** source — Nielsen Norman Group, "Scrolling and Attention" (2018): people spent about 57% of page-viewing time above the fold.
+- **Basis:** source — Nielsen Norman Group, "Scrolling and Attention" (2018), <https://www.nngroup.com/articles/scrolling-and-attention/> (checked 2026-11-15): "users spent about 57% of their page-viewing time above the fold".
+- **Threshold source:** the same article: the attention shares motivate the threshold; zero scroll is FlowChad's own standard, not a number from the source.
 ```
 
 **Measures, not adjectives.** Every walk records, per step and per flow:
@@ -205,14 +208,23 @@ fresh agent could not answer
 each number against the previous walk. Thresholds exist only where a rule
 with a cited source sets one.
 
-**A gate before "test it".** `/flow-gate` says PASS, FAIL or INCOMPLETE:
-FAIL if the value moment is not reached or a blocker rule fails, INCOMPLETE
-if a blocker was never judged or a read-only production walk stopped before a
-write step, and it fails walks of a different host than the one the tester
-will open. Rough edges (should-fix and later rules) never fail it; they are
-listed first in the hand-off. `--record` writes a redacted walk record to
+**A gate before "test it".** `/flow-gate` says PASS, PASS-WITH-OVERRIDES,
+FAIL or INCOMPLETE. It takes nothing on the walk's word: the value moment
+counts as reached only from recorded steps up to the step marked
+`first_value`; every blocker needs a judgement or a measure recorded on every
+step ("not applicable" needs a reason); the target address comes from
+`--target` or `gate.target` in the config, and without one the gate says
+INCOMPLETE; a walk of another host fails, and so does one older than the last
+deploy (`--not-before`, required when the config tracks deploys). Rough edges
+(should-fix and later rules) never fail it; they are listed first in the
+hand-off, and so is every override. `--record` writes a walk record to
 `.flowchad/walks/` for the project to commit, and `--changed` lists which
 saved flows a branch touches since their last walk.
+
+Walk records are redacted best-effort: URLs keep their host and lose user
+info, query strings and token-like path segments; secret shapes, emails,
+card-like, account-like and phone-like numbers are replaced. It cannot catch
+everything, so **review a walk record before committing it**.
 
 **Map first.** A flow can be saved as a plain Mermaid flow chart with its
 value moment (`.flowchad/flows/<id>.map.md`) before anything is built, and
@@ -236,13 +248,18 @@ product's nouns and either a public source supports it or the same problem
 appears in a second, independent flow. The
 [admission test](.flowchad/skills/flow-walk/rules/README.md#admission-test)
 lists the criteria; `bash .flowchad/skills/flow-walk/scripts/lint_rules.sh`
-enforces the ones a script can check (format, unique ids, a basis with a link
-or a count of two flows, no product or vendor names, both examples, a
-CHANGELOG line, thresholds only with a source). Rules are retired, never
-deleted or reused, when better evidence contradicts them.
+enforces the ones a script can check (format, unique ids, a basis with a
+dated link or two field-note ids, no vendor or brand names in any text file of
+the folder, both examples, a CHANGELOG line, numbers only with a cited
+`Threshold source`). Whether two flows were independent, and whether a source
+says what the line claims, is the reviewer's check: the lint cannot read the
+maintainer's private field-note ledger or the cited pages. Rules are retired,
+never deleted or reused, when better evidence contradicts them.
 
 **Disagree with a rule?** For one flow, add a `rule_overrides` entry with
-the reason; the gate shows it as an accepted exception. For everyone, open a
+the reason; the gate lists it under known rough edges. Overriding a blocker
+also needs who and when, and gives PASS-WITH-OVERRIDES (exit 3), never PASS;
+the value-moment rule cannot be overridden. For everyone, open a
 pull request that changes, replaces or retires the rule, with evidence: a
 source, or walks of independent flows. Projects can keep their own rules in
 `.flowchad/rules/`.
@@ -350,7 +367,7 @@ context:
   optional: true                     # don't fail the flow if this breaks
   effect: write                      # write | send | pay — skipped on read-only-live surfaces
   first_value: true                  # shows the flow's value_moment
-  primary: "#site-url"               # the one input this screen asks for (default: next step's selector)
+  primary: "#email"                  # the first input this screen needs (default: first fill step on it)
   bot_check: true                    # test keys on a local copy, or a human-assisted step
 ```
 

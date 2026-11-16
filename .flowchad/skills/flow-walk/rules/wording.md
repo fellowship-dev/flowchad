@@ -11,10 +11,10 @@ a button will do, and whether what the screen says is true.
 - **Check:** Read each label, heading and menu item as someone new to the product. Fail any internal, team or technical term shown without a one-line explanation of who uses it and why.
 - **Severity:** should-fix
 - **Applies to:** step, docs
-- **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, updated 2024), heuristic 2, match between the system and the real world, <https://www.nngroup.com/articles/ten-usability-heuristics/>: use words, phrases and concepts familiar to the person.
-- **Basis:** source — Louis Rosenfeld, Peter Morville and Jorge Arango, *Information Architecture* (4th ed., 2015), <https://www.oreilly.com/library/view/information-architecture-4th/9781491913529/>: labels use the vocabulary of the people the site serves.
-- **Pass:** A setting reads "Weekly summary email: a short report every Monday for whoever manages the site".
-- **Fail:** A setting reads "Digest cadence (product)" with no hint of what the product is or who receives it.
+- **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 2, match between the system and the real world, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "Use words, phrases, and concepts familiar to the user, rather than internal jargon."
+- **Basis:** source — Page Laubheimer, "Menu-Design Checklist: 17 UX Guidelines" (Nielsen Norman Group, 2024), guideline 7, <https://www.nngroup.com/articles/menu-design/> (checked 2026-11-15): "use category labels that are familiar and relevant", not "made-up words, internal jargon, or abstract high-level categorization."
+- **Pass:** A setting reads "Reminder email: sent to your client two days before the appointment".
+- **Fail:** A setting reads "Notif. lead time (T-n)" with no hint of what is sent or to whom.
 - **Since:** 0.5.0
 
 ### WORD-02 · Actions say what happens
@@ -23,8 +23,8 @@ a button will do, and whether what the screen says is true.
 - **Check:** Read each button and link out of context. Fail "Click here", "Submit", "OK", "Learn more" or any label that does not say what happens next.
 - **Severity:** should-fix
 - **Applies to:** step, docs
-- **Basis:** source — GOV.UK Service Manual, "Writing for user interfaces" (2017), <https://www.gov.uk/service-manual/design/writing-for-user-interfaces>: make the purpose of a link clear from the link text alone.
-- **Basis:** source — W3C, WCAG 2.2, Success Criterion 2.4.4 Link Purpose (In Context) (2023), <https://www.w3.org/TR/WCAG22/#link-purpose-in-context>: the purpose of each link can be determined from its text and context.
+- **Basis:** source — GOV.UK Service Manual, "Writing for user interfaces" (2017), <https://www.gov.uk/service-manual/design/writing-for-user-interfaces> (checked 2026-11-15): "make the purpose of the link clear from the link text alone."
+- **Basis:** source — W3C, WCAG 2.2, Success Criterion 2.4.4 Link Purpose (In Context) (2023), <https://www.w3.org/TR/WCAG22/#link-purpose-in-context> (checked 2026-11-15): "The purpose of each link can be determined from the link text alone or from the link text together with its programmatically determined link context".
 - **Pass:** "Send invitation", "Download the invoice (PDF)".
 - **Fail:** "Submit" on an invitation form, and "Click here" for the invoice.
 - **Since:** 0.5.0
@@ -35,10 +35,10 @@ a button will do, and whether what the screen says is true.
 - **Check:** For each warning, caution or "insecure" label, write the consequence and how likely it is. Fail warnings with no concrete consequence, warnings on routine short-lived actions, and alarm words ("insecure", "danger", "critical") for normal states.
 - **Severity:** should-fix
 - **Applies to:** step, docs
-- **Basis:** source — Nielsen Norman Group, "Confirmation Dialogs Can Prevent User Errors" (2018), <https://www.nngroup.com/articles/confirmation-dialog/>: warnings on routine actions teach people to ignore all warnings.
-- **Basis:** source — GOV.UK Design System, "Error message", <https://design-system.service.gov.uk/components/error-message/>: describe what happened and how to fix it in plain, positive language.
-- **Pass:** "This link signs you in. It works once, for the next 5 minutes."
-- **Fail:** "Warning: insecure link. Anyone with this link may access your account." on a single-use sign-in link that expires in minutes.
+- **Basis:** source — Jakob Nielsen, "Confirmation Dialogs Can Prevent User Errors (If Not Overused)" (Nielsen Norman Group, 2018), <https://www.nngroup.com/articles/confirmation-dialog/> (checked 2026-11-15): "if you cry wolf too many times, people will stop paying attention to the question".
+- **Basis:** source — GOV.UK Design System, "Error message", <https://design-system.service.gov.uk/components/error-message/> (checked 2026-11-15): "Describe what has happened and tell them how to fix it. The message must be in plain English, use positive language and get to the point."
+- **Pass:** "Anyone with this link can view these photos until Friday." on a share dialog.
+- **Fail:** "Warning: insecure! Your files may be exposed." on every share dialog, including links limited to named people.
 - **Since:** 0.5.0
 
 ### WORD-04 · One name for one thing
@@ -47,10 +47,10 @@ a button will do, and whether what the screen says is true.
 - **Check:** List the names the walk sees for each key object, state and level (screens, emails, docs, a marketing site and the app). Fail any object with two names or any name used for two things.
 - **Severity:** should-fix
 - **Applies to:** step, flow, docs
-- **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, updated 2024), heuristic 4, consistency and standards, <https://www.nngroup.com/articles/ten-usability-heuristics/>: people should not have to wonder whether different words mean the same thing.
-- **Basis:** field — failed in 1 flow in 2 products of one maker (maintainer field note, 2026-11).
-- **Pass:** The marketing site, the app and the welcome email all call the three states "Not set up", "Partly protected" and "Protected".
-- **Fail:** The marketing site calls a state "Partly protected" while the app calls the same state "Basic" and gives the same site a different verdict.
+- **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 4, consistency and standards, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "Users should not have to wonder whether different words, situations, or actions mean the same thing."
+- **Basis:** field — failed in 1 flow in 2 products of one maker (maintainer field note, 2026-11; FN-2026-11-16).
+- **Pass:** The pricing page, the app and the welcome email all call the shared space a "Team folder".
+- **Fail:** The pricing page calls it a "Team folder", the app calls the same thing a "Workspace" and the welcome email calls it a "Shared drive".
 - **Since:** 0.5.0
 
 ### WORD-05 · What the screen says is true
@@ -59,8 +59,8 @@ a button will do, and whether what the screen says is true.
 - **Check:** For each claim (a record is valid, a check passed, "sent", a total, advice to apply), check it independently as in `references/walk-checks.md` and record it in `truth_checks`. Fail any claim that disagrees.
 - **Severity:** blocker
 - **Applies to:** step, docs
-- **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, updated 2024), heuristic 1, visibility of system status, <https://www.nngroup.com/articles/ten-usability-heuristics/>: keep people informed about what is going on through appropriate, timely feedback.
-- **Basis:** field — failed in 4 flows in 2 products (maintainer field note, 2026-11).
+- **Basis:** source — Nielsen Norman Group, "10 Usability Heuristics for User Interface Design" (1994, last reviewed 2024), heuristic 1, visibility of system status, <https://www.nngroup.com/articles/ten-usability-heuristics/> (checked 2026-11-15): "keep users informed about what is going on, through appropriate feedback within a reasonable amount of time."
+- **Basis:** field — failed in 4 flows in 2 products (maintainer field note, 2026-11; FN-2026-11-17, FN-2026-11-18, FN-2026-11-19, FN-2026-11-20).
 - **Pass:** "Sent at 14:02 to the address you gave", and the captured mail arrived at 14:02.
-- **Fail:** A checker suggests a configuration change that, applied as shown, would break the person's existing setup.
+- **Fail:** An invoicing app marks an invoice "Paid" while the payment provider shows the payment as refunded.
 - **Since:** 0.5.0

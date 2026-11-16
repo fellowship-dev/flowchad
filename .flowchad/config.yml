@@ -59,10 +59,14 @@
 #     deploy_check: vercel
 #     deploy_timeout: 120
 
-# Gate (optional — /flow-gate)
-# The address a human tester will open; the gate fails walks of any other host.
+# Gate (/flow-gate reads this block)
+# target: the address a human tester will open. The gate fails walks of any
+#   other host or port, and says INCOMPLETE when neither this nor --target is set.
+# deploy_check: when set (or when the environment matching target has a
+#   deploy_check other than none), the gate needs --not-before <last deploy time>.
 # gate:
 #   target: https://example.com
+#   deploy_check: gh-actions   # gh-actions | vercel | none
 #   rules: [.flowchad/rules]   # project rules, read next to flow-walk/rules
 
 # Locales (auto-detected by /flowchad-setup — do not edit manually)
