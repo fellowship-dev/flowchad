@@ -1,49 +1,29 @@
-# {Product} atlas: findings ({YYYY-MM-DD})
+# {Product} atlas: observations ({YYYY-MM-DD})
 
-Companion to `index.html`. Every count below comes from the manifests.
+Optional companion to `index.html`. The atlas's visual flows remain the primary
+output. Keep what was observed separate from a proposed change or a test result.
 
-## What was walked
+## Context
 
-- Today: {build} `{commit}`: {screens} screens, {actions} actions. {works} work,
-  {untrue} have untrue text, {broken} are broken, {dead_end} are dead ends,
-  {hidden} are hidden, {not_built} are not built, {needs_live_test} need a live test.
-- After the open changes (only the screens they change): {screens} screens, {actions} actions.
-  - {change or set}: {screens} screens. {conflicts, if any}
-- Messages: {kinds} kinds; {per label}.
-- Settings and stand-ins: {one line; the full list is under "Differences from production"}.
+- Build/version and environment: {source, capture date, roles, stand-ins}.
+- Mapped scope: {flow IDs}; gaps: {link to the atlas coverage section}.
 
-## 1. What stands between the owner and the value moment (walking order)
+## Observations
 
-1. {What happens, in the words on screen}. Fix: {change, or "nobody is working on this"}. {Size} ({files}).
-2. ...
-
-## Done and working today
-
-- {One line per thing that works end to end.}
-
-## 2. Code health (production files holding a copy)
-
-| Concept | {previous build} | today | after |
+| Flow / screen or transition ID | Observation | Evidence | Possible follow-up |
 |---|---|---|---|
-| {concept} | {n} | {n} | {n} |
-| Unused exports | {n} | {n} | {n} |
+| {id} | {what the person sees or encounters} | {screenshot/transition or linked walk} | {question, proposed change or existing issue; not automatically approved work} |
 
-Cleaned: {copies removed, or "none"}. Guarded only: {tests that stop growth}. Not touched: {concepts}.
-Commands: `{command}`.
+## Related checks (when performed)
 
-## 3. Compared with the previous atlas ({date})
+- {flow-walk/flow-gate report, named target, date and unresolved results}.
+- {separate code-health or other audit, only when requested and measured}.
 
-| Count | previous | now |
-|---|---|---|
-| Works | {n} ({share}) | {n} ({share}) |
-| Untrue text | {n} | {n} |
-| Broken | {n} | {n} |
-| Dead end | {n} | {n} |
+## Compared with an earlier atlas (when relevant)
 
-## 4. Not walked
+- {flow/branch/state added, removed or changed; compare the same scope/build
+  conditions or state the difference}.
 
-- {What}: {why}.
+## Not established
 
-## 5. Differences from production
-
-- {Each switch, stand-in or test key used, and why.}
+- {inferred or untested behavior; provider-only checks and evidence needed}.

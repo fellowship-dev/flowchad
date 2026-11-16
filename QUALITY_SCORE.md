@@ -18,7 +18,7 @@ Last updated: 2026-11-16
 | flow-reproduce | B | 2026-05-25 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
 | flow-pulse | B | 2026-11-14 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
 | flow-gate | B | 2026-11-15 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S5 ✅ (gate, changed tests), S6 ❌ |
-| flow-atlas | B | 2026-11-16 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S5 N/A (spec and templates only), S6 ❌ |
+| flow-atlas | B | 2026-11-16 | S1 ✅, S3 ✅ (visual-flow purpose reconciled), S4 ✅ (0 open), S5 N/A (spec and templates only; JSON/links/reader scenarios checked), S6 ❌ |
 
 ## Signal Matrix
 
@@ -75,3 +75,5 @@ Last updated: 2026-11-16
 | 2026-05-25 | issue #28 | 10 domains. Added flow-reproduce (B). 0 regressions to existing skills. |
 | 2026-11-14 | field lessons from two launch walks | 11 domains. Added flow-pulse (B), live-safety and walk-checks knowledge, agents/flowchad.md. Grades unchanged: no tests or issues closed. |
 | 2026-11-15 | rules, measures and gate | 12 domains. Added flow-gate (B), the rule set in flow-walk/rules (44 rules, admission lint), measures, flow maps, walk records. Other grades unchanged. |
+
+| 2026-11-16 | atlas purpose correction | Atlas now leads with visual user-flow maps, branches and outcomes. Findings are optional; systematic QA and code health retain separate owners. No grade change or runtime-test claim. |

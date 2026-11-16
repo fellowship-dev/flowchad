@@ -45,7 +45,7 @@ Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and
 | `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
 | `/flow-gate sign-up` | PASS / FAIL / INCOMPLETE before a human tests: blocker rules, measures against the last walk, known rough edges; `--changed` lists the flows a diff touches |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser and attaches evidence to the issue |
-| `/flow-atlas [--after <change>]` | Maps the whole product: every screen and action walked for real, one label each (works, untrue text, broken, dead end, hidden, not built, needs live test), blockers in walking order, code health measured, today versus after open changes |
+| `/flow-atlas [--after <change>]` | Visual map of an app or website by user flow: screenshots, entry points, transitions, branches and outcomes; optional findings and build comparisons |
 
 ### Agent definition
 
@@ -233,14 +233,14 @@ info, query strings and token-like path segments; secret shapes, emails,
 card-like, account-like and phone-like numbers are replaced. It cannot catch
 everything, so **review a walk record before committing it**.
 
-**An atlas of the whole product.** `/flow-atlas` inventories every route,
-action, message and scheduled job from the code, walks every action on local
-copies built with production settings (stand-ins for outside providers, so
-nothing real is sent, paid or written), and labels each one with evidence. The
-page shows a screenshot per screen, the blockers in the order a person meets
-them, what the open changes fix, and code health counted with the repo's own
-scanners. Make one before dogfooding, before asking for the first payment and
-after a long run of merges; compare its counts with the previous one.
+**A visual atlas of the product.** `/flow-atlas` maps an app or website by user
+flows. Start from a flow index, follow connected screenshots, see the roles,
+meaningful states, choices, branches and outcomes, and use screen links to
+attach feedback. It is useful for understanding, discussion and redesign even
+when no bug is found. Local copies use named builds and provider stand-ins
+under the live-safety rules; capture gaps stay explicit. `--after` optionally
+compares changed flows. Findings are annotations; systematic testing stays in
+`/flow-walk` and `/flow-gate`, and code health is a separate review.
 
 **Map first.** A flow can be saved as a plain Mermaid flow chart with its
 value moment (`.flowchad/flows/<id>.map.md`) before anything is built, and

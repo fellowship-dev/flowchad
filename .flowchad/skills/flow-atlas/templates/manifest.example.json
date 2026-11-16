@@ -1,58 +1,76 @@
 {
-  "build": "today",
+  "build": "baseline",
   "commit": "a1b2c3d",
-  "differences_from_production": [
-    "payment provider replaced by the repo's fake in test mode",
-    "mail captured in the server log, not sent"
+  "environment": "local-copy",
+  "captured_at": "2026-03-20",
+  "differences_from_production": ["mail captured rather than sent"],
+  "flows": [
+    {
+      "id": "create-account",
+      "title": "Create an account",
+      "goal": "Reach the signed-in home screen",
+      "roles": ["visitor"],
+      "entry_points": ["baseline-b-01"],
+      "outcomes": ["signed-in home", "cancelled"]
+    }
   ],
   "screens": [
     {
-      "id": "today-b-01",
+      "id": "baseline-b-01",
+      "flow_id": "create-account",
       "path": "B",
       "order": 1,
       "title": "Create an account",
       "route": "/signup",
-      "role": "signed-out visitor",
+      "role": "visitor",
       "state": "empty form",
-      "shots": { "375": "today-b-01-signup-375.jpg", "1440": null },
-      "actions": [
-        { "label": "Create account", "status": "WORKS", "note": "went to the code screen; the code arrived in the captured mail" },
-        { "label": "Sign in instead", "status": "WORKS", "note": "opened /signin with the address kept" },
-        { "label": "Terms", "status": "DEAD_END", "note": "404 with no way back" }
+      "shots": {"375": "baseline-b-01-signup-375.jpg", "1440": null},
+      "transitions": [
+        {"action": "Continue", "condition": "valid fields", "to": "baseline-b-02", "evidence": "navigated to the confirmation screen"},
+        {"action": "Continue", "condition": "invalid fields", "to": "baseline-b-01-error", "evidence": "inline validation displayed"},
+        {"action": "Cancel", "outcome": "cancelled", "evidence": "returned to the public home page"}
       ]
     },
     {
-      "id": "today-c-03",
-      "path": "C",
-      "order": 3,
-      "title": "Your first project",
-      "route": "/projects/new",
-      "role": "owner",
-      "state": "after import",
-      "shots": { "375": "today-c-03-first-project-375.jpg", "1440": "today-c-03-first-project-1440.jpg" },
-      "actions": [
-        { "label": "Apply settings", "status": "UNTRUE", "note": "says \"saved for all members\"; only the current member's copy changed (src/settings/save.ts:42)" },
-        { "label": "Export", "status": "HIDDEN", "note": "switched off in this deployment (src/config.ts:17)" },
-        { "label": "Connect provider", "status": "NEEDS_LIVE_TEST", "note": "needs a real provider account and consent screen" }
-      ]
-    }
-  ],
-  "messages": [
+      "id": "baseline-b-01-error",
+      "flow_id": "create-account",
+      "path": "B",
+      "order": 2,
+      "title": "Create an account",
+      "route": "/signup",
+      "role": "visitor",
+      "state": "invalid fields",
+      "shots": {"375": "baseline-b-01-error-375.jpg", "1440": null},
+      "transitions": [{"action": "Correct fields and continue", "to": "baseline-b-02", "evidence": "confirmation screen opened"}]
+    },
     {
-      "id": "today-g-01",
-      "name": "Sign-in code",
-      "trigger": "sign up or sign in",
-      "on_in_production": "yes",
-      "subject": "Your code",
-      "shot": "today-g-01-message-code.jpg",
-      "text": "Your code is 123456.",
-      "status": "WORKS",
-      "note": "rendered from the captured message"
+      "id": "baseline-b-02",
+      "flow_id": "create-account",
+      "path": "B",
+      "order": 3,
+      "title": "Confirm your address",
+      "route": "/confirm",
+      "role": "visitor",
+      "state": "code requested; mail captured locally",
+      "shots": {"375": "baseline-b-02-confirm-375.jpg", "1440": null},
+      "transitions": [
+        {"action": "Enter code", "condition": "valid code", "to": "baseline-b-03", "evidence": "signed-in home displayed"},
+        {"action": "Use another address", "to": "baseline-b-01", "evidence": "returned to the account form"}
+      ]
+    },
+    {
+      "id": "baseline-b-03",
+      "flow_id": "create-account",
+      "path": "B",
+      "order": 4,
+      "title": "Home",
+      "route": "/home",
+      "role": "signed-in user",
+      "state": "new account",
+      "shots": {"375": "baseline-b-03-home-375.jpg", "1440": null},
+      "transitions": [],
+      "outcome": "signed-in home"
     }
   ],
-  "jobs": [
-    { "schedule": "0 4 * * *", "on_in_production": true, "does": "removes expired sessions", "ran_locally": "2 rows deleted, no errors" }
-  ],
-  "findings": { "B": ["The terms link is a dead end."] },
-  "not_walked": [ { "what": "real provider consent", "why": "needs a live account" } ]
+  "not_walked": [{"what": "real mail delivery", "why": "external provider; message captured locally"}]
 }
