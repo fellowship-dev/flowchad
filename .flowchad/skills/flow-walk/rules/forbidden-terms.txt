@@ -1,0 +1,41 @@
+# Vendor and brand names that make a rule product-specific. One per line.
+# The lint compares them with every text file in a rules folder after
+# normalising both sides (lowercase, punctuation and spaces removed, optional
+# trailing "s"), so "Cloud-flare" and "Stripes" match too. The cited work's
+# author and title in a source Basis line, and links, are exempt.
+#
+# Vendor and brand names only. Generic technical terms (protocols, record
+# types, standards) are not listed: a rule may need them, and a list of them
+# says more about the products walked than about the rules. Common words that
+# are also brand names (resend, react, notion) are left out on purpose.
+#
+# Keep private names (clients, unreleased products) out of this public file:
+# put them in a local file and pass it with FLOWCHAD_FORBIDDEN_TERMS=<path>.
+amazon
+auth0
+aws
+calendly
+cloudflare
+firebase
+github
+gitlab
+google
+hcaptcha
+mailgun
+mixpanel
+netlify
+next.js
+okta
+paypal
+plausible
+posthog
+recaptcha
+sendgrid
+shopify
+slack
+strapi
+stripe
+supabase
+turnstile
+vercel
+wordpress

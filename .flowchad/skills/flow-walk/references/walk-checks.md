@@ -42,6 +42,12 @@ person's own thing (their score, their record, their result), not a
 marketing claim or a loading screen. Mark that step with `first_value: true`
 in the flow. Compare all three with the previous walk of the same flow.
 
+These counts are part of the fuller set in `measures.md`: decisions, words,
+viewport heights scrolled before the primary action at each width, non-task
+elements, waits, dead ends and loops, per step, taken with
+`scripts/measure.mjs` where they can be measured. The rules in `../rules/` are
+judged against them.
+
 ## Cross-check what the product claims
 
 When a screen states a fact, check it against an independent source before

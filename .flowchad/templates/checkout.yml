@@ -5,6 +5,8 @@
 
 name: Logged-in user checks out their cart with a credit card and sees order confirmation
 goal: The order is recorded and the person sees its confirmation
+value_moment: The order confirmation shows the order number and what was bought
+covers: []   # source globs this flow depends on, e.g. app/checkout/*
 url: https://staging.example.com
 tags: [payment, critical]
 priority: P0

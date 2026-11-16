@@ -80,6 +80,10 @@ Print the mermaid source in a fenced code block. The user can:
 
 If multiple flows requested (`all`), generate one diagram per flow with a heading.
 
+## Save as a Flow Map
+
+`/flow-diagram <name> --save-map` writes the diagram to `.flowchad/flows/{name}.map.md` in the flow-map conventions (`flow-walk/references/flow-maps.md`): screens as `[ ]`, the person's questions as `{ }`, waits as `(( ))`, entry and exit as `([ ])`, the `first_value` step marked `:::value`, and the flow's `value_moment` on the `**Value moment:**` line. Use it to redraw a built flow before shortening it, then judge the new map with `/flow-walk {name} --map`.
+
 ## Multi-Flow Overview
 
 When `all` is specified, also generate an overview diagram showing how flows connect:

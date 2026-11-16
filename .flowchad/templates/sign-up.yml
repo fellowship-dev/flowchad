@@ -5,6 +5,8 @@
 
 name: New user signs up with email and password and lands on the dashboard
 goal: A new account exists and the dashboard shows the person's first useful result
+value_moment: The dashboard shows the new account and its first useful result
+covers: []   # source globs this flow depends on, e.g. app/sign-up/*
 url: https://staging.example.com
 tags: [onboarding, critical]
 priority: P0

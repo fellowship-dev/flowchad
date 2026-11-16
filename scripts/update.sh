@@ -6,6 +6,8 @@
 #   .flowchad/config.yml   — your project config
 #   .flowchad/snapshots/   — walk results
 #   .flowchad/reports/     — generated reports
+#   .flowchad/walks/       — committed walk records
+#   .flowchad/rules/       — your project rules
 #
 # Updated (overwritten from upstream):
 #   .flowchad/skills/      — AI skill instructions
@@ -88,4 +90,6 @@ echo "  .flowchad/flows/       — your flow definitions"
 echo "  .flowchad/config.yml   — your project config"
 echo "  .flowchad/snapshots/   — walk results"
 echo "  .flowchad/reports/     — generated reports"
+echo "  .flowchad/walks/       — committed walk records"
+echo "  .flowchad/rules/       — your project rules"
 echo ""

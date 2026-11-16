@@ -113,10 +113,22 @@ One sentence the report can answer yes or no to, in the person's terms:
 goal: The person is signed in and sees the onboarding wizard with their Google name
 ```
 
+### Value moment and coverage
+
+`value_moment`: the first thing the person came for, in one sentence (their own result, a working install). The gate fails a flow without it. `covers`: globs of the source files found in Step 2 that this flow depends on, so `/flow-gate --changed` knows when to walk it again.
+
+```yaml
+value_moment: The onboarding wizard greets the person by their Google name and shows their first project
+covers: [app/(auth)/*, app/onboarding/*]
+```
+
+If nothing is built yet, write the flow as a map first (`.flowchad/flows/<id>.map.md`, see `flow-walk/references/flow-maps.md`) and judge it with `/flow-walk <id> --map`.
+
 ### Step markers
 
 - `effect: write | send | pay` on every step that creates or changes data, sends a message, books or charges (form submits, "Save", "Send", "Book", "Pay"). The walker never performs these on live systems.
-- `first_value: true` on the step where the person first gets a true, useful fact about their own thing.
+- `first_value: true` on the step that shows the value moment.
+- `primary: <selector>` on a screen whose one input or button is not the next step's selector.
 - `bot_check: true` on steps behind Turnstile, reCAPTCHA or hCaptcha.
 
 ### Context block — preconditions

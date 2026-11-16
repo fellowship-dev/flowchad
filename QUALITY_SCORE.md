@@ -1,6 +1,6 @@
 # Quality Score — fellowship-dev/flowchad
 
-Last updated: 2026-05-25
+Last updated: 2026-11-15
 
 ## Domains
 
@@ -17,6 +17,7 @@ Last updated: 2026-05-25
 | evidence-upload | B | 2026-05-21 | S1 ✅, S3 ✅, S4 ✅ (0 open), S6 ❌ |
 | flow-reproduce | B | 2026-05-25 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
 | flow-pulse | B | 2026-11-14 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
+| flow-gate | B | 2026-11-15 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S5 ✅ (gate, changed tests), S6 ❌ |
 
 ## Signal Matrix
 
@@ -33,6 +34,7 @@ Last updated: 2026-05-25
 | evidence-upload | ✅ | N/A | ✅ (docs>code) | ✅ (0) | N/A | ❌ |
 | flow-reproduce | ✅ | N/A | ✅ (new 2026-05-25) | ✅ (0) | N/A | ❌ |
 | flow-pulse | ✅ | N/A | ✅ (new 2026-11-14) | ✅ (0) | N/A | ❌ |
+| flow-gate | ✅ | N/A | ✅ (new 2026-11-15) | ✅ (0) | ✅ | ❌ |
 
 ## Signal Applicability
 
@@ -42,13 +44,13 @@ Last updated: 2026-05-25
 | S2 FlowChad | No | Tool repo — no frontend framework; .flowchad/flows/ is empty by design (template) |
 | S3 Staleness | Yes | README last updated 2026-05-01; scripts last commit 2026-05-21 (PR #39 — update mechanism) ✅ |
 | S4 Open Issues | Yes | 6 total open issues across repo |
-| S5 Tests | No | No test infrastructure detected |
+| S5 Tests | Partly | Script tests in `tests/` (pulse, upload gate, guard, rules lint, changed, gate, flow map, measures); skill specs themselves are untested |
 | S6 Hookshot | Yes | Not configured ❌ |
 
 ## Grade Summary
 
 - A: 0
-- B: 7 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload, flow-reproduce, flow-pulse)
+- B: 8 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload, flow-reproduce, flow-pulse, flow-gate)
 - C: 4 (flow-walk, flow-report, flow-add, flow-update)
 - D: 0
 
@@ -70,3 +72,4 @@ Last updated: 2026-05-25
 | 2026-05-25 | daily sweep | 9 domains, 0 regressions, 0 improvements. S3 4d ✅. WIP=0. Dispatched #28 (P1, customer bug reproduction). |
 | 2026-05-25 | issue #28 | 10 domains. Added flow-reproduce (B). 0 regressions to existing skills. |
 | 2026-11-14 | field lessons from two launch walks | 11 domains. Added flow-pulse (B), live-safety and walk-checks knowledge, agents/flowchad.md. Grades unchanged: no tests or issues closed. |
+| 2026-11-15 | rules, measures and gate | 12 domains. Added flow-gate (B), the rule set in flow-walk/rules (44 rules, admission lint), measures, flow maps, walk records. Other grades unchanged. |

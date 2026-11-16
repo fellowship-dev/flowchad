@@ -7,12 +7,13 @@
 <p align="center">
   <strong>Drop-in AI QA for any web project.</strong>
   <br />
-  Walk user flows, screenshot each step, record trimmed videos, and get friction reports.
+  Walk user flows like a first-time user, judge them against opinionated rules with sources, measure the path to value, and gate them before a human tests.
 </p>
 
 <p align="center">
   <a href="#getting-started">Getting Started</a> &middot;
   <a href="#what-it-does">What It Does</a> &middot;
+  <a href="#opinionated-rules-with-sources">Rules</a> &middot;
   <a href="#flow-definition-reference">Flow Reference</a> &middot;
   <a href="#safe-on-live-systems">Live Safety</a> &middot;
   <a href="#evidence-upload">Evidence Upload</a> &middot;
@@ -42,6 +43,7 @@ Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and
 | `/flow-add <description>` | Creates a new flow from natural language, scanning your codebase for selectors |
 | `/flow-update <name> <change>` | Updates an existing flow to reflect product changes |
 | `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
+| `/flow-gate sign-up` | PASS / FAIL / INCOMPLETE before a human tests: blocker rules, measures against the last walk, known rough edges; `--changed` lists the flows a diff touches |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser and attaches evidence to the issue |
 
 ### Agent definition
@@ -114,6 +116,8 @@ The `type` field tells the AI which evaluation criteria to apply during `/flow-r
 ```yaml
 name: New user signs up with email and password and lands on the dashboard
 goal: A new account exists and the dashboard shows the person's first useful result
+value_moment: The dashboard shows the person's first useful result
+covers: [app/signup/*, app/dashboard/*]   # source files this flow depends on
 url: /signup
 tags: [onboarding, critical]
 priority: P0
@@ -144,7 +148,7 @@ steps:
       Redirect to /dashboard because sign-up succeeded.
       Welcome message confirms account was created.
     timing: 3s
-    first_value: true    # time to first value is measured to here
+    first_value: true    # the value moment: measures to value are counted to here
 ```
 
 Or skip manual YAML and let AI create it:
@@ -159,11 +163,116 @@ Or skip manual YAML and let AI create it:
 /flow-walk sign-up
 ```
 
-**5. Get the report:**
+**5. Gate it, then get the report:**
 
 ```
+/flow-gate sign-up --target https://staging.example.com
 /flow-report sign-up
 ```
+
+## Opinionated Rules With Sources
+
+FlowChad has a point of view: the best flow is the shortest honest path to the
+first thing a person came for. Every walk is judged against a small set of
+rules in [`flow-walk/rules/`](.flowchad/skills/flow-walk/rules/): 44 today,
+in ten groups (path to value, the primary action and the fold, decisions,
+noise, wording, navigation, waiting, errors, docs cold start, agent
+experience). Each rule is one sentence a reviewer can pass or fail on one
+screen, says how to check it during a walk, has a severity, and names its
+basis: a public source with a link, opened and checked on a stated date
+(Nielsen Norman Group, GOV.UK, WCAG 2.2, Diátaxis, MeasuringU, Brysbaert,
+Laws of UX, the llms.txt proposal, Biilmann, clig.dev, the MCP specification),
+or failures seen in at least two independent flows. Each field note has an
+id (`FN-0001`); the observation behind it is recorded privately by the
+maintainer and is not published. Today 41 rules rest on a cited source (12 of
+them also on field notes) and 3 on field notes alone (PATH-04, PATH-06,
+NAV-04), labelled as such.
+
+```markdown
+### FOLD-01 · The first input is visible without scrolling
+
+- **Rule:** The first input a step needs is fully visible without scrolling in a 375 × 812 px viewport and in a 1440 × 900 px viewport.
+- **Check:** In each viewport, before scrolling, measure how far the bottom of the primary element sits below the viewport (`scroll_before_primary_vh`, which takes the first required input of the step and falls back to the primary action only when the step has no input). Fail if it is above 0 in either viewport, or the element is hidden.
+- **Threshold:** `scroll_before_primary_vh = 0`
+- **Severity:** blocker
+- **Basis:** source — Nielsen Norman Group, "Scrolling and Attention" (2018), <https://www.nngroup.com/articles/scrolling-and-attention/> (checked 2026-11-15): "users spent about 57% of their page-viewing time above the fold".
+- **Threshold source:** tool standard: zero scroll in these two viewports is FlowChad's own standard, not a number from the source; it is motivated by the attention shares above the fold reported in <https://www.nngroup.com/articles/scrolling-and-attention/> (checked 2026-11-15).
+```
+
+**Measures, not adjectives.** Every walk records, per step and per flow:
+screens to the value moment, decisions asked, clicks and fields, words on
+screen and reading time, viewport heights scrolled before the primary action
+at 375 and 1440, non-task elements (badges, banners, widgets the step does
+not need), waits and whether they showed status, dead ends and loops, and
+time to value; docs walks add commands to a working install and questions a
+fresh agent could not answer
+([measures](.flowchad/skills/flow-walk/references/measures.md)). Reports show
+each number against the previous walk. Thresholds exist only where a rule
+with a cited source sets one.
+
+**A gate before "test it".** `/flow-gate` says PASS, PASS-WITH-OVERRIDES,
+FAIL or INCOMPLETE. The gate checks that a walk record is complete, judged
+against every blocker rule and fresh for the stated target; it cannot prove
+the walk took place. It takes nothing on the walk's word: the value moment
+counts as reached only from recorded steps up to the step marked
+`first_value`; every blocker needs a judgement or a measure recorded on every
+step ("not applicable" needs a reason); a walk timestamp in the future, or an
+override signed by nobody or dated in the future or before the walk, is
+refused; the target address comes from
+`--target` or `gate.target` in the config, and without one the gate says
+INCOMPLETE; a walk of another host fails, and so does one older than the last
+deploy (`--not-before`, required when the config tracks deploys). Rough edges
+(should-fix and later rules) never fail it; they are listed first in the
+hand-off, and so is every override. `--record` writes a walk record to
+`.flowchad/walks/` for the project to commit, and `--changed` lists which
+saved flows a branch touches since their last walk.
+
+Walk records are redacted best-effort: URLs keep their host and lose user
+info, query strings and token-like path segments; secret shapes, emails,
+card-like, account-like and phone-like numbers are replaced. It cannot catch
+everything, so **review a walk record before committing it**.
+
+**Map first.** A flow can be saved as a plain Mermaid flow chart with its
+value moment (`.flowchad/flows/<id>.map.md`) before anything is built, and
+`/flow-walk <id> --map` judges the chart against the flow-shape rules
+([flow maps](.flowchad/skills/flow-walk/references/flow-maps.md)). Shorten it
+from the value moment backwards, then build.
+
+### How this differs from a checklist
+
+A generic checklist asks "is it usable?" and gets "mostly". These rules are
+few, narrow and countable; each names what to look at on one screen; the
+walk keeps the numbers, so the next walk shows whether the path got shorter;
+blockers decide whether a human should be asked to test at all; and the set
+changes only with evidence.
+
+### Adding or changing a rule
+
+New rules come from walks: a report lists problems no rule covers under "Not
+covered by a rule". One becomes a rule when it can be worded without the
+product's nouns and either a public source supports it or the same problem
+appears in a second, independent flow. The
+[admission test](.flowchad/skills/flow-walk/rules/README.md#admission-test)
+lists the criteria; `bash .flowchad/skills/flow-walk/scripts/lint_rules.sh`
+enforces the ones a script can check (format, unique ids, a basis with a
+dated link or two field-note ids, no vendor or brand names in any text file of
+the folder, both examples, a CHANGELOG line, numbers only with a cited
+`Threshold source`, real check dates). Whether two flows were independent,
+and whether a source says what the line claims, is the reviewer's check: the
+lint cannot read the cited pages or the observations behind field notes, which
+the maintainer records privately. To propose a rule from your own
+observation, describe each flow where it happened in the pull request (kind of
+product, step, what the person had to do or could not see, date); the
+maintainer records it and assigns a field-note id. Rules are retired,
+never deleted or reused, when better evidence contradicts them.
+
+**Disagree with a rule?** For one flow, add a `rule_overrides` entry with
+the reason; the gate lists it under known rough edges. Overriding a blocker
+also needs who and when, and gives PASS-WITH-OVERRIDES (exit 3), never PASS;
+the value-moment rule cannot be overridden. For everyone, open a
+pull request that changes, replaces or retires the rule, with evidence: a
+source, or walks of independent flows. Projects can keep their own rules in
+`.flowchad/rules/`.
 
 ## Safe on Live Systems
 
@@ -178,6 +287,8 @@ Every walk starts by declaring each host it touches (`flow-walk/references/live-
 The block is mechanical: `flow-walk/scripts/guard.mjs` is installed on every walk and classifies each request by host, and contexts always block service workers. `tests/guard_test.mjs` checks it with a real browser against servers that count what arrives (fetch, XHR, beacons, workers, form posts in pages, iframes and popups, WebSockets); see flow-walk Step 0c for exactly what is and is not verified.
 
 Steps that write carry `effect: write | send | pay` and are never performed on live systems. Secrets are never printed, evidence stays local unless you opt in, and bot checks are handled with test keys on a local copy or a human-assisted step instead of stopping the walk.
+
+Walks on production are read-only by the same rules: they record what real settings show (bot checks, sign-in providers) up to the first write step, and the gate reports INCOMPLETE until the rest is walked on a test surface or a local copy of the same commit.
 
 Walks also apply the checks in `flow-walk/references/walk-checks.md` by default: rendered content over status codes, a timestamp on every observation with environmental findings re-checked before the report, every width captured at the same moment without reloading, truth cross-checks of what screens claim, a dead-end pass, and console and network errors per step.
 
@@ -265,7 +376,8 @@ context:
   timing: 3s                         # flag if slower than this
   optional: true                     # don't fail the flow if this breaks
   effect: write                      # write | send | pay — skipped on read-only-live surfaces
-  first_value: true                  # the person's first true, useful result
+  first_value: true                  # shows the flow's value_moment
+  primary: "#email"                  # the first input this screen needs (default: first fill step on it)
   bot_check: true                    # test keys on a local copy, or a human-assisted step
 ```
 
@@ -346,7 +458,9 @@ After installation, your project has two FlowChad layers:
 .claude/skills/        # Symlinks to .agents/skills/ (Claude Code)
 .flowchad/             # Project data — tracked in git (shared knowledge)
 ├── config.yml         # Project config (URL, timing, credentials)
-└── flows/             # Your flow definitions (YAML)
+├── flows/             # Your flow definitions (YAML) and flow maps (*.map.md)
+├── walks/             # Walk records from /flow-gate --record (committed, redacted)
+└── rules/             # Optional project rules, same format as flow-walk/rules
 ```
 
 The skills (tooling) live in `.agents/skills/` and are managed by `npx skills`.
@@ -370,7 +484,7 @@ Optional:
 | Reports | Auto-generated friction reports | Pass/fail only | Spreadsheets |
 | Video | Smart-trimmed action replays | Raw recordings | Screen recordings |
 | Cost | Free | Free | $$$/hour |
-| Intelligence | AI evaluates UX quality | Assertions only | Human judgment |
+| Intelligence | AI judges each step against rules with cited sources, and counts the path to value | Assertions only | Human judgment |
 | Agent support | 40+ agents | Framework-specific | N/A |
 
 ## FAQ
@@ -392,7 +506,7 @@ This is a [known bug](https://github.com/vercel-labs/skills/issues/337) — `ski
 
 **Workaround — remove by skill names, then re-add:**
 ```bash
-npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flowchad-setup evidence-upload -y
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flow-gate flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 

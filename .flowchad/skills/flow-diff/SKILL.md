@@ -48,6 +48,8 @@ For each step, compare across snapshots:
 | **Goal** | Compare `goal_reached` and `stopped_at` | Any change; "now reaches its goal" is the headline improvement |
 | **Effort** | Compare `counts` (typed fields, clicks, time to first value) | Any change |
 | **Errors** | Compare `console_errors` / `failed_requests` per step | New errors |
+| **Measures** | Compare the gate's flow measures (`node flow-gate/scripts/gate.mjs latest --previous prev --json`): screens, decisions, fields, clicks, words, scroll before the primary action per width, non-task elements, waits, dead ends, loops, time to value | Any measure that got worse; fewer is the improvement to report |
+| **Rules** | Compare `rule_results` failures by rule id | New failures (regressions) and rules that now pass |
 
 ### 4. Visual Comparison
 
