@@ -16,6 +16,7 @@ skills:
   - flow-reproduce
   - flow-pulse
   - flow-gate
+  - flow-atlas
   - evidence-upload
 ---
 
@@ -48,6 +49,7 @@ npx skills add Fellowship-dev/flowchad --skill '*'
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
 | `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
 | `/flow-gate <name\|all> [--changed]` | PASS / FAIL / INCOMPLETE before a human tests: blockers, measures against the last walk, rough edges, changed flows |
+| `/flow-atlas [--after <change>]` | Every screen and action walked for real, one label each, blockers in walking order, code health measured, today versus after open changes |
 | `/evidence-upload` | Uploads reviewed screenshots/GIFs to the public evidence S3 bucket (opt-in) |
 
 Walks are safe on live systems by default (`flow-walk/references/live-safety.md`), apply the checks in `flow-walk/references/walk-checks.md`, record the measures in `flow-walk/references/measures.md`, and are judged against the rules in `flow-walk/rules/` (each with a source; see its README for the admission test). A Claude Code subagent definition lives in `agents/flowchad.md`.

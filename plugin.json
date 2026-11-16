@@ -16,6 +16,7 @@
     "flow-reproduce",
     "flow-pulse",
     "flow-gate",
+    "flow-atlas",
     "evidence-upload"
   ],
   "install": {

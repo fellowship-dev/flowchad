@@ -1,6 +1,6 @@
 # Quality Score — fellowship-dev/flowchad
 
-Last updated: 2026-11-15
+Last updated: 2026-11-16
 
 ## Domains
 
@@ -18,6 +18,7 @@ Last updated: 2026-11-15
 | flow-reproduce | B | 2026-05-25 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
 | flow-pulse | B | 2026-11-14 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S6 ❌ |
 | flow-gate | B | 2026-11-15 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S5 ✅ (gate, changed tests), S6 ❌ |
+| flow-atlas | B | 2026-11-16 | S1 ✅, S3 ✅ (new — same day), S4 ✅ (0 open), S5 N/A (spec and templates only), S6 ❌ |
 
 ## Signal Matrix
 
@@ -35,6 +36,7 @@ Last updated: 2026-11-15
 | flow-reproduce | ✅ | N/A | ✅ (new 2026-05-25) | ✅ (0) | N/A | ❌ |
 | flow-pulse | ✅ | N/A | ✅ (new 2026-11-14) | ✅ (0) | N/A | ❌ |
 | flow-gate | ✅ | N/A | ✅ (new 2026-11-15) | ✅ (0) | ✅ | ❌ |
+| flow-atlas | ✅ | N/A | ✅ (new 2026-11-16) | ✅ (0) | N/A | ❌ |
 
 ## Signal Applicability
 
@@ -50,7 +52,7 @@ Last updated: 2026-11-15
 ## Grade Summary
 
 - A: 0
-- B: 8 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload, flow-reproduce, flow-pulse, flow-gate)
+- B: 9 (flowchad-setup, flow-suggest, flow-diff, flow-diagram, evidence-upload, flow-reproduce, flow-pulse, flow-gate, flow-atlas)
 - C: 4 (flow-walk, flow-report, flow-add, flow-update)
 - D: 0
 

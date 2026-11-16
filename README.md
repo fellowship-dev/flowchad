@@ -45,6 +45,7 @@ Works with Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, OpenHands, and
 | `/flow-pulse [init\|run]` | Seconds-long after-deploy check of each flow's key step, matched on content |
 | `/flow-gate sign-up` | PASS / FAIL / INCOMPLETE before a human tests: blocker rules, measures against the last walk, known rough edges; `--changed` lists the flows a diff touches |
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser and attaches evidence to the issue |
+| `/flow-atlas [--after <change>]` | Maps the whole product: every screen and action walked for real, one label each (works, untrue text, broken, dead end, hidden, not built, needs live test), blockers in walking order, code health measured, today versus after open changes |
 
 ### Agent definition
 
@@ -231,6 +232,15 @@ Walk records are redacted best-effort: URLs keep their host and lose user
 info, query strings and token-like path segments; secret shapes, emails,
 card-like, account-like and phone-like numbers are replaced. It cannot catch
 everything, so **review a walk record before committing it**.
+
+**An atlas of the whole product.** `/flow-atlas` inventories every route,
+action, message and scheduled job from the code, walks every action on local
+copies built with production settings (stand-ins for outside providers, so
+nothing real is sent, paid or written), and labels each one with evidence. The
+page shows a screenshot per screen, the blockers in the order a person meets
+them, what the open changes fix, and code health counted with the repo's own
+scanners. Make one before dogfooding, before asking for the first payment and
+after a long run of merges; compare its counts with the previous one.
 
 **Map first.** A flow can be saved as a plain Mermaid flow chart with its
 value moment (`.flowchad/flows/<id>.map.md`) before anything is built, and
@@ -460,6 +470,7 @@ After installation, your project has two FlowChad layers:
 ├── config.yml         # Project config (URL, timing, credentials)
 ├── flows/             # Your flow definitions (YAML) and flow maps (*.map.md)
 ├── walks/             # Walk records from /flow-gate --record (committed, redacted)
+├── atlas/             # /flow-atlas pages and screenshots (ignored by git)
 └── rules/             # Optional project rules, same format as flow-walk/rules
 ```
 
@@ -506,7 +517,7 @@ This is a [known bug](https://github.com/vercel-labs/skills/issues/337) — `ski
 
 **Workaround — remove by skill names, then re-add:**
 ```bash
-npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flow-gate flowchad-setup evidence-upload -y
+npx skills remove flow-walk flow-report flow-add flow-update flow-suggest flow-diff flow-diagram flow-reproduce flow-pulse flow-gate flow-atlas flowchad-setup evidence-upload -y
 npx skills add Fellowship-dev/flowchad --skill '*'
 ```
 
