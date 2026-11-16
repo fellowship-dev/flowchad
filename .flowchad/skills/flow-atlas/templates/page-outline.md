@@ -1,26 +1,30 @@
 # Atlas page: section order
 
-One self-contained HTML page with images under `shots/`. Plain words; the
-label word is always printed next to its colour.
+One self-contained HTML page with images under `shots/`. The visual map is
+useful without findings or a quality score.
 
-1. **Header:** product, date, builds walked (commit per build), one sentence
-   on how it was walked (local copies with production settings and stand-ins).
-2. **Counts:** one row per build: screens, actions, and actions per label
-   (Works, Untrue text, Broken, Dead end, Hidden, Not built, Needs live test).
-3. **Blockers in walking order:** numbered; each with what happens, the fix in
-   flight or "nobody is working on this", the size.
-4. **Paths A to N:** a section per path. Each screen is a card:
-   - screenshot (375 px; 1440 px beside it when taken), lazy-loaded;
-   - title, route, role, state;
-   - actions as a list: label chip, action name, the evidence note.
-   Screens from an "after" build sit next to the screen they change, marked
-   with the change.
-5. **Messages:** one card per message: rendered image, trigger, on in
-   production or not, label.
-6. **Scheduled jobs and switches:** a table: schedule, on in production, what
-   it does, what happened when run.
-7. **Code health:** concepts × builds table; cleaned versus guarded.
-8. **Not walked** and **differences from production.**
+1. **Header:** product, capture date, named builds and environments; distinguish
+   a local copy, production settings and provider stand-ins from live capture.
+2. **Flow index:** linked titles with each goal, role and entry point. State the
+   mapping scope and link to known capture gaps.
+3. **One section per flow:**
+   - goal, starting conditions, entry points and possible outcomes;
+   - connected screenshots in journey order, with stable screen anchors;
+   - each screen's title, route, role and meaningful state;
+   - transitions labelled with the action/condition and destination;
+   - visible branches, loops, back/retry paths, shared screens and cross-flow
+     links; mark external handoffs and exits;
+   - relevant email/notification steps and whether captured or simulated.
+   A diagram or linked screen overview can introduce a branching journey.
+4. **Optional build comparison:** changed screens/paths beside their baseline,
+   with the build and coverage difference stated. Do not imply that independent
+   or conflicting changes were integrated.
+5. **Capture gaps and environment differences:** unmapped flows, branches,
+   roles/states and provider boundaries, with reasons. Counts, if useful, come
+   from manifests and describe coverage, not an acceptance score.
+6. **Optional observations:** link to screen/transition IDs and evidence;
+   findings/QA reports are supporting material, not the navigation structure.
 
-Layout: a single column that fits 375 px with no horizontal scroll; cards in
-a grid at wider widths; light and dark themes from the same colour tokens.
+Layout: readable at 375 px and 1440 px; a flow index and stable anchors, legible
+screenshots and explicit branch destinations. Any intentional horizontal
+screenshot strip has a visible scroll affordance. Check every image/link.

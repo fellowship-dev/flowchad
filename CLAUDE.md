@@ -40,7 +40,7 @@ QUALITY_SCORE.md              # Per-skill quality grades and open issues
 | `/flow-reproduce <issue-ref>` | Reproduces a customer-reported bug in-browser, attaches evidence to the GitHub issue |
 | `/flow-pulse [init\|run]` | Content-matched HTTP check of each flow's key step after a deploy |
 | `/flow-gate <name\|all>` | PASS/FAIL/INCOMPLETE before human testing; `--changed` lists flows a diff touches |
-| `/flow-atlas [--after <change>]` | Every screen and action walked and labelled, ordered blockers, measured code health |
+| `/flow-atlas [--after <change>]` | Visual map by user flow: connected screenshots, entries, branches and outcomes; optional findings |
 | `/evidence-upload` | Uploads reviewed screenshots/GIFs to the public evidence S3 bucket (opt-in) |
 
 ## Key Rules
